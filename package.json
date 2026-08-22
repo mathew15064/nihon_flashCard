@@ -1,0 +1,14 @@
+{
+  "name": "japanese-flashcard",
+  "version": "0.1.0",
+  "description": "Japanese learning / flashcard web app with JSON file storage",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

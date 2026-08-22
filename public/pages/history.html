@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Japanese Flashcard — History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <header class="bg-white shadow-sm">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm">&larr; Dashboard</a>
+      <h1 class="font-bold text-slate-800">History</h1>
+      <select id="month" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
+        <option value="">This month</option>
+        <option value="all">All months</option>
+      </select>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
+
+    <div id="summary" class="hidden grid grid-cols-3 gap-3 mb-6 text-center"></div>
+
+    <ul id="event-list" class="space-y-2">
+      <li class="text-slate-400 text-sm">Loading history…</li>
+    </ul>
+
+    <div class="flex justify-center gap-3 mt-6">
+      <button id="prev-btn" class="bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm disabled:opacity-40">Previous</button>
+      <button id="next-btn" class="bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm disabled:opacity-40">Next</button>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/current-user.js"></script>
+  <script src="/js/history.js"></script>
+</body>
+</html>

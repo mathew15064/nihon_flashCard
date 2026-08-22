@@ -1,0 +1,160 @@
+[
+  {
+    "id": "kanji_001",
+    "kanji": "日",
+    "onyomi": [
+      "ニチ",
+      "ジツ"
+    ],
+    "kunyomi": [
+      "ひ",
+      "か"
+    ],
+    "meanings": [
+      "day",
+      "sun"
+    ],
+    "jlpt": "N5",
+    "lesson": 1,
+    "examples": [
+      {
+        "word": "日本",
+        "reading": "にほん",
+        "meaning": "Japan"
+      }
+    ]
+  },
+  {
+    "id": "kanji_002",
+    "kanji": "一",
+    "onyomi": [
+      "イチ"
+    ],
+    "kunyomi": [
+      "ひと"
+    ],
+    "meanings": [
+      "one"
+    ],
+    "jlpt": "N5",
+    "lesson": 1,
+    "examples": [
+      {
+        "word": "一人",
+        "reading": "ひとり",
+        "meaning": "one person"
+      }
+    ]
+  },
+  {
+    "id": "kanji_003",
+    "kanji": "人",
+    "onyomi": [
+      "ジン",
+      "ニン"
+    ],
+    "kunyomi": [
+      "ひと"
+    ],
+    "meanings": [
+      "person"
+    ],
+    "jlpt": "N5",
+    "lesson": 1,
+    "examples": [
+      {
+        "word": "日本人",
+        "reading": "にほんじん",
+        "meaning": "Japanese person"
+      }
+    ]
+  },
+  {
+    "id": "kanji_004",
+    "kanji": "国",
+    "onyomi": [
+      "コク"
+    ],
+    "kunyomi": [
+      "くに"
+    ],
+    "meanings": [
+      "country"
+    ],
+    "jlpt": "N5",
+    "lesson": 2,
+    "examples": [
+      {
+        "word": "外国",
+        "reading": "がいこく",
+        "meaning": "foreign country"
+      }
+    ]
+  },
+  {
+    "id": "kanji_005",
+    "kanji": "行",
+    "onyomi": [
+      "コウ"
+    ],
+    "kunyomi": [
+      "い",
+      "ゆ"
+    ],
+    "meanings": [
+      "to go"
+    ],
+    "jlpt": "N5",
+    "lesson": 2,
+    "examples": [
+      {
+        "word": "旅行",
+        "reading": "りょこう",
+        "meaning": "travel"
+      }
+    ]
+  },
+  {
+    "id": "kanji_006",
+    "kanji": "時",
+    "onyomi": [
+      "ジ"
+    ],
+    "kunyomi": [
+      "とき"
+    ],
+    "meanings": [
+      "time",
+      "hour"
+    ],
+    "jlpt": "N5",
+    "lesson": 3,
+    "examples": [
+      {
+        "word": "時間",
+        "reading": "じかん",
+        "meaning": "time"
+      }
+    ]
+  },
+  {
+    "id": "kanji_007",
+    "kanji": "語",
+    "onyomi": [
+      "ゴ"
+    ],
+    "kunyomi": [],
+    "meanings": [
+      "language"
+    ],
+    "jlpt": "N5",
+    "lesson": 3,
+    "examples": [
+      {
+        "word": "日本語",
+        "reading": "にほんご",
+        "meaning": "Japanese language"
+      }
+    ]
+  }
+]

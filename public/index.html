@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Japanese Flashcard — Select User</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <main class="max-w-xl mx-auto px-4 py-10">
+    <h1 class="text-3xl font-bold text-slate-800 text-center mb-1">🇯🇵 Japanese Flashcard</h1>
+    <p class="text-slate-500 text-center mb-8">Who is learning today?</p>
+
+    <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
+
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-slate-700">Users</h2>
+        <button id="new-user-btn"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+          + New user
+        </button>
+      </div>
+
+      <form id="new-user-form" class="hidden mb-4 bg-white rounded-xl shadow p-4 flex gap-2">
+        <input id="username-input" type="text" placeholder="Username" required maxlength="50"
+          class="flex-1 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <input id="displayname-input" type="text" placeholder="Display name (optional)" maxlength="50"
+          class="flex-1 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">Create</button>
+      </form>
+
+      <ul id="user-list" class="space-y-2">
+        <li class="text-slate-400 text-sm">Loading users…</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/current-user.js"></script>
+  <script src="/js/user.js"></script>
+</body>
+</html>

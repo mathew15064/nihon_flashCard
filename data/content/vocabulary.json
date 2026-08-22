@@ -1,0 +1,137 @@
+[
+  {
+    "id": "vocabulary_001",
+    "word": "わたし",
+    "reading": "わたし",
+    "meaning": "I, me",
+    "lesson": 1,
+    "category": "pronoun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_002",
+    "word": "あなた",
+    "reading": "あなた",
+    "meaning": "you",
+    "lesson": 1,
+    "category": "pronoun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_003",
+    "word": "あの人",
+    "reading": "あのひと",
+    "meaning": "that person",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_004",
+    "word": "先生",
+    "reading": "せんせい",
+    "meaning": "teacher",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_005",
+    "word": "学生",
+    "reading": "がくせい",
+    "meaning": "student",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_006",
+    "word": "会社員",
+    "reading": "かいしゃいん",
+    "meaning": "company employee",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_007",
+    "word": "これ",
+    "reading": "これ",
+    "meaning": "this (thing)",
+    "lesson": 2,
+    "category": "demonstrative",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_008",
+    "word": "それ",
+    "reading": "それ",
+    "meaning": "that (thing)",
+    "lesson": 2,
+    "category": "demonstrative",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_009",
+    "word": "あれ",
+    "reading": "あれ",
+    "meaning": "that over there",
+    "lesson": 2,
+    "category": "demonstrative",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_010",
+    "word": "本",
+    "reading": "ほん",
+    "meaning": "book",
+    "lesson": 2,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_011",
+    "word": "辞書",
+    "reading": "じしょ",
+    "meaning": "dictionary",
+    "lesson": 2,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_012",
+    "word": "新聞",
+    "reading": "しんぶん",
+    "meaning": "newspaper",
+    "lesson": 2,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_013",
+    "word": "食べる",
+    "reading": "たべる",
+    "meaning": "to eat",
+    "lesson": 3,
+    "category": "verb",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_014",
+    "word": "飲む",
+    "reading": "のむ",
+    "meaning": "to drink",
+    "lesson": 3,
+    "category": "verb",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_015",
+    "word": "学校",
+    "reading": "がっこう",
+    "meaning": "school",
+    "lesson": 3,
+    "category": "noun",
+    "notes": ""
+  }
+]

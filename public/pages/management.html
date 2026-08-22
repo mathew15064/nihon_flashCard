@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Japanese Flashcard — Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <header class="bg-white shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm">&larr; Dashboard</a>
+      <h1 class="font-bold text-slate-800">Management</h1>
+      <span></span>
+    </div>
+    <div class="max-w-4xl mx-auto px-4 pb-3 flex flex-wrap gap-2 text-sm">
+      <button class="tab-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg" data-tab="users">Users</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="hiragana">Hiragana</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="katakana">Katakana</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="kanji">Kanji</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="vocabulary">Vocabulary</button>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
+
+    <section id="toolbar" class="flex flex-wrap gap-2 items-center mb-4"></section>
+
+    <ul id="item-list" class="space-y-2">
+      <li class="text-slate-400 text-sm">Loading…</li>
+    </ul>
+
+    <!-- create/edit dialog -->
+    <div id="form-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-10">
+      <form id="entity-form" class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md space-y-3"></form>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/management.js"></script>
+</body>
+</html>

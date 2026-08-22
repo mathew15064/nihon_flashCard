@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Japanese Flashcard — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <header class="bg-white shadow-sm">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="font-bold text-slate-800">🇯🇵 Japanese Flashcard</h1>
+      <div class="flex items-center gap-3 text-sm">
+        <span id="current-user" class="text-slate-600"></span>
+        <button id="switch-user-btn" class="text-indigo-600 hover:underline">Switch user</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <p id="welcome" class="text-xl text-slate-700 mb-6"></p>
+    <p id="stats-loading" class="text-slate-400 text-sm mb-6">Loading statistics…</p>
+
+    <section id="totals" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"></section>
+
+    <nav class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <a href="/pages/learn.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
+        <p class="text-xl font-semibold text-slate-800">📚 Learn</p>
+      </a>
+      <a href="/pages/history.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
+        <p class="text-xl font-semibold text-slate-800">📜 History</p>
+      </a>
+      <a href="/pages/review.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
+        <p class="text-xl font-semibold text-slate-800">🔁 Review</p>
+      </a>
+      <a href="/pages/management.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
+        <p class="text-xl font-semibold text-slate-800">⚙️ Manage</p>
+      </a>
+    </nav>
+
+    <section class="mb-8">
+      <h2 class="text-lg font-semibold text-slate-700 mb-3">Progress by content type</h2>
+      <div id="by-type" class="space-y-3"></div>
+    </section>
+
+    <section id="lesson-section" class="hidden">
+      <h2 class="text-lg font-semibold text-slate-700 mb-3">Vocabulary by lesson</h2>
+      <div id="by-lesson" class="space-y-2"></div>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/current-user.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
