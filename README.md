@@ -16,25 +16,42 @@ npm run dev        # same, with auto-reload on changes
 - Multiple local users (no authentication) with isolated progress
 - Hiragana · Katakana · Kanji · Minna no Nihongo vocabulary
 - Flashcard practice and due-based review sessions (simple spaced repetition)
+- Quiz mode: multiple-choice quizzes (JP↔meaning, reading questions, mixed)
 - Learning states: new → learning → review → mastered
 - Review history per month, dashboard statistics, streaks
 - Management area: full CRUD + search/filters for users and all content
 
-## Documentation
+## Documentation navigation
 
-Read in this order before changing anything:
+Read in this order:
 
 ```text
-doc/readme.md            ← project rules & AI agent protocol
-doc/architecture.md      ← full architecture specification
-doc/overflow.md          ← context & decision log (spec side)
-ARCHITECTURE.md          ← decided architecture
-DATA_MODEL.md            ← JSON data models
-API.md                   ← REST endpoints
-LEARNING_SYSTEM.md       ← states & review scheduling
-IMPLEMENTATION_PLAN.md   ← phased build plan
-OVERFLOW.md              ← living project state (implementation side)
+README.md                ← you are here (entry point)
+    ↓
+ARCHITECTURE.md          ← how the system is designed
+    ↓
+OVERFLOW.md              ← current project state
+    ↓
+logs/YYYY-MM-DD.md       ← only if historical context is needed
+    ↓
+source code
 ```
+
+## AI Agent Startup Protocol
+
+1. Read `README.md`
+2. Read `ARCHITECTURE.md`
+3. Read `OVERFLOW.md`
+4. Inspect source code relevant to the task
+5. Make changes
+6. Test changes
+7. Update `OVERFLOW.md` if the project state changed
+8. Create/update the daily log in `logs/YYYY-MM-DD.md`
+
+Do NOT read all historical logs by default — only when investigating a specific issue.
+
+Detailed references: `API.md` (endpoints), `DATA_MODEL.md` (JSON shapes),
+`LEARNING_SYSTEM.md` (scheduling rules), `doc/` (original specifications).
 
 ## Tech
 

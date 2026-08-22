@@ -126,6 +126,37 @@ Never expose stack traces or filesystem paths.
 
 No auth. Required minimum: input validation, path traversal prevention (user IDs/content types validated against allow-lists), `/data` never served statically.
 
-## 9. Current User Flow
+## 9. Quiz Architecture
+
+A multiple-choice quiz mode layered on top of the existing content and learning
+systems. It introduces NO new storage.
+
+```text
+POST /api/quiz/sessions                     → create session + questions
+POST /api/quiz/sessions/:sid/answers        → submit one answer
+GET  /api/quiz/sessions/:sessionId/result   → final score (requires all answered)
+```
+
+Components:
+
+- `server/utils/quiz-generator.js` — pure question generation:
+  question types `jp-to-meaning`, `meaning-to-jp`, `jp-to-reading`,
+  `reading-to-jp`, `random`; distractors sampled only from the same content type;
+  a card is skipped if fewer than 2 valid distinct distractors exist.
+- `server/services/quiz.service.js` — session lifecycle, validation
+  (user active, type/count/question-type validity, option IDs, ownership,
+  single-answer enforcement), scoring. Sessions live IN MEMORY ONLY
+  (Map keyed by random session id); they are lost on restart by design.
+  Correct answers never leave the server before submission (`_correctOptionId`
+  is stripped from all question responses).
+- Learning integration: each answer calls `learning.service.recordReview`
+  (same progress/scheduling/history pipeline as flashcards). No second progress system.
+- Quiz results are NOT persisted separately; per-question review events in the
+  existing monthly history files are the record.
+
+Frontend: single page `public/pages/quiz.html` + `public/js/quiz.js`
+(config → play → result states), keyboard shortcuts A–D / 1–4 / Enter.
+
+## 10. Current User Flow
 
 Startup: read `currentUserId` from localStorage → validate via `GET /api/users/:id` → dashboard if valid, else user selection. User switching always allowed.

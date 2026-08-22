@@ -1,0 +1,10 @@
+[
+  {
+    "id": "user_001",
+    "username": "yourname",
+    "displayName": "Your Name",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "lastActiveAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  }
+]

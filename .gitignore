@@ -1,4 +1,9 @@
 node_modules/
-data/learning/users/
 npm-debug.log*
 .DS_Store
+
+# ---- User data (environment-specific: dev vs production) ----
+# Learning data is per-environment and never versioned.
+data/learning/
+# Local user registry (usernames/IDs differ between dev and production)
+data/users.json
