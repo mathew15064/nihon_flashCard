@@ -10,16 +10,22 @@
 </head>
 <body class="bg-slate-100 min-h-screen">
   <header class="bg-white shadow-sm">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm">&larr; Dashboard</a>
-      <h1 class="font-bold text-slate-800">Review</h1>
-      <select id="content-type" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
-        <option value="">All types</option>
-        <option value="hiragana">Hiragana</option>
-        <option value="katakana">Katakana</option>
-        <option value="kanji">Kanji</option>
-        <option value="vocabulary">Vocabulary</option>
-      </select>
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <a href="/pages/dashboard.html" data-i18n="nav.dashboard" class="text-slate-600 hover:underline text-sm whitespace-nowrap">&larr; Dashboard</a>
+      <h1 class="font-bold text-slate-800" data-i18n="review.title">Review</h1>
+      <div class="flex items-center gap-2">
+        <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
+          <option value="vi">🇻🇳 Tiếng Việt</option>
+          <option value="en">🇺🇸 English</option>
+        </select>
+        <select id="content-type" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
+          <option value="" data-i18n="review.allTypes">All types</option>
+          <option value="hiragana" data-i18n="content.hiragana">Hiragana</option>
+          <option value="katakana" data-i18n="content.katakana">Katakana</option>
+          <option value="kanji" data-i18n="content.kanji">Kanji</option>
+          <option value="vocabulary" data-i18n="content.vocabulary">Vocabulary</option>
+        </select>
+      </div>
     </div>
   </header>
 
@@ -32,31 +38,36 @@
       <p class="text-xs uppercase tracking-wide text-slate-400 mb-3"></p>
       <p id="card-front" class="text-5xl sm:text-8xl font-semibold text-slate-800 break-all"></p>
       <div id="card-back" class="hidden mt-6 border-t border-slate-200 pt-6 w-full">
-        <p id="answer-main" class="text-3xl font-medium text-indigo-700"></p>
+        <p id="answer-reading" class="hidden text-2xl text-slate-600"></p>
+        <p id="answer-romanization" class="hidden text-lg italic text-slate-400"></p>
+        <p id="answer-main" class="mt-4 text-3xl font-medium text-indigo-700"></p>
         <p id="answer-extra" class="mt-2 text-slate-500 break-words"></p>
       </div>
     </div>
 
     <div id="done-panel" class="hidden bg-white rounded-2xl shadow-lg p-10 text-center">
       <p class="text-5xl mb-4">🎉</p>
-      <p class="text-xl font-semibold text-slate-800 mb-2">Session complete</p>
+      <p class="text-xl font-semibold text-slate-800 mb-2" data-i18n="review.sessionComplete">Session complete</p>
       <p id="done-summary" class="text-slate-500"></p>
-      <button id="reload-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-medium">
+      <button id="reload-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-medium" data-i18n="review.loadMore">
         Load more
       </button>
     </div>
 
     <div class="mt-8 flex justify-center gap-4">
-      <button id="wrong-btn" disabled class="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32">Wrong</button>
-      <button id="reveal-btn" class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-xl w-32">Reveal</button>
-      <button id="correct-btn" disabled class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32">Correct</button>
+      <button id="wrong-btn" disabled class="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.wrong">Wrong</button>
+      <button id="reveal-btn" class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.reveal">Reveal</button>
+      <button id="correct-btn" disabled class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.correct">Correct</button>
     </div>
     <p id="status-line" class="text-center text-xs text-emerald-700 mt-2 h-4"></p>
-    <p class="text-center text-xs text-slate-400 mt-3">Space: reveal / next · ← Wrong · → Correct</p>
+    <p class="text-center text-xs text-slate-400 mt-3" data-i18n="learn.hint">Space: reveal / next · ← Wrong · → Correct</p>
   </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/current-user.js"></script>
+  <script src="/js/i18n/en.js"></script>
+  <script src="/js/i18n/vi.js"></script>
+  <script src="/js/i18n/i18n.js"></script>
   <script src="/js/review.js"></script>
 </body>
 </html>

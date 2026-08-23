@@ -20,6 +20,12 @@ npm run dev        # same, with auto-reload on changes
 - Learning states: new → learning → review → mastered
 - Review history per month, dashboard statistics, streaks
 - Management area: full CRUD + search/filters for users and all content
+- Flashcard swipe gestures: swipe right = Correct, swipe left = Wrong
+  (buttons and keyboard shortcuts still work)
+- UI i18n: Vietnamese (default) / English, switchable per page,
+  persisted in `localStorage` (`locale`)
+- Vocabulary cards show word → reading → romanization → localized meaning
+  (vi/en with fallback chain vi → en)
 
 ## Documentation navigation
 

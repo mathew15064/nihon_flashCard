@@ -5,6 +5,8 @@ $(function () {
   const $typeLabel = $('#card .text-xs.uppercase');
   const $front = $('#card-front');
   const $back = $('#card-back');
+  const $answerReading = $('#answer-reading');
+  const $answerRomanization = $('#answer-romanization');
   const $answerMain = $('#answer-main');
   const $answerExtra = $('#answer-extra');
   const $sessionInfo = $('#session-info');
@@ -19,11 +21,23 @@ $(function () {
   let revealed = false;
   let answeredCount = 0;
 
+  function localizedMeaning(item) {
+    // Content translation fallback: selected locale -> English -> Vietnamese -> raw
+    if (item.meaning && typeof item.meaning === 'object') {
+      return item.meaning[I18n.locale()] || item.meaning.en || item.meaning.vi || '';
+    }
+    const base = (item.meaning || '').trim();
+    const vi = (item.meaningVi || '').trim();
+    return I18n.locale() === 'vi' ? (vi || base) : (base || vi);
+  }
+
   function sides(card) {
     const c = card.content || {};
     if (card.contentType === 'kanji') {
       return {
         front: c.kanji,
+        reading: '',
+        romanization: '',
         main: (c.meanings || []).join(', ') || '—',
         extra: [
           c.onyomi && c.onyomi.length ? 'On: ' + c.onyomi.join('、') : '',
@@ -34,16 +48,21 @@ $(function () {
     if (card.contentType === 'vocabulary') {
       return {
         front: c.word,
-        main: c.meaning,
-        extra: [c.reading && c.reading !== c.word ? c.reading : '', c.category || '']
-          .filter(Boolean).join(' · ')
+        reading: c.reading && c.reading !== c.word ? c.reading : '',
+        romanization: c.romanization || '',
+        main: localizedMeaning(c) || '—',
+        extra: c.category || ''
       };
     }
-    return { front: c.character, main: c.romaji, extra: '' };
+    return { front: c.character, reading: '', romanization: c.romaji || '', main: '', extra: '' };
   }
 
   function showError(msg) {
     $('#error').text(msg).removeClass('hidden');
+  }
+
+  function setText($el, text) {
+    $el.toggleClass('hidden', !text).text(text || '');
   }
 
   function render() {
@@ -55,11 +74,13 @@ $(function () {
     revealed = false;
     $donePanel.addClass('hidden');
     $card.removeClass('hidden');
-    $sessionInfo.text(`${queue.length + 1} card${queue.length === 0 ? '' : 's'} left in session`);
+    $sessionInfo.text(I18n.t('review.cardsLeft', { n: queue.length + 1 }));
 
     const s = sides(current);
     $typeLabel.text(current.contentType);
     $front.text(s.front);
+    setText($answerReading, '');
+    setText($answerRomanization, '');
     $answerMain.text('');
     $answerExtra.text('');
     $back.addClass('hidden');
@@ -76,6 +97,8 @@ $(function () {
     if (!current || revealed) return;
     revealed = true;
     const s = sides(current);
+    setText($answerReading, s.reading);
+    setText($answerRomanization, s.romanization);
     $answerMain.text(s.main);
     $answerExtra.text(s.extra);
     $back.removeClass('hidden');
@@ -94,26 +117,27 @@ $(function () {
       })
       .done(function (card) {
         answeredCount += 1;
-        const labels = { learning: 'Learning', review: 'Review', mastered: 'Mastered' };
+        const labels = {
+          learning: I18n.t('status.learning'),
+          review: I18n.t('status.review'),
+          mastered: I18n.t('status.mastered')
+        };
         $('#status-line').text(
-          `${labels[card.status] || card.status} · streak ${card.streak}`
+          `${labels[card.status] || card.status} · ${I18n.t('status.streak')} ${card.streak}`
         );
       })
       .fail(function (err) {
-        showError(err.message || 'Could not record answer');
+        showError(err.message || I18n.t('learn.error'));
       })
       .always(nextCard);
   }
 
   function showDone() {
-    if (answeredCount === 0 && queue.length === 0 && !current) {
-      // nothing to review at all — still show panel
-    }
     $donePanel.removeClass('hidden');
     $doneSummary.text(
       answeredCount > 0
-        ? `You reviewed ${answeredCount} card${answeredCount === 1 ? '' : 's'}.`
-        : 'Nothing is due right now. Come back later!'
+        ? I18n.t('review.reviewed', { n: answeredCount })
+        : I18n.t('review.nothingDue')
     );
     $sessionInfo.text('');
   }
@@ -137,13 +161,13 @@ $(function () {
         nextCard();
       })
       .fail(function (err) {
-        showError(err.message || 'Could not load review queue');
+        showError(err.message || I18n.t('review.loadError'));
       });
   }
 
   $card.on('click', reveal);
   $(document).on('keydown', function (e) {
-    if (e.code === 'Space') { e.preventDefault(); revealed ? answer(null) : reveal(); }
+    if (e.code === 'Space') { e.preventDefault(); revealed ? nextCard() : reveal(); }
     else if (e.code === 'ArrowRight' && revealed) answer('correct');
     else if (e.code === 'ArrowLeft' && revealed) answer('wrong');
   });
@@ -153,6 +177,16 @@ $(function () {
   $wrong.on('click', () => answer('wrong'));
   $('#reload-btn').on('click', loadQueue);
   $('#content-type').on('change', loadQueue);
+
+  $(document).on('locale:changed', function () {
+    I18n.apply();
+    if (current) {
+      render();
+      if (revealed) reveal();
+    } else {
+      showDone();
+    }
+  });
 
   currentUser
     .validate()

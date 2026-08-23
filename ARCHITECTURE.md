@@ -65,6 +65,7 @@ japanese-flashcard/
     ├── index.html          # user selection
     ├── pages/{dashboard,learn,review,history,management}.html
     ├── js/                 # api.js abstraction + one module per page
+    │   └── i18n/           # en.js, vi.js (dictionaries) + i18n.js (runtime)
     └── css/app.css
 ```
 
@@ -160,3 +161,82 @@ Frontend: single page `public/pages/quiz.html` + `public/js/quiz.js`
 ## 10. Current User Flow
 
 Startup: read `currentUserId` from localStorage → validate via `GET /api/users/:id` → dashboard if valid, else user selection. User switching always allowed.
+
+## 11. i18n Architecture
+
+Two distinct concepts that must not be mixed:
+
+- **UI i18n** — application chrome strings ("Correct" → "Đúng"). Handled by the
+  client-side `I18n` runtime.
+- **Content translation** — meaning data of vocabulary items ("Japan" → "Nhật Bản").
+  Belongs to content JSON, returned by the API as-is; never stored in i18n files.
+
+Implementation (no external framework):
+
+```text
+public/js/i18n/
+├── vi.js     # window.I18N_VI dictionary (default locale)
+├── en.js     # window.I18N_EN dictionary
+└── i18n.js   # I18n runtime: t(path), apply(), setLocale(), locale()
+```
+
+- Selected locale persisted in `localStorage` key `locale`; default `vi`.
+- Static HTML elements are translated via `data-i18n="dotted.key"` attributes,
+  refreshed by `I18n.apply()` on load and on locale change.
+- Dynamic strings use `I18n.t('key', {vars})` at render time.
+- Pages listen to the `locale:changed` document event to re-render translated
+  dynamic state without reloading.
+- Fallback for a missing key: selected locale → Vietnamese → raw key.
+- Language switcher (`#locale-select`, 🇻🇳/🇺🇸) is included in learn.html and
+  review.html headers.
+
+## 12. Flashcard Gesture Architecture
+
+`public/js/flashcard.js` exposes named responsibilities:
+`loadCards → renderCard → revealCard → handleAnswer → showFeedback → nextCard`,
+plus `handleSwipe*` and keyboard handling.
+
+- ALL answering mechanisms converge on one function: `handleAnswer(result)`.
+  Buttons, ArrowRight/ArrowLeft keys, and swipes call nothing else.
+- Swipe uses Pointer Events (`pointerdown/move/up/cancel`) so touch, mouse and
+  pen all work. Only horizontal movement is tracked; `touch-action: pan-y`
+  keeps vertical scrolling intact.
+- Threshold: 100 px horizontal drag while the card is revealed AND not already
+  answered. Below threshold the card springs back; above threshold it flies out
+  (CSS transform/transition only) and the answer is committed once
+  (`answered` guard prevents duplicates).
+- During drag the card follows the pointer with slight rotation and shows a
+  badge: right → "✓ Correct", left → "✕ Wrong".
+- Swipe is an enhancement only — buttons and keyboard shortcuts remain fully
+  functional and accessible.
+- Card advancement happens ONLY on API success. On failure the current card
+  stays visible, position is restored, and the user can retry.
+- `pointercancel` always resets drag state — it never commits an answer.
+- `submitting`/`answered` flags guarantee one review request per card.
+
+## 13. Vocabulary Display Model
+
+Vocabulary schema (additive extension, backward compatible):
+
+```json
+{
+  "id": "vocabulary_001",
+  "word": "日本",
+  "reading": "にほん",
+  "romanization": "nihon",        // optional, new
+  "meaning": "Japan",             // base/English string (unchanged legacy field)
+  "meaningVi": "Nhật Bản",        // optional, new
+  "lesson": 1, "category": "...", "notes": "", "examples": []
+}
+```
+
+- `meaning` stays a plain string so quiz generation, search and management CRUD
+  keep working unchanged. `romanization` / `meaningVi` are optional additive
+  fields accepted by `content.service.validate`.
+- Frontend fallback for displayed meaning: selected locale → English
+  (`meaning`) → Vietnamese (`meaningVi`) → empty (never "undefined").
+  If `meaning` is ever an object `{vi,en}`, it is handled too.
+- Card hierarchy after reveal: word → reading → romanization → separator →
+  localized meaning. Reading is hidden until reveal; romanization is shown only
+  when present (never invented). Kana cards show character → romaji;
+  kanji cards show kanji → meanings → on/kun readings.

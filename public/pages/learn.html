@@ -10,53 +10,68 @@
 </head>
 <body class="bg-slate-100 min-h-screen">
   <header class="bg-white shadow-sm">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm">&larr; Dashboard</a>
-      <h1 class="font-bold text-slate-800">Learn</h1>
-      <select id="content-type" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
-        <option value="hiragana">Hiragana</option>
-        <option value="katakana">Katakana</option>
-        <option value="kanji">Kanji</option>
-        <option value="vocabulary">Vocabulary</option>
-      </select>
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <a href="/pages/dashboard.html" data-i18n="nav.dashboard" class="text-slate-600 hover:underline text-sm whitespace-nowrap">&larr; Dashboard</a>
+      <h1 class="font-bold text-slate-800" data-i18n="learn.title">Learn</h1>
+      <div class="flex items-center gap-2">
+        <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
+          <option value="vi">🇻🇳 Tiếng Việt</option>
+          <option value="en">🇺🇸 English</option>
+        </select>
+        <select id="content-type" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
+          <option value="hiragana" data-i18n="content.hiragana">Hiragana</option>
+          <option value="katakana" data-i18n="content.katakana">Katakana</option>
+          <option value="kanji" data-i18n="content.kanji">Kanji</option>
+          <option value="vocabulary" data-i18n="content.vocabulary">Vocabulary</option>
+        </select>
+      </div>
     </div>
   </header>
 
   <main class="max-w-2xl mx-auto px-4 py-10">
     <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
 
-    <div id="card" class="hidden bg-white rounded-2xl shadow-lg p-10 min-h-[16rem] flex flex-col items-center justify-center text-center cursor-pointer select-none">
-      <p id="card-front" class="text-5xl sm:text-8xl font-semibold text-slate-800 break-all"></p>
-      <div id="card-back" class="hidden mt-6 border-t border-slate-200 pt-6 w-full">
-        <p id="answer-main" class="text-3xl font-medium text-indigo-700"></p>
-        <p id="answer-extra" class="mt-2 text-slate-500 break-words"></p>
+    <div id="card-wrap" class="relative hidden">
+      <p id="swipe-badge" class="hidden absolute top-4 right-6 z-10 text-xl font-bold px-3 py-1 rounded-lg border-2 rotate-6 pointer-events-none"></p>
+      <div id="card"
+        class="bg-white rounded-2xl shadow-lg p-10 min-h-[16rem] flex flex-col items-center justify-center text-center cursor-pointer select-none [touch-action:pan-y]">
+        <p id="card-front" class="text-5xl sm:text-8xl font-semibold text-slate-800 break-all"></p>
+        <div id="card-back" class="hidden mt-6 border-t border-slate-200 pt-6 w-full">
+          <p id="answer-reading" class="hidden text-2xl text-slate-600"></p>
+          <p id="answer-romanization" class="hidden text-lg italic text-slate-400"></p>
+          <p id="answer-main" class="mt-4 text-3xl font-medium text-indigo-700"></p>
+          <p id="answer-extra" class="mt-2 text-slate-500 break-words"></p>
+        </div>
       </div>
     </div>
 
-    <p id="empty-state" class="hidden text-center text-slate-400 py-16">
+    <p id="empty-state" class="hidden text-center text-slate-400 py-16" data-i18n="learn.empty">
       No cards available for this content type yet.
     </p>
 
     <div class="mt-8 flex justify-center gap-4">
       <button id="wrong-btn" disabled
-        class="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32">
+        class="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.wrong">
         Wrong
       </button>
       <button id="reveal-btn"
-        class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-xl w-32">
+        class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.reveal">
         Reveal
       </button>
       <button id="correct-btn" disabled
-        class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32">
+        class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.correct">
         Correct
       </button>
     </div>
     <p id="status-line" class="text-center text-xs text-emerald-700 mt-2 h-4"></p>
-    <p class="text-center text-xs text-slate-400 mt-3">Space: reveal / next · ← Wrong · → Correct</p>
+    <p class="text-center text-xs text-slate-400 mt-3" data-i18n="learn.hint">Space: reveal / next · ← Wrong · → Correct</p>
   </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/current-user.js"></script>
+  <script src="/js/i18n/en.js"></script>
+  <script src="/js/i18n/vi.js"></script>
+  <script src="/js/i18n/i18n.js"></script>
   <script src="/js/flashcard.js"></script>
 </body>
 </html>

@@ -28,6 +28,14 @@ CURRENT_BLOCKER:     NONE
 - Quiz system: multiple-choice quizzes (JP↔meaning, reading questions, mixed),
   in-memory sessions, server-side answer keys, learning integration via
   `learning.service.recordReview`, result screen with breakdown
+- Flashcard swipe gestures on learn page (pointer events; right = correct,
+  left = wrong; 100px threshold; same `handleAnswer` path as buttons/keyboard)
+- UI i18n: lightweight client-side system in `public/js/i18n/`
+  (`vi` default, `en`), locale switcher on learn/review pages,
+  persisted in localStorage key `locale`
+- Vocabulary cards display word → reading → romanization → localized meaning;
+  additive fields `romanization` + `meaningVi` on vocabulary items
+  (legacy `meaning` string preserved for quiz/search/management)
 
 ## 3. Current Data State
 
@@ -36,7 +44,9 @@ data/users.json                          1 user
 data/content/hiragana.json               104 items (seeded)
 data/content/katakana.json               104 items (seeded)
 data/content/kanji.json                  7 items   (seeded, N5)
-data/content/vocabulary.json             15 items  (seeded, Minna lessons 1–3)
+data/content/vocabulary.json             15 items  (seeded, Minna lessons 1–3;
+                                                   + romanization/meaningVi fields)
+data/backups/vocabulary.pre-i18n-2026-08-23.json  pre-migration backup
 data/learning/users/user_001/            real learning data (progress + history)
 ```
 
@@ -60,6 +70,10 @@ None.
 - Never reset or silently delete learning data/history.
 - Backend is the source of truth; frontend never computes progress/scheduling.
 - Quiz sessions are in-memory only (lost on restart) — by design, do not persist them.
+- UI i18n covers application strings only; content translations live in content
+  JSON (`meaning` base/EN string + optional `meaningVi`), never mixed.
+- Vocabulary `romanization`/`meaningVi` are additive; `meaning` must stay a
+  plain string (quiz-generator, search and management depend on it).
 
 ## 6. Current Development
 
@@ -71,7 +85,9 @@ CURRENT_BLOCKER:
 None
 
 NEXT_RECOMMENDED_ACTION:
-Wait for explicit request.
+Wait for explicit request. Possible follow-ups: extend i18n to remaining
+pages (dashboard/history/management/quiz), add swipe gestures to review page,
+backfill romanization for future vocabulary seeds.
 ```
 
 ## 7. Agent Handoff

@@ -63,7 +63,9 @@ function validate(contentType, data, { partial } = {}) {
     requireField(data, partial, 'meaning');
     if (data.word !== undefined) out.word = String(data.word).trim();
     if (data.reading !== undefined) out.reading = String(data.reading).trim();
+    if (data.romanization !== undefined) out.romanization = String(data.romanization).trim();
     if (data.meaning !== undefined) out.meaning = String(data.meaning).trim();
+    if (data.meaningVi !== undefined) out.meaningVi = String(data.meaningVi).trim();
     if (data.lesson !== undefined && data.lesson !== '') out.lesson = toLesson(data.lesson);
     if (data.category !== undefined) out.category = String(data.category).trim();
     if (data.examples !== undefined) out.examples = data.examples;
@@ -102,7 +104,7 @@ function searchMatches(contentType, item, needle) {
   if (contentType === CONTENT_TYPES.KANJI) {
     fields = [item.kanji, ...(item.onyomi || []), ...(item.kunyomi || []), ...(item.meanings || [])];
   } else if (contentType === CONTENT_TYPES.VOCABULARY) {
-    fields = [item.word, item.reading, item.meaning, item.category];
+    fields = [item.word, item.reading, item.romanization, item.meaning, item.meaningVi, item.category];
   } else {
     fields = [item.character, item.romaji];
   }
