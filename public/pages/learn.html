@@ -2,23 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Japanese Flashcard — Learn</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="/css/app.css" />
 </head>
-<body class="bg-slate-100 min-h-screen">
-  <header class="bg-white shadow-sm">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+<body class="bg-slate-100 flashcard-screen flex flex-col">
+  <!-- Compact mobile header -->
+  <header class="bg-white shadow-sm shrink-0">
+    <div class="max-w-2xl mx-auto px-3 py-2 sm:px-4 sm:py-3 flex items-center justify-between gap-2">
       <a href="/pages/dashboard.html" data-i18n="nav.dashboard" class="text-slate-600 hover:underline text-sm whitespace-nowrap">&larr; Dashboard</a>
       <h1 class="font-bold text-slate-800" data-i18n="learn.title">Learn</h1>
-      <div class="flex items-center gap-2">
-        <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
-          <option value="vi">🇻🇳 Tiếng Việt</option>
-          <option value="en">🇺🇸 English</option>
+      <div class="flex items-center gap-1.5">
+        <select id="locale-select" class="border border-slate-300 rounded-lg px-1.5 py-1 text-xs sm:text-sm max-w-[6.5rem]" aria-label="Language">
+          <option value="vi">🇻🇳 VI</option>
+          <option value="en">🇺🇸 EN</option>
         </select>
-        <select id="content-type" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
+        <select id="content-type" class="border border-slate-300 rounded-lg px-1.5 py-1 text-xs sm:text-sm max-w-[7.5rem]" aria-label="Content type">
           <option value="hiragana" data-i18n="content.hiragana">Hiragana</option>
           <option value="katakana" data-i18n="content.katakana">Katakana</option>
           <option value="kanji" data-i18n="content.kanji">Kanji</option>
@@ -28,14 +29,28 @@
     </div>
   </header>
 
-  <main class="max-w-2xl mx-auto px-4 py-10">
-    <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
+  <main class="max-w-2xl w-full mx-auto px-4 flex-1 flex flex-col min-h-0">
+    <p id="error" class="hidden mb-2 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
 
-    <div id="card-wrap" class="relative hidden">
-      <p id="swipe-badge" class="hidden absolute top-4 right-6 z-10 text-xl font-bold px-3 py-1 rounded-lg border-2 rotate-6 pointer-events-none"></p>
+    <!-- Progress: compact, secondary -->
+    <p id="progress-line" class="text-center text-xs text-slate-400 mt-2 shrink-0"></p>
+
+    <!-- Flexible spacer pushes the card into the lower-middle thumb zone -->
+    <div id="top-spacer" class="flex-[2] min-h-[8px]"></div>
+
+    <p id="empty-state" class="hidden text-center text-slate-400 py-16" data-i18n="learn.empty">
+      No cards available for this content type yet.
+    </p>
+
+    <div id="card-wrap" class="relative hidden shrink-0 w-full">
+      <p id="swipe-badge"
+        class="hidden absolute top-3 right-5 z-10 text-xl font-bold px-3 py-1 rounded-lg border-2 rotate-6 pointer-events-none opacity-0 transition-opacity duration-150"></p>
       <div id="card"
-        class="bg-white rounded-2xl shadow-lg p-10 min-h-[16rem] flex flex-col items-center justify-center text-center cursor-pointer select-none [touch-action:pan-y]">
+        class="bg-white rounded-2xl shadow-lg px-6 py-10 sm:p-10 min-h-[42dvh] sm:min-h-[20rem] max-h-[55dvh] sm:max-h-none
+               w-[calc(100vw-32px)] sm:w-auto max-w-md lg:max-w-xl mx-auto
+               flex flex-col items-center justify-center text-center cursor-pointer select-none [touch-action:pan-y] overflow-hidden">
         <p id="card-front" class="text-5xl sm:text-8xl font-semibold text-slate-800 break-all"></p>
+        <p id="reveal-hint" class="mt-6 text-sm text-slate-300" data-i18n="learn.tapToReveal">Tap to reveal</p>
         <div id="card-back" class="hidden mt-6 border-t border-slate-200 pt-6 w-full">
           <p id="answer-reading" class="hidden text-2xl text-slate-600"></p>
           <p id="answer-romanization" class="hidden text-lg italic text-slate-400"></p>
@@ -45,26 +60,30 @@
       </div>
     </div>
 
-    <p id="empty-state" class="hidden text-center text-slate-400 py-16" data-i18n="learn.empty">
-      No cards available for this content type yet.
-    </p>
+    <!-- Interaction zone: primary swipe area is the card; buttons sit just below -->
+    <div class="flex-[3] min-h-[8px]"></div>
 
-    <div class="mt-8 flex justify-center gap-4">
-      <button id="wrong-btn" disabled
-        class="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.wrong">
-        Wrong
-      </button>
+    <div id="controls" class="shrink-0 pb-safe">
+      <div class="flex justify-center gap-4">
+        <button id="wrong-btn" disabled
+          class="min-h-[52px] bg-red-500 active:bg-red-600 disabled:opacity-40 text-white font-medium px-8 rounded-xl flex-1 max-w-[11rem]"
+          data-i18n="learn.wrong">
+          ← Wrong
+        </button>
+        <button id="correct-btn" disabled
+          class="min-h-[52px] bg-emerald-500 active:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 rounded-xl flex-1 max-w-[11rem]"
+          data-i18n="learn.correct">
+          Correct →
+        </button>
+      </div>
       <button id="reveal-btn"
-        class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.reveal">
+        class="block mx-auto mt-2 mb-2 min-h-[44px] bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium px-10 rounded-xl"
+        data-i18n="learn.reveal">
         Reveal
       </button>
-      <button id="correct-btn" disabled
-        class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.correct">
-        Correct
-      </button>
+      <p id="status-line" class="text-center text-xs text-emerald-700 h-4"></p>
+      <p class="text-center text-xs text-slate-400 mt-1 pb-2" data-i18n="learn.hint">Space: reveal / next · ← Wrong · → Correct · swipe right = Correct, swipe left = Wrong</p>
     </div>
-    <p id="status-line" class="text-center text-xs text-emerald-700 mt-2 h-4"></p>
-    <p class="text-center text-xs text-slate-400 mt-3" data-i18n="learn.hint">Space: reveal / next · ← Wrong · → Correct</p>
   </main>
 
   <script src="/js/api.js"></script>

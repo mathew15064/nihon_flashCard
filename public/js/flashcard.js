@@ -16,9 +16,13 @@ $(function () {
   const $reveal = $('#reveal-btn');
   const $correct = $('#correct-btn');
   const $wrong = $('#wrong-btn');
+  const $progressLine = $('#progress-line');
+  const $revealHint = $('#reveal-hint');
 
   let queue = [];
   let current = null;
+  let totalCards = 0;
+  let answeredCount = 0;
   let revealed = false;
   let answered = false;
   let submitting = false;
@@ -97,9 +101,12 @@ $(function () {
     $cardWrap.removeClass('hidden');
     revealed = false;
     answered = false;
+    answeredCount += 1;
+    updateProgress();
 
     const sides = cardSides(current, $('#content-type').val());
     $front.text(sides.front);
+    $revealHint.removeClass('hidden');
     setText($answerReading, '');
     setText($answerRomanization, '');
     $answerMain.text('');
@@ -110,6 +117,14 @@ $(function () {
     $reveal.prop('disabled', false);
     $correct.add($wrong).prop('disabled', true);
     $('#status-line').text('');
+  }
+
+  function updateProgress() {
+    if (!totalCards) {
+      $progressLine.text('');
+      return;
+    }
+    $progressLine.text(`${Math.min(answeredCount, totalCards)} / ${totalCards}`);
   }
 
   function nextCard() {
@@ -124,6 +139,7 @@ $(function () {
   function revealCard() {
     if (!current || revealed) return;
     revealed = true;
+    $revealHint.addClass('hidden');
     const sides = cardSides(current, $('#content-type').val());
     setText($answerReading, sides.reading);
     setText($answerRomanization, sides.romanization);
@@ -191,6 +207,9 @@ $(function () {
     api.get(`/api/${contentType}/random?count=10&userId=${currentUser.get() || ''}`)
       .done(function (res) {
         queue = res.items;
+        totalCards = queue.length;
+        answeredCount = 0;
+        updateProgress();
         if (!queue.length) {
           current = null;
           renderCard();
@@ -209,16 +228,23 @@ $(function () {
   // ---- swipe gestures -----------------------------------------------------
 
   function setBadge(dx) {
-    if (dx > 20) {
-      $badge.removeClass('hidden text-red-500 border-red-400 bg-red-50')
+    if (Math.abs(dx) <= 20) {
+      $badge.addClass('hidden').css('opacity', 0);
+      return;
+    }
+    // Feedback opacity grows with swipe distance (0 → 1 across the threshold).
+    const strength = Math.min(Math.abs(dx) / SWIPE_THRESHOLD, 1);
+    $badge
+      .toggleClass('hidden', false)
+      .css('opacity', strength);
+    if (dx > 0) {
+      $badge.removeClass('text-red-500 border-red-400 bg-red-50')
         .addClass('text-emerald-600 border-emerald-500 bg-emerald-50')
         .text(I18n.t('swipe.correct'));
-    } else if (dx < -20) {
-      $badge.removeClass('hidden text-emerald-600 border-emerald-500 bg-emerald-50')
+    } else {
+      $badge.removeClass('text-emerald-600 border-emerald-500 bg-emerald-50')
         .addClass('text-red-500 border-red-400 bg-red-50')
         .text(I18n.t('swipe.wrong'));
-    } else {
-      $badge.addClass('hidden');
     }
   }
 
@@ -226,7 +252,7 @@ $(function () {
     dragging = false;
     dragMoved = false;
     deltaX = 0;
-    $badge.addClass('hidden');
+    $badge.addClass('hidden').css('opacity', 0);
     // New card MUST start from translateX(0) / opacity 1.
     $card.css({ transition: 'transform 0.2s ease', transform: '', opacity: '' });
   }

@@ -8,8 +8,9 @@ window.I18N_VI = {
     title: 'Học',
     empty: 'Chưa có thẻ nào cho loại nội dung này.',
     reveal: 'Lật thẻ',
-    correct: 'Đúng',
-    wrong: 'Sai',
+    tapToReveal: 'Chạm để lật',
+    correct: 'Đúng →',
+    wrong: '← Sai',
     error: 'Không thể ghi nhận câu trả lời',
     loadError: 'Không thể tải thẻ',
     hint: 'Space: lật / tiếp theo · ← Sai · → Đúng · quẹt phải = Đúng, quẹt trái = Sai'

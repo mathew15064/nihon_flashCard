@@ -1,1 +1,17 @@
 /* App-specific styles beyond Tailwind utilities */
+
+/* Safe-area helpers for mobile devices with home indicators */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-bottom);
+}
+
+/* Flashcard page fills the viewport without unwanted scrolling */
+.flashcard-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}

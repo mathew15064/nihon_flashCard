@@ -36,6 +36,10 @@ CURRENT_BLOCKER:     NONE
 - Vocabulary cards display word → reading → romanization → localized meaning;
   additive fields `romanization` + `meaningVi` on vocabulary items
   (legacy `meaning` string preserved for quiz/search/management)
+- Mobile-first Learn page: 100dvh flex layout with card in the lower-middle
+  thumb zone, compact header, progress indicator (`n / total`),
+  large Correct/Wrong buttons + Reveal below the card, safe-area padding,
+  tap-to-reveal hint, swipe-feedback badge opacity scaled to drag distance
 
 ## 3. Current Data State
 

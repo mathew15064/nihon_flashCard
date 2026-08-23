@@ -213,6 +213,15 @@ plus `handleSwipe*` and keyboard handling.
   stays visible, position is restored, and the user can retry.
 - `pointercancel` always resets drag state — it never commits an answer.
 - `submitting`/`answered` flags guarantee one review request per card.
+- Learn page is mobile-first: `100dvh` flex column (header → progress →
+  flexible spacer → card → flexible spacer → controls with safe-area padding).
+  The card sits in the lower-middle thumb zone; spacers are proportional
+  (`flex-[2]` / `flex-[3]`) so the layout adapts to any viewport height,
+  including landscape. Card uses `w-[calc(100vw-32px)]`, `min-h-[42dvh]`
+  on mobile and desktop breakpoints (`sm:`) restore the centered layout.
+- Tap vs swipe: a tap (|deltaX| small) reveals; only |deltaX| ≥ threshold
+  commits an answer; the two are mutually exclusive per gesture
+  (`dragMoved` suppresses click-reveal after real drags).
 
 ## 13. Vocabulary Display Model
 

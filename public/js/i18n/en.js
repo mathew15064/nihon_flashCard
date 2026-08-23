@@ -8,8 +8,9 @@ window.I18N_EN = {
     title: 'Learn',
     empty: 'No cards available for this content type yet.',
     reveal: 'Reveal',
-    correct: 'Correct',
-    wrong: 'Wrong',
+    tapToReveal: 'Tap to reveal',
+    correct: 'Correct →',
+    wrong: '← Wrong',
     error: 'Could not record answer',
     loadError: 'Could not load cards',
     hint: 'Space: reveal / next · ← Wrong · → Correct · swipe right = Correct, swipe left = Wrong'
