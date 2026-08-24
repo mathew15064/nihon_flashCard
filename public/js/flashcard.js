@@ -2,6 +2,7 @@
 
 $(function () {
   const SWIPE_THRESHOLD = 100; // px — minimum horizontal distance for a swipe answer
+  const ESTIMATED_SECONDS_PER_CARD = 45; // rough "≈ N min" estimate for session UI
   const $card = $('#card');
   const $cardWrap = $('#card-wrap');
   const $front = $('#card-front');
@@ -21,11 +22,17 @@ $(function () {
   const $imageWrap = $('#card-image-wrap');
   const $image = $('#card-image');
   const $imageSkeleton = $('#image-skeleton');
+  const $lessonSelect = $('#lesson-select');
+  const $sessionPanel = $('#session-panel');
+  const $sessionList = $('#session-list');
+  const $sessionSummary = $('#session-summary');
 
   let queue = [];
   let current = null;
   let totalCards = 0;
   let answeredCount = 0;
+  let sessionMode = false; // studying a derived lesson session (not random mode)
+  let currentSession = null; // { lesson, contentType, sessionIndex }
   let revealed = false;
   let answered = false;
   let submitting = false;
@@ -167,12 +174,145 @@ $(function () {
       $progressLine.text('');
       return;
     }
-    $progressLine.text(`${Math.min(answeredCount, totalCards)} / ${totalCards}`);
+    const base = `${Math.min(answeredCount, totalCards)} / ${totalCards}`;
+    $progressLine.text(
+      currentSession ? `L${currentSession.lesson} · S${currentSession.sessionIndex} · ${base}` : base
+    );
+  }
+
+  // ---- lesson sessions ----------------------------------------------------
+
+  function hideSessionPanel() {
+    $sessionPanel.addClass('hidden');
+  }
+
+  async function loadLessons(contentType) {
+    $lessonSelect.find('option:not(:first)').remove();
+    try {
+      const items = await api.get(`/api/${contentType}?limit=500`);
+      const lessons = [...new Set(items.map((i) => i.lesson).filter((l) => l != null))]
+        .sort((a, b) => a - b);
+      lessons.forEach((l) => {
+        $lessonSelect.append(
+          $('<option></option>').val(l).text(I18n.t('session.lessonLabel', { n: l }))
+        );
+      });
+    } catch (err) {
+      /* lesson filter stays empty — random mode still works */
+    }
+  }
+
+  function renderSessionPanel(data) {
+    $sessionSummary.text(
+      `${I18n.t('session.lessonLabel', { n: data.lesson })} · ${I18n.t('session.cards', { n: data.totalCards })} · ${I18n.t('session.sessionsCount', { n: data.totalSessions })}`
+    );
+    $sessionList.empty();
+
+    const recommended = data.sessions.findIndex((s) => s.completed < s.count);
+    data.sessions.forEach((s) => {
+      const isDone = s.completed >= s.count;
+      const state = isDone ? '✓' : s.completed > 0 ? '→' : '○';
+      const minutes = Math.max(1, Math.round((s.count * ESTIMATED_SECONDS_PER_CARD) / 60));
+      const statusText = isDone
+        ? I18n.t('session.completed')
+        : s.completed > 0 ? I18n.t('session.inProgress') : I18n.t('session.notStarted');
+      const actionLabel = isDone
+        ? I18n.t('session.start')
+        : s.completed > 0 ? I18n.t('session.continueSession') : I18n.t('session.start');
+
+      const $row = $(`
+        <div class="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium text-slate-800 text-sm"></p>
+            <p class="text-xs text-slate-400"></p>
+            <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden w-28">
+              <div class="h-full bg-emerald-500"></div>
+            </div>
+          </div>
+          <button class="shrink-0 min-h-[44px] px-5 rounded-xl text-white text-sm font-medium"></button>
+        </div>
+      `);
+
+      $row.find('p.font-medium').text(
+        `${state} S${s.sessionIndex} · ${statusText}` +
+          (recommended === s.sessionIndex - 1 && !isDone ? ` · ${I18n.t('session.nextSession')}` : '')
+      );
+      $row.find('p.text-xs').text(`${I18n.t('session.cards', { n: s.count })} · ${I18n.t('session.minutes', { n: minutes })}`);
+      $row.find('.h-full').css('width', `${s.progress}%`);
+      const $btn = $row.find('button')
+        .toggleClass('bg-emerald-500', !isDone)
+        .toggleClass('bg-slate-400', isDone)
+        .text(actionLabel)
+        .on('click', () => startSession(s.sessionIndex));
+
+      $sessionList.append($row);
+    });
+
+    $sessionPanel.removeClass('hidden');
+    $cardWrap.addClass('hidden');
+    $empty.addClass('hidden');
+  }
+
+  async function openLessonSessions(lesson) {
+    hideMessages();
+    hideSessionPanel();
+    try {
+      const data = await api.get(
+        `/api/learning/${currentUser.get()}/sessions?contentType=${$('#content-type').val()}&lesson=${lesson}`
+      );
+      sessionMode = true;
+      renderSessionPanel(data);
+    } catch (err) {
+      showError(err.message || I18n.t('session.loadError'));
+    }
+  }
+
+  async function startSession(sessionIndex) {
+    try {
+      const res = await api.get(
+        `/api/learning/${currentUser.get()}/sessions/cards?contentType=${$('#content-type').val()}&lesson=${$lessonSelect.val()}&session=${sessionIndex}`
+      );
+      currentSession = { lesson: Number($lessonSelect.val()), contentType: $('#content-type').val(), sessionIndex };
+      sessionMode = true;
+      hideSessionPanel();
+      hideMessages();
+      queue = res.items;
+      totalCards = queue.length;
+      answeredCount = 0;
+      updateProgress();
+      if (!queue.length) {
+        current = null;
+        renderCard();
+        return;
+      }
+      nextCard();
+    } catch (err) {
+      showError(err.message || I18n.t('learn.loadError'));
+    }
+  }
+
+  function exitToLessonOverview() {
+    // Session finished — refresh derived progress and show the session list.
+    if ($lessonSelect.val()) {
+      loadLessons($('#content-type').val()).then(() => {
+        $lessonSelect.val($lessonSelect.val()); // keep selection
+        openLessonSessions($lessonSelect.val());
+      });
+    } else {
+      sessionMode = false;
+      currentSession = null;
+      loadCards($('#content-type').val());
+    }
   }
 
   function nextCard() {
     current = queue.shift();
     if (!current) {
+      if (sessionMode) {
+        // Session finished — go back to the lesson overview (progress refreshed).
+        exitToLessonOverview();
+        return;
+      }
       loadCards($('#content-type').val());
       return;
     }
@@ -374,12 +514,31 @@ $(function () {
   $wrong.on('click', () => handleAnswer('wrong'));
 
   $('#content-type').on('change', function () {
+    sessionMode = false;
+    currentSession = null;
+    $lessonSelect.val('');
+    hideSessionPanel();
+    loadLessons($(this).val());
     loadCards($(this).val());
+  });
+
+  $lessonSelect.on('change', function () {
+    if (!$(this).val()) {
+      sessionMode = false;
+      currentSession = null;
+      hideSessionPanel();
+      loadCards($('#content-type').val());
+    } else {
+      openLessonSessions($(this).val());
+    }
   });
 
   $(document).on('locale:changed', function () {
     // Refresh dynamic strings on the current card without losing state.
     I18n.apply();
+    if (!$sessionPanel.hasClass('hidden') && $lessonSelect.val()) {
+      openLessonSessions($lessonSelect.val()); // re-render translated session list
+    }
     if (current) {
       if (revealed) {
         const s = cardSides(current, $('#content-type').val());
@@ -399,5 +558,6 @@ $(function () {
       window.location.href = '/';
     });
 
+  loadLessons($('#content-type').val());
   loadCards($('#content-type').val());
 });

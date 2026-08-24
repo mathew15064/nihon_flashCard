@@ -44,6 +44,11 @@ CURRENT_BLOCKER:     NONE
   `GET /api/images/search` for Management only, image metadata validated
   (http/https) and stored in vocabulary JSON; flashcard shows image after
   reveal with skeleton/error fallback and next-card preloading
+- Study Sessions: lessons auto-chunked into 10-card sessions
+  (`DEFAULT_SESSION_SIZE`), derived from content order (stable membership,
+  nothing persisted); `GET /api/learning/:uid/sessions[/cards]`; Learn page
+  has an "All lessons" filter — random mode unchanged, lesson mode shows a
+  mobile session list with derived progress, Continue and next-session hints
 
 ## 3. Current Data State
 

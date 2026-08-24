@@ -43,6 +43,21 @@ window.I18N_VI = {
     hour: 'giờ',
     days: 'ngày'
   },
+  session: {
+    all: 'Tất cả bài học',
+    cards: '{n} thẻ',
+    minutes: '≈ {n} phút',
+    start: 'Bắt đầu',
+    continueSession: 'Tiếp tục',
+    completed: 'Đã hoàn thành',
+    notStarted: 'Chưa học',
+    inProgress: 'Đang học',
+    nextSession: 'Buổi tiếp theo',
+    lessonLabel: 'Bài học {n}',
+    sessionsCount: '{n} buổi học',
+    lessonComplete: 'Hoàn thành bài học',
+    loadError: 'Không thể tải buổi học'
+  },
   image: {
     searchBtn: 'Tìm ảnh',
     searchPlaceholder: 'Tìm ảnh…',

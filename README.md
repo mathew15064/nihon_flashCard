@@ -16,6 +16,9 @@ npm run dev        # same, with auto-reload on changes
 - Multiple local users (no authentication) with isolated progress
 - Hiragana · Katakana · Kanji · Minna no Nihongo vocabulary
 - Flashcard practice and due-based review sessions (simple spaced repetition)
+- Study Sessions: large lessons are auto-split into chunks of 10 cards
+  (configurable constant) for short daily practice; lesson content is
+  unchanged, progress stays per card, review is unaffected
 - Quiz mode: multiple-choice quizzes (JP↔meaning, reading questions, mixed)
 - Learning states: new → learning → review → mastered
 - Review history per month, dashboard statistics, streaks

@@ -2,6 +2,7 @@
 
 const express = require('express');
 const learningService = require('../services/learning.service');
+const studySessionService = require('../services/study-session.service');
 
 const router = express.Router();
 
@@ -52,6 +53,34 @@ router.get('/:userId/review', (req, res) => {
       count: req.query.count
     });
     res.locals.sendSuccess(queue);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/:userId/sessions/cards', (req, res) => {
+  try {
+    const session = studySessionService.getSessionCards(
+      req.params.userId,
+      req.query.contentType,
+      req.query.lesson,
+      req.query.session
+    );
+    const items = session.contentIds.map((id) =>
+      require('../repositories/content.repository').findById(req.query.contentType, id)
+    );
+    res.locals.sendSuccess({ ...session, items });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/learning/:userId/sessions?contentType=vocabulary&lesson=1
+router.get('/:userId/sessions', (req, res) => {
+  try {
+    res.locals.sendSuccess(
+      studySessionService.getLessonSessions(req.params.userId, req.query.contentType, req.query.lesson)
+    );
   } catch (err) {
     handleError(res, err);
   }

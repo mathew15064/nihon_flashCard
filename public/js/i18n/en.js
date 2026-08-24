@@ -43,6 +43,21 @@ window.I18N_EN = {
     hour: 'h',
     days: 'days'
   },
+  session: {
+    all: 'All lessons',
+    cards: '{n} cards',
+    minutes: '≈ {n} min',
+    start: 'Start',
+    continueSession: 'Continue',
+    completed: 'Completed',
+    notStarted: 'Not started',
+    inProgress: 'In progress',
+    nextSession: 'Next session',
+    lessonLabel: 'Lesson {n}',
+    sessionsCount: '{n} study session(s)',
+    lessonComplete: 'Lesson completed',
+    loadError: 'Could not load study sessions'
+  },
   image: {
     searchBtn: 'Search Image',
     searchPlaceholder: 'Search images…',

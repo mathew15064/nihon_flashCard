@@ -257,6 +257,35 @@ plus `handleSwipe*` and keyboard handling.
   badge: right → "✓ Correct", left → "✕ Wrong".
 - Swipe is an enhancement only — buttons and keyboard shortcuts remain fully
   functional and accessible.
+
+## 12b. Study Sessions (lesson chunking)
+
+A CONTENT LESSON and a LEARNING SESSION are different concepts:
+
+```text
+CONTENT: Lesson 1 (40 vocabulary items, lesson=1 unchanged)
+LEARNING: Session 1 → items 1–10 · Session 2 → 11–20 · ...
+PROGRESS: stays per card in progress.json — sessions own nothing
+```
+
+- `server/constants/study-session.js` — `DEFAULT_SESSION_SIZE = 10`
+  (single central constant).
+- `server/utils/session-chunker.js` — deterministic chunking of a stable,
+  id-sorted item list; remainder becomes a smaller final session.
+- `server/services/study-session.service.js` — derives sessions from content
+  on demand (nothing persisted), computes per-session progress from existing
+  card progress (`status !== 'new'` = introduced). No duplicate records,
+  no new progress system; review scheduling untouched.
+- APIs:
+  - `GET /api/learning/:userId/sessions?contentType&lesson` → session list
+    with derived progress (`LESSON_NOT_FOUND` for empty lessons)
+  - `GET /api/learning/:userId/sessions/cards?contentType&lesson&session`
+    → only that session's cards (`SESSION_NOT_FOUND` if out of range)
+- Learn page: "All lessons" keeps the original random mode; picking a lesson
+  shows a mobile-first session list (✓ done / → in progress / ○ not started,
+  progress bar, Start/Continue, recommended next highlighted). Finishing a
+  session returns to the refreshed overview. Review page works independently
+  of sessions.
 - Card advancement happens ONLY on API success. On failure the current card
   stays visible, position is restored, and the user can retry.
 - `pointercancel` always resets drag state — it never commits an answer.
