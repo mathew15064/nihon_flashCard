@@ -8,7 +8,8 @@
     "meaningVi": "tôi",
     "lesson": 1,
     "category": "pronoun",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_002",
@@ -19,7 +20,8 @@
     "meaningVi": "bạn",
     "lesson": 1,
     "category": "pronoun",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_003",
@@ -30,7 +32,8 @@
     "meaningVi": "người đó",
     "lesson": 1,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_004",
@@ -41,7 +44,8 @@
     "meaningVi": "giáo viên",
     "lesson": 1,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_005",
@@ -52,7 +56,8 @@
     "meaningVi": "học sinh",
     "lesson": 1,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_006",
@@ -63,7 +68,8 @@
     "meaningVi": "nhân viên công ty",
     "lesson": 1,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_007",
@@ -74,7 +80,8 @@
     "meaningVi": "cái này",
     "lesson": 2,
     "category": "demonstrative",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_008",
@@ -85,7 +92,8 @@
     "meaningVi": "cái đó",
     "lesson": 2,
     "category": "demonstrative",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_009",
@@ -96,7 +104,8 @@
     "meaningVi": "cái kia",
     "lesson": 2,
     "category": "demonstrative",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_010",
@@ -107,7 +116,15 @@
     "meaningVi": "sách",
     "lesson": 2,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Liji_2.jpg",
+      "thumbnailUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Liji_2.jpg/500px-Liji_2.jpg",
+      "source": "Wikimedia Commons",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Liji_2.jpg",
+      "license": "CC BY-SA 2.0",
+      "author": "user:snowyowls"
+    }
   },
   {
     "id": "vocabulary_011",
@@ -118,7 +135,15 @@
     "meaningVi": "từ điển",
     "lesson": 2,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Latin_dictionary.jpg",
+      "thumbnailUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Latin_dictionary.jpg/500px-Latin_dictionary.jpg",
+      "source": "Wikimedia Commons",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Latin_dictionary.jpg",
+      "license": "CC BY-SA 3.0",
+      "author": "Dr. Marcus Gossler"
+    }
   },
   {
     "id": "vocabulary_012",
@@ -129,7 +154,15 @@
     "meaningVi": "báo",
     "lesson": 2,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Vecteezy_stack-of-newspaper_1961329.jpg",
+      "thumbnailUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Vecteezy_stack-of-newspaper_1961329.jpg/500px-Vecteezy_stack-of-newspaper_1961329.jpg",
+      "source": "Wikimedia Commons",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vecteezy_stack-of-newspaper_1961329.jpg",
+      "license": "CC BY 4.0",
+      "author": "Bernerlover"
+    }
   },
   {
     "id": "vocabulary_013",
@@ -140,7 +173,8 @@
     "meaningVi": "ăn",
     "lesson": 3,
     "category": "verb",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_014",
@@ -151,7 +185,8 @@
     "meaningVi": "uống",
     "lesson": 3,
     "category": "verb",
-    "notes": ""
+    "notes": "",
+    "image": null
   },
   {
     "id": "vocabulary_015",
@@ -162,6 +197,14 @@
     "meaningVi": "trường học",
     "lesson": 3,
     "category": "noun",
-    "notes": ""
+    "notes": "",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Oshu_City_Maesawa_Elementary_School_Building_202508b.jpg",
+      "thumbnailUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Oshu_City_Maesawa_Elementary_School_Building_202508b.jpg/500px-Oshu_City_Maesawa_Elementary_School_Building_202508b.jpg",
+      "source": "Wikimedia Commons",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Oshu_City_Maesawa_Elementary_School_Building_202508b.jpg",
+      "license": "CC BY 4.0",
+      "author": "とらもん192"
+    }
   }
 ]

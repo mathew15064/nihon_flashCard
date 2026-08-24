@@ -43,6 +43,20 @@ window.I18N_EN = {
     hour: 'h',
     days: 'days'
   },
+  image: {
+    searchBtn: 'Search Image',
+    searchPlaceholder: 'Search images…',
+    select: 'Select',
+    save: 'Save Image',
+    remove: 'Remove Image',
+    selected: 'Selected image',
+    source: 'Source',
+    license: 'License',
+    author: 'Author',
+    unavailable: 'Image unavailable',
+    noResults: 'No images found.',
+    loadError: 'Could not search images'
+  },
   swipe: {
     correct: '✓ Correct',
     wrong: '✕ Wrong'

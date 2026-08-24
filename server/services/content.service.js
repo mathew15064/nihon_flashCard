@@ -5,6 +5,7 @@ const userRepository = require('../repositories/user.repository');
 const historyRepository = require('../repositories/history.repository');
 const { CONTENT_TYPES, ALL_CONTENT_TYPES } = require('../constants/content-types');
 const { contentId } = require('../utils/id-generator');
+const imageService = require('./image/image.service');
 
 const KANA_TYPES = ['basic', 'dakuten', 'handakuten', 'combination'];
 const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -70,6 +71,11 @@ function validate(contentType, data, { partial } = {}) {
     if (data.category !== undefined) out.category = String(data.category).trim();
     if (data.examples !== undefined) out.examples = data.examples;
     if (data.notes !== undefined) out.notes = String(data.notes);
+    if (data.image !== undefined) {
+      // Optional illustrative image; null clears it. Metadata validated
+      // (http/https only) by the image service — provider-agnostic.
+      out.image = imageService.normalizeImageMetadata(data.image);
+    }
   }
 
   return out;

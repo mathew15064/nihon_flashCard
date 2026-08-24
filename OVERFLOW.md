@@ -40,6 +40,10 @@ CURRENT_BLOCKER:     NONE
   thumb zone, compact header, progress indicator (`n / total`),
   large Correct/Wrong buttons + Reveal below the card, safe-area padding,
   tap-to-reveal hint, swipe-feedback badge opacity scaled to drag distance
+- Optional vocabulary images: Wikimedia Commons provider (no API key),
+  `GET /api/images/search` for Management only, image metadata validated
+  (http/https) and stored in vocabulary JSON; flashcard shows image after
+  reveal with skeleton/error fallback and next-card preloading
 
 ## 3. Current Data State
 
@@ -49,8 +53,10 @@ data/content/hiragana.json               104 items (seeded)
 data/content/katakana.json               104 items (seeded)
 data/content/kanji.json                  7 items   (seeded, N5)
 data/content/vocabulary.json             15 items  (seeded, Minna lessons 1–3;
-                                                   + romanization/meaningVi fields)
+                                                   + romanization/meaningVi fields;
+                                                   4 items with Wikimedia Commons images)
 data/backups/vocabulary.pre-i18n-2026-08-23.json  pre-migration backup
+data/backups/vocabulary.pre-image-2026-08-23.json  pre-image backup
 data/learning/users/user_001/            real learning data (progress + history)
 ```
 

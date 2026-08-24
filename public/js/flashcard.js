@@ -18,6 +18,9 @@ $(function () {
   const $wrong = $('#wrong-btn');
   const $progressLine = $('#progress-line');
   const $revealHint = $('#reveal-hint');
+  const $imageWrap = $('#card-image-wrap');
+  const $image = $('#card-image');
+  const $imageSkeleton = $('#image-skeleton');
 
   let queue = [];
   let current = null;
@@ -87,6 +90,45 @@ $(function () {
     $el.toggleClass('hidden', !text).text(text || '');
   }
 
+  // ---- vocabulary image ---------------------------------------------------
+
+  function resetCardImage() {
+    $imageWrap.addClass('hidden');
+    $image.addClass('hidden').attr('src', ''); // never keep the previous card's photo
+    $imageSkeleton.removeClass('hidden');
+  }
+
+  function showCardImage(item) {
+    const meta = item && item.image;
+    if (!meta || !meta.url) {
+      resetCardImage();
+      return;
+    }
+    $imageWrap.removeClass('hidden');
+    $imageSkeleton.removeClass('hidden');
+    $image.addClass('hidden');
+    // Safe DOM assignment (no HTML interpolation of remote URLs).
+    $image[0].alt = `${item.word} - ${localizedMeaning(item)}`;
+    $image[0].onload = function () {
+      $imageSkeleton.addClass('hidden');
+      $image.removeClass('hidden');
+    };
+    $image[0].onerror = function () {
+      // Broken/slow-blocked image: fall back to a normal text card.
+      resetCardImage();
+    };
+    $image[0].src = meta.thumbnailUrl || meta.url;
+  }
+
+  function preloadNextImage() {
+    // Preload only the next card's image for smoother swipes — never the whole deck.
+    const next = queue[0];
+    if (next && next.image && next.image.url) {
+      const probe = new Image();
+      probe.src = next.image.thumbnailUrl || next.image.url;
+    }
+  }
+
   // ---- flashcard lifecycle ----------------------------------------------
 
   function renderCard() {
@@ -106,6 +148,7 @@ $(function () {
 
     const sides = cardSides(current, $('#content-type').val());
     $front.text(sides.front);
+    resetCardImage();
     $revealHint.removeClass('hidden');
     setText($answerReading, '');
     setText($answerRomanization, '');
@@ -133,6 +176,7 @@ $(function () {
       loadCards($('#content-type').val());
       return;
     }
+    preloadNextImage();
     renderCard();
   }
 
@@ -140,6 +184,7 @@ $(function () {
     if (!current || revealed) return;
     revealed = true;
     $revealHint.addClass('hidden');
+    showCardImage(current);
     const sides = cardSides(current, $('#content-type').val());
     setText($answerReading, sides.reading);
     setText($answerRomanization, sides.romanization);

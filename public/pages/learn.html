@@ -52,6 +52,12 @@
         <p id="card-front" class="text-5xl sm:text-8xl font-semibold text-slate-800 break-all"></p>
         <p id="reveal-hint" class="mt-6 text-sm text-slate-300" data-i18n="learn.tapToReveal">Tap to reveal</p>
         <div id="card-back" class="hidden mt-6 border-t border-slate-200 pt-6 w-full">
+          <div id="card-image-wrap" class="hidden mb-4 mx-auto w-full max-w-[220px] sm:max-w-[260px]">
+            <div class="relative rounded-xl overflow-hidden bg-slate-100 aspect-[4/3]">
+              <div id="image-skeleton" class="absolute inset-0 animate-pulse bg-slate-200"></div>
+              <img id="card-image" alt="" class="hidden absolute inset-0 w-full h-full object-cover" loading="lazy" />
+            </div>
+          </div>
           <p id="answer-reading" class="hidden text-2xl text-slate-600"></p>
           <p id="answer-romanization" class="hidden text-lg italic text-slate-400"></p>
           <p id="answer-main" class="mt-4 text-3xl font-medium text-indigo-700"></p>

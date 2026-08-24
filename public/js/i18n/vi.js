@@ -43,6 +43,20 @@ window.I18N_VI = {
     hour: 'giờ',
     days: 'ngày'
   },
+  image: {
+    searchBtn: 'Tìm ảnh',
+    searchPlaceholder: 'Tìm ảnh…',
+    select: 'Chọn',
+    save: 'Lưu ảnh',
+    remove: 'Xóa ảnh',
+    selected: 'Ảnh đã chọn',
+    source: 'Nguồn',
+    license: 'Giấy phép',
+    author: 'Tác giả',
+    unavailable: 'Ảnh không khả dụng',
+    noResults: 'Không tìm thấy ảnh nào.',
+    loadError: 'Không thể tìm ảnh'
+  },
   swipe: {
     correct: '✓ Đúng',
     wrong: '✕ Sai'

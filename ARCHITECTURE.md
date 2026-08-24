@@ -158,7 +158,55 @@ Components:
 Frontend: single page `public/pages/quiz.html` + `public/js/quiz.js`
 (config → play → result states), keyboard shortcuts A–D / 1–4 / Enter.
 
-## 10. Current User Flow
+Frontend: single page `public/pages/quiz.html` + `public/js/quiz.js`
+(config → play → result states), keyboard shortcuts A–D / 1–4 / Enter.
+
+## 10. Image Architecture (vocabulary, optional)
+
+Vocabulary items may carry an optional `image` object; `null` means no image.
+
+```json
+"image": {
+  "url": "https://upload.wikimedia.org/...",
+  "thumbnailUrl": "https://upload.wikimedia.org/.../500px-...",
+  "source": "Wikimedia Commons",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:...",
+  "license": "CC BY-SA 4.0",
+  "author": "..."
+}
+```
+
+Layers:
+
+```text
+server/services/image/
+├── image.service.js            # provider abstraction + metadata validation
+└── providers/wikimedia.provider.js   # default provider (no API key)
+```
+
+- **Search**: `GET /api/images/search?q=<query>&limit=` → normalized results
+  `{ url, thumbnailUrl, title, source, sourceUrl, license, author }`.
+  Only Management uses this endpoint. The Learn page NEVER searches live —
+  it only renders URLs already stored in vocabulary JSON (deterministic,
+  fast, no quota use).
+- **Provider abstraction**: `imageService.search()` delegates to the active
+  provider (`IMAGE_PROVIDER` env, default `wikimedia`). Future providers plug
+  in as new files under `providers/`; any needed API key comes from
+  `IMAGE_PROVIDER_API_KEY` env — never hard-coded. App works with no
+  provider configured.
+- **Validation** (`normalizeImageMetadata`, applied on every content update):
+  `image.url` required; url/thumbnailUrl/sourceUrl must be valid http(s)
+  URLs — `javascript:` / `data:` / `file:` are rejected. `null` clears.
+- **Storage**: remote URL metadata in JSON only. No binaries, no database;
+  model leaves room for a future local cache.
+- **Rendering** (flashcard.js): image sits between word and reading lines
+  (hierarchy: word → image → reading → romanization → meaning), shown only
+  after reveal. Safe DOM property assignment (`.src =`), skeleton while
+  loading, container hidden on error (card stays fully usable). Alt text is
+  localized ("word - meaning"). Only the NEXT card's image is preloaded.
+  Swipe/tap gestures are bound to the whole card and unaffected by the image.
+
+## 11. Current User Flow
 
 Startup: read `currentUserId` from localStorage → validate via `GET /api/users/:id` → dashboard if valid, else user selection. User switching always allowed.
 

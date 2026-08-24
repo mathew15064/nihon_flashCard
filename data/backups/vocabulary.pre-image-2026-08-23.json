@@ -1,0 +1,167 @@
+[
+  {
+    "id": "vocabulary_001",
+    "word": "わたし",
+    "reading": "わたし",
+    "romanization": "watashi",
+    "meaning": "I, me",
+    "meaningVi": "tôi",
+    "lesson": 1,
+    "category": "pronoun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_002",
+    "word": "あなた",
+    "reading": "あなた",
+    "romanization": "anata",
+    "meaning": "you",
+    "meaningVi": "bạn",
+    "lesson": 1,
+    "category": "pronoun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_003",
+    "word": "あの人",
+    "reading": "あのひと",
+    "romanization": "anohito",
+    "meaning": "that person",
+    "meaningVi": "người đó",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_004",
+    "word": "先生",
+    "reading": "せんせい",
+    "romanization": "sensei",
+    "meaning": "teacher",
+    "meaningVi": "giáo viên",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_005",
+    "word": "学生",
+    "reading": "がくせい",
+    "romanization": "gakusei",
+    "meaning": "student",
+    "meaningVi": "học sinh",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_006",
+    "word": "会社員",
+    "reading": "かいしゃいん",
+    "romanization": "kaishain",
+    "meaning": "company employee",
+    "meaningVi": "nhân viên công ty",
+    "lesson": 1,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_007",
+    "word": "これ",
+    "reading": "これ",
+    "romanization": "kore",
+    "meaning": "this (thing)",
+    "meaningVi": "cái này",
+    "lesson": 2,
+    "category": "demonstrative",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_008",
+    "word": "それ",
+    "reading": "それ",
+    "romanization": "sore",
+    "meaning": "that (thing)",
+    "meaningVi": "cái đó",
+    "lesson": 2,
+    "category": "demonstrative",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_009",
+    "word": "あれ",
+    "reading": "あれ",
+    "romanization": "are",
+    "meaning": "that over there",
+    "meaningVi": "cái kia",
+    "lesson": 2,
+    "category": "demonstrative",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_010",
+    "word": "本",
+    "reading": "ほん",
+    "romanization": "hon",
+    "meaning": "book",
+    "meaningVi": "sách",
+    "lesson": 2,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_011",
+    "word": "辞書",
+    "reading": "じしょ",
+    "romanization": "jisho",
+    "meaning": "dictionary",
+    "meaningVi": "từ điển",
+    "lesson": 2,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_012",
+    "word": "新聞",
+    "reading": "しんぶん",
+    "romanization": "shinbun",
+    "meaning": "newspaper",
+    "meaningVi": "báo",
+    "lesson": 2,
+    "category": "noun",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_013",
+    "word": "食べる",
+    "reading": "たべる",
+    "romanization": "taberu",
+    "meaning": "to eat",
+    "meaningVi": "ăn",
+    "lesson": 3,
+    "category": "verb",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_014",
+    "word": "飲む",
+    "reading": "のむ",
+    "romanization": "nomu",
+    "meaning": "to drink",
+    "meaningVi": "uống",
+    "lesson": 3,
+    "category": "verb",
+    "notes": ""
+  },
+  {
+    "id": "vocabulary_015",
+    "word": "学校",
+    "reading": "がっこう",
+    "romanization": "gakkou",
+    "meaning": "school",
+    "meaningVi": "trường học",
+    "lesson": 3,
+    "category": "noun",
+    "notes": ""
+  }
+]

@@ -8,6 +8,7 @@ const learningRoutes = require('./routes/learning.routes');
 const historyRoutes = require('./routes/history.routes');
 const statisticsRoutes = require('./routes/statistics.routes');
 const quizRoutes = require('./routes/quiz.routes');
+const imageRoutes = require('./routes/image.routes');
 const { makeContentRoutes } = require('./routes/content.routes');
 const { CONTENT_TYPES } = require('./constants/content-types');
 
@@ -32,6 +33,7 @@ function createApp() {
   app.use('/api/history', historyRoutes);
   app.use('/api/statistics', statisticsRoutes);
   app.use('/api/quiz', quizRoutes);
+  app.use('/api/images', imageRoutes);
 
   for (const contentType of Object.values(CONTENT_TYPES)) {
     app.use(`/api/${contentType}`, makeContentRoutes(contentType));

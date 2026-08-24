@@ -26,6 +26,10 @@ npm run dev        # same, with auto-reload on changes
   persisted in `localStorage` (`locale`)
 - Vocabulary cards show word → reading → romanization → localized meaning
   (vi/en with fallback chain vi → en)
+- Optional illustrative images on vocabulary flashcards, sourced from
+  Wikimedia Commons (license/source/author metadata preserved); admins search
+  and select images in the Management area — no live internet lookups during
+  learning
 
 ## Documentation navigation
 
