@@ -100,8 +100,7 @@ function recordReview(userId, { contentType, contentId, result }) {
   scheduler.schedule(card, result, now);
   card.lastReviewedAt = now.toISOString();
 
-  progressRepository.upsertCard(progress, card);
-  progressRepository.saveProgress(userId, progress);
+  progressRepository.upsertCard(userId, card);
 
   historyRepository.appendEvent(userId, {
     cardId,

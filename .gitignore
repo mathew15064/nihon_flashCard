@@ -12,3 +12,7 @@ data/users.json
 test-results/
 playwright-report/
 test/.cache/
+
+data/app.db
+data/app.db-wal
+data/app.db-shm

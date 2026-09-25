@@ -1,31 +1,40 @@
 'use strict';
 
-const jsonFile = require('../utils/json-file');
-const { currentMonthKey } = require('../utils/date');
+const { getDb } = require('../db/connection');
 
-function monthFile(monthKey) {
-  return `learning/users/{userId}/history/${monthKey}.json`;
+function rowToEvent(r) {
+  return {
+    cardId: r.card_id,
+    contentType: r.content_type,
+    reviewedAt: r.reviewed_at,
+    result: r.result
+  };
 }
 
-async function appendEvent(userId, event) {
-  const path = monthFile(currentMonthKey()).replace('{userId}', userId);
-  let events = jsonFile.read(path, []);
-  events.push(event);
-  return jsonFile.write(path, events);
+function appendEvent(userId, event) {
+  getDb().prepare(
+    'INSERT INTO history (user_id, card_id, content_type, reviewed_at, result) VALUES (?, ?, ?, ?, ?)'
+  ).run(userId, event.cardId, event.contentType, event.reviewedAt, event.result);
+  return event;
 }
 
 function getMonthEvents(userId, monthKey) {
-  return jsonFile.read(monthFile(monthKey).replace('{userId}', userId), []);
+  return getDb()
+    .prepare("SELECT * FROM history WHERE user_id = ? AND substr(reviewed_at, 1, 7) = ? ORDER BY reviewed_at")
+    .all(userId, monthKey)
+    .map(rowToEvent);
 }
 
 function listMonths(userId) {
-  return jsonFile
-    .listFiles(`learning/users/${userId}/history`, /^\d{4}-\d{2}\.json$/)
-    .map((f) => f.replace('.json', ''));
+  return getDb()
+    .prepare("SELECT DISTINCT substr(reviewed_at, 1, 7) AS m FROM history WHERE user_id = ? ORDER BY m DESC")
+    .all(userId)
+    .map((r) => r.m);
 }
 
 function hasAnyHistory(userId) {
-  return jsonFile.exists(`learning/users/${userId}/history`);
+  const r = getDb().prepare('SELECT 1 FROM history WHERE user_id = ? LIMIT 1').get(userId);
+  return Boolean(r);
 }
 
-module.exports = { appendEvent, getMonthEvents, hasAnyHistory, listMonths };
+module.exports = { appendEvent, getMonthEvents, listMonths, hasAnyHistory };

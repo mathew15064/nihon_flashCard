@@ -48,51 +48,38 @@ function createUser({ username, displayName }) {
     status: 'active'
   };
 
-  const users = userRepository.getAll();
-  users.push(user);
-  userRepository.saveAll(users);
+  userRepository.insert(user);
   return user;
 }
 
 function updateUser(id, patch = {}) {
-  const users = userRepository.getAll();
-  const user = users.find((u) => u.id === id);
-  if (!user) {
-    const err = new Error('User not found');
-    err.code = 'USER_NOT_FOUND';
-    err.status = 404;
-    throw err;
-  }
+  const user = getUser(id);
+  const toUpdate = {};
 
   if (patch.displayName !== undefined) {
     if (typeof patch.displayName !== 'string' || !patch.displayName.trim()) {
       validationError('displayName must be a non-empty string');
     }
-    user.displayName = patch.displayName.trim();
+    toUpdate.displayName = patch.displayName.trim();
   }
   if (patch.status !== undefined) {
     if (!['active', 'inactive'].includes(patch.status)) {
       validationError('status must be active or inactive');
     }
-    user.status = patch.status;
+    toUpdate.status = patch.status;
   }
 
-  userRepository.saveAll(users);
-  return user;
+  return userRepository.updateFields(id, toUpdate);
 }
 
 function touchActivity(id) {
-  const user = getUser(id);
-  const users = userRepository.getAll();
-  const entry = users.find((u) => u.id === id);
-  entry.lastActiveAt = nowIso();
-  userRepository.saveAll(users);
-  return entry;
+  getUser(id);
+  return userRepository.updateFields(id, { lastActiveAt: nowIso() });
 }
 
 function deleteUser(id, { force } = {}) {
   getUser(id);
-  if (userRepository.learningDirectoryExists(id) && !force) {
+  if (userRepository.learningDataExists(id) && !force) {
     const err = new Error(
       'User has learning data; delete requires force=true and archives it'
     );
@@ -100,8 +87,7 @@ function deleteUser(id, { force } = {}) {
     err.status = 409;
     throw err;
   }
-  const users = userRepository.getAll().filter((u) => u.id !== id);
-  userRepository.saveAll(users);
+  userRepository.remove(id);
   return { id };
 }
 

@@ -1,9 +1,7 @@
 'use strict';
 
 const contentRepository = require('../repositories/content.repository');
-const userRepository = require('../repositories/user.repository');
-const historyRepository = require('../repositories/history.repository');
-const progressRepository = require('../repositories/progress.repository');
+const { getDb } = require('../db/connection');
 const { CONTENT_TYPES, ALL_CONTENT_TYPES } = require('../constants/content-types');
 const { contentId } = require('../utils/id-generator');
 const imageService = require('./image/image.service');
@@ -165,55 +163,34 @@ function create(contentType, body) {
     id: contentId(contentType, items),
     ...fields
   };
-  items.push(item);
-  contentRepository.saveAll(contentType, items);
+  contentRepository.insert(contentType, item);
   return item;
 }
 
 function update(contentType, id, body) {
   assertType(contentType);
-  const items = contentRepository.getAll(contentType);
-  const item = items.find((i) => i.id === id);
-  if (!item) fail(404, 'CONTENT_NOT_FOUND', `${contentType} not found: ${id}`);
   const fields = validate(contentType, body, { partial: true });
-  Object.assign(item, fields);
-  contentRepository.saveAll(contentType, items);
-  return item;
+  const merged = contentRepository.updateFields(contentType, id, fields);
+  if (!merged) fail(404, 'CONTENT_NOT_FOUND', `${contentType} not found: ${id}`);
+  return merged;
 }
 
 function findReferences(cardId) {
-  const referencing = [];
-  for (const user of userRepository.getAll()) {
-    try {
-      const progress = progressRepository.getProgress(user.id);
-      if (progress.cards[cardId]) {
-        referencing.push(user.id);
-        continue;
-      }
-      for (const month of historyRepository.listMonths(user.id)) {
-        if (historyRepository.getMonthEvents(user.id, month).some((e) => e.cardId === cardId)) {
-          referencing.push(user.id);
-          break;
-        }
-      }
-    } catch (err) {
-      /* skip unreadable user data */
-    }
-  }
-  return [...new Set(referencing)];
+  const db = getDb();
+  const rows = db.prepare('SELECT DISTINCT user_id FROM progress WHERE card_id = ?').all(cardId);
+  const histRows = db.prepare('SELECT DISTINCT user_id FROM history WHERE card_id = ?').all(cardId);
+  return [...new Set([...rows, ...histRows].map(r => r.user_id))];
 }
 
 function remove(contentType, id) {
   assertType(contentType);
-  const items = contentRepository.getAll(contentType);
-  const index = items.findIndex((i) => i.id === id);
-  if (index === -1) fail(404, 'CONTENT_NOT_FOUND', `${contentType} not found: ${id}`);
+  const item = contentRepository.findById(contentType, id);
+  if (!item) fail(404, 'CONTENT_NOT_FOUND', `${contentType} not found: ${id}`);
   const referencing = findReferences(id);
   if (referencing.length) {
     fail(409, 'CONTENT_IN_USE', `Card is used by ${referencing.length} user(s); deletion blocked`);
   }
-  items.splice(index, 1);
-  contentRepository.saveAll(contentType, items);
+  contentRepository.remove(contentType, id);
   return { id };
 }
 
