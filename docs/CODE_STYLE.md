@@ -39,3 +39,8 @@ The project uses two distinct export styles for controllers:
 - **image.controller.js** will mirror `quiz.controller.js` and export individual handler functions (e.g., `exports.search = …`).
 
 All controllers will import the shared error handler from `server/utils/error-handler.js` and will contain **no business logic** – they simply forward to the corresponding service and let errors bubble up.
+
+## Filesystem Access Rule
+
+Only `server/db/connection.js` and `server/utils/json-file.js` may import `fs` / `path` directly for data operations.
+

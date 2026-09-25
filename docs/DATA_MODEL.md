@@ -1,6 +1,65 @@
 # DATA_MODEL — Japanese Flashcard
 
-## 1. Users — `data/users.json` (array)
+## 1. SQLite Schema (`data/app.db`)
+
+Primary persistence layer powered by Node 22 `node:sqlite`.
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  display_name TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL,
+  last_active_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS content (
+  id TEXT PRIMARY KEY,
+  content_type TEXT NOT NULL,
+  data TEXT NOT NULL,
+  lesson INTEGER,
+  category TEXT,
+  jlpt TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_content_type ON content(content_type);
+CREATE INDEX IF NOT EXISTS idx_content_lesson ON content(content_type, lesson);
+
+CREATE TABLE IF NOT EXISTS progress (
+  user_id TEXT NOT NULL,
+  card_id TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  times_reviewed INTEGER NOT NULL DEFAULT 0,
+  correct_count INTEGER NOT NULL DEFAULT 0,
+  wrong_count INTEGER NOT NULL DEFAULT 0,
+  streak INTEGER NOT NULL DEFAULT 0,
+  last_reviewed_at TEXT,
+  next_review_at TEXT,
+  PRIMARY KEY (user_id, card_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_progress_due ON progress(user_id, next_review_at);
+
+CREATE TABLE IF NOT EXISTS history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  card_id TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  reviewed_at TEXT NOT NULL,
+  result TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_history_user_time ON history(user_id, reviewed_at);
+```
+
+---
+
+## 2. Legacy JSON Structures (Historical Reference / Import Source)
+
+### 2.1 Users — `data/users.json` (Legacy)
 
 ```json
 {
@@ -16,13 +75,12 @@
 - `id`: `user_` + zero-padded counter / generated, stable forever.
 - `username`: unique (case-insensitive), required.
 - `status`: `active` | `inactive`. Inactive users cannot be selected but data is kept.
-- Deletion: only allowed when no learning directory exists; otherwise require explicit confirmation and archive learning data (never silently destroy history).
 
 Dates: ISO 8601 UTC strings.
 
-## 2. Content files — `data/content/*.json` (arrays)
+### 2.2 Content files — `data/content/*.json` (Import Source)
 
-### Hiragana / Katakana
+#### Hiragana / Katakana
 
 ```json
 {
@@ -36,7 +94,7 @@ Dates: ISO 8601 UTC strings.
 `type`: `basic | dakuten | handakuten | combination`.
 Katakana identical shape with `katakana_` prefixed IDs.
 
-### Kanji
+#### Kanji
 
 ```json
 {
@@ -55,7 +113,7 @@ Katakana identical shape with `katakana_` prefixed IDs.
 
 Only `id` and `kanji` are mandatory.
 
-### Vocabulary
+#### Vocabulary
 
 ```json
 {
@@ -72,12 +130,12 @@ Only `id` and `kanji` are mandatory.
 
 Only `id`, `word`, `meaning` mandatory. `lesson` links to Minna no Nihongo lessons (integer ≥ 1).
 
-### Content identity
+### 2.3 Content identity
 
 - Stable IDs (`{type}_NNN`). Japanese text is never the primary key.
 - IDs never reused after deletion.
 
-## 3. Progress — `data/learning/users/{userId}/progress.json`
+### 2.4 Progress — `data/learning/users/{userId}/progress.json` (Legacy)
 
 ```json
 {
@@ -104,7 +162,7 @@ Only `id`, `word`, `meaning` mandatory. `lesson` links to Minna no Nihongo lesso
 - Cards absent from the map are implicitly `NEW`.
 - `status`: `new | learning | review | mastered` (see LEARNING_SYSTEM.md).
 
-## 4. History — `data/learning/users/{userId}/history/YYYY-MM.json`
+### 2.5 History — `data/learning/users/{userId}/history/YYYY-MM.json` (Legacy)
 
 ```json
 [
@@ -118,15 +176,15 @@ Only `id`, `word`, `meaning` mandatory. `lesson` links to Minna no Nihongo lesso
 ]
 ```
 
-- Append-only array per month file. Old months never rewritten.
+- Append-only review events.
 - `result`: `correct | wrong`.
 
-## 5. Relationships
+## 3. Relationships
 
 ```text
-users.json 1 ─── N progress cards        (via userId directory)
-content/*.json 1 ─── N progress entries  (via cardId = content id)
-progress entry 1 ─── N history events    (via cardId)
+users 1 ─── N progress cards        (via user_id foreign key)
+content 1 ─── N progress entries    (via card_id)
+progress entry 1 ─── N history events (via user_id, card_id)
 ```
 
 No embedded/duplicated statistics anywhere; derived on demand by statistics.service.

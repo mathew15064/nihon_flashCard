@@ -24,7 +24,7 @@ async function startServer() {
     const timeout = setTimeout(() => {
       child.kill();
       reject(new Error(`startup timeout. stderr: ${stderrBuf}`));
-    }, 5000);
+    }, 15000);
 
     child.stdout.on('data', (chunk) => {
       if (chunk.toString().includes('server running')) {

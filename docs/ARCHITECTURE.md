@@ -108,11 +108,11 @@ POST /api/learning/:userId/review {contentType, contentId, result}
 - Shared content: `data/content/*.json` — what everyone learns. Never contains user fields.
 - User learning data: `data/learning/users/{userId}/` — how a specific user learns it.
 
-## 6. JSON File Safety
+## 6. SQLite Transaction Safety (Replaced JSON Files)
 
-- All fs access centralized in `server/utils/json-file.js`.
-- Atomic writes (write temp file then rename). Missing file → return empty default where safe; invalid JSON → throw a clear server error, never overwrite.
-- Concurrency: assume low volume; serialize writes per process (simple in-memory queue inside `json-file.js`) to avoid read-modify-write races.
+- Storage persistence has moved to SQLite via Node 22's built-in `node:sqlite`.
+- WAL mode and transaction semantics ensure consistency and crash safety.
+- `server/utils/json-file.js` remains for backward-compatible utilities but is no longer the persistence layer.
 
 ## 7. API & Error Conventions
 
@@ -328,3 +328,18 @@ Vocabulary schema (additive extension, backward compatible):
   localized meaning. Reading is hidden until reveal; romanization is shown only
   when present (never invented). Kana cards show character → romaji;
   kanji cards show kanji → meanings → on/kun readings.
+
+## 16. SQLite Persistence
+
+- **Engine**: Node 22 built-in `node:sqlite` (`DatabaseSync`), requiring zero external dependencies.
+- **Data directory layout**: `data/app.db` with WAL mode (`app.db-wal`, `app.db-shm`) enabled for concurrent reads and crash safety.
+- **Schema tables**:
+  - `users`: user accounts (id, username UNIQUE COLLATE NOCASE, display_name, status, created_at, last_active_at).
+  - `content`: learning materials (id, content_type, data JSON blob, lesson, category, jlpt, timestamps).
+  - `progress`: user card status & SRS state (user_id, card_id, content_type, status, times_reviewed, correct_count, wrong_count, streak, last_reviewed_at, next_review_at).
+  - `history`: immutable log of review events (id, user_id, card_id, content_type, reviewed_at, result).
+- **Content storage**: full item serialized as JSON in `data` column; extracted columns (`lesson`, `category`, `jlpt`) indexed for fast filtering.
+- **Import-once behavior**: `server/db/import-content.js` populates the `content` table from `data/content/*.json` only when the `content` table is completely empty.
+- **DB_PATH environment override**: supports pointing to an alternate database path (e.g. `process.env.DB_PATH`).
+- **Test isolation**: every test run creates an isolated tmp DB file and points `DB_PATH` to it, ensuring tests never pollute or depend on production data in `data/app.db`.
+
