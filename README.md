@@ -7,7 +7,7 @@ JSON files are the entire persistence layer — there is intentionally no databa
 
 ```bash
 npm install
-npm start          # http://localhost:3000  (PORT env to override)
+npm start          # http://localhost:3005  (PORT env to override)
 npm run dev        # same, with auto-reload on changes
 ```
 
