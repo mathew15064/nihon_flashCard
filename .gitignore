@@ -7,3 +7,8 @@ npm-debug.log*
 data/learning/
 # Local user registry (usernames/IDs differ between dev and production)
 data/users.json
+
+# Playwright artifacts
+test-results/
+playwright-report/
+test/.cache/

@@ -5,10 +5,18 @@
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "node --watch server/server.js"
+    "dev": "node --watch server/server.js",
+    "test": "node --test test/api/*.test.js",
+    "test:api": "node --test test/api/*.test.js",
+    "test:e2e": "playwright test",
+    "test:all": "npm run test:api && npm run test:e2e",
+    "backup": "bash scripts/backup-data.sh"
   },
   "license": "MIT",
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
   }
 }
