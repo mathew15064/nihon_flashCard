@@ -41,49 +41,6 @@ $(function () {
   let dragStartX = 0;
   let deltaX = 0;
 
-  // ---- content rendering -------------------------------------------------
-
-  function localizedMeaning(item) {
-    // Content translation fallback: selected locale -> English -> Vietnamese -> raw
-    if (item.meaning && typeof item.meaning === 'object') {
-      return item.meaning[I18n.locale()] || item.meaning.en || item.meaning.vi || '';
-    }
-    const base = (item.meaning || '').trim();
-    const vi = (item.meaningVi || '').trim();
-    return I18n.locale() === 'vi' ? (vi || base) : (base || vi);
-  }
-
-  function cardSides(item, contentType) {
-    if (contentType === 'kanji') {
-      return {
-        front: item.kanji,
-        reading: '',
-        romanization: '',
-        main: (item.meanings || []).join(', ') || '—',
-        extra: [
-          item.onyomi && item.onyomi.length ? 'On: ' + item.onyomi.join('、') : '',
-          item.kunyomi && item.kunyomi.length ? 'Kun: ' + item.kunyomi.join('、') : ''
-        ].filter(Boolean).join(' · ')
-      };
-    }
-    if (contentType === 'vocabulary') {
-      return {
-        front: item.word,
-        reading: item.reading && item.reading !== item.word ? item.reading : '',
-        romanization: item.romanization || '',
-        main: localizedMeaning(item) || '—',
-        extra: item.category || ''
-      };
-    }
-    return {
-      front: item.character,
-      reading: '',
-      romanization: item.romaji || '',
-      main: '',
-      extra: ''
-    };
-  }
-
   function showError(msg) {
     $error.text(msg).removeClass('hidden');
   }
@@ -115,7 +72,7 @@ $(function () {
     $imageSkeleton.removeClass('hidden');
     $image.addClass('hidden');
     // Safe DOM assignment (no HTML interpolation of remote URLs).
-    $image[0].alt = `${item.word} - ${localizedMeaning(item)}`;
+    $image[0].alt = `${item.word} - ${CardRender.localizedMeaning(item)}`;
     $image[0].onload = function () {
       $imageSkeleton.addClass('hidden');
       $image.removeClass('hidden');
@@ -153,7 +110,7 @@ $(function () {
     answeredCount += 1;
     updateProgress();
 
-    const sides = cardSides(current, $('#content-type').val());
+    const sides = CardRender.fromContent(current, $('#content-type').val());
     $front.text(sides.front);
     resetCardImage();
     $revealHint.removeClass('hidden');
@@ -325,7 +282,7 @@ $(function () {
     revealed = true;
     $revealHint.addClass('hidden');
     showCardImage(current);
-    const sides = cardSides(current, $('#content-type').val());
+    const sides = CardRender.fromContent(current, $('#content-type').val());
     setText($answerReading, sides.reading);
     setText($answerRomanization, sides.romanization);
     $answerMain.text(sides.main);
@@ -541,7 +498,7 @@ $(function () {
     }
     if (current) {
       if (revealed) {
-        const s = cardSides(current, $('#content-type').val());
+        const s = CardRender.fromContent(current, $('#content-type').val());
         setText($answerReading, s.reading);
         setText($answerRomanization, s.romanization);
         $answerMain.text(s.main);

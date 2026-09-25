@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Japanese Flashcard — Management</title>
+  <title data-i18n="management.title">Japanese Flashcard — Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="/css/app.css" />
@@ -11,16 +11,19 @@
 <body class="bg-slate-100 min-h-screen">
   <header class="bg-white shadow-sm">
     <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm">&larr; Dashboard</a>
-      <h1 class="font-bold text-slate-800">Management</h1>
-      <span></span>
+      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm" data-i18n="nav.dashboard">&larr; Dashboard</a>
+      <h1 class="font-bold text-slate-800" data-i18n="management.title">Management</h1>
+      <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
+        <option value="vi">🇻🇳 Tiếng Việt</option>
+        <option value="en">🇺🇸 English</option>
+      </select>
     </div>
     <div class="max-w-4xl mx-auto px-4 pb-3 flex flex-wrap gap-2 text-sm">
-      <button class="tab-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg" data-tab="users">Users</button>
-      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="hiragana">Hiragana</button>
-      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="katakana">Katakana</button>
-      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="kanji">Kanji</button>
-      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="vocabulary">Vocabulary</button>
+      <button class="tab-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg" data-tab="users" data-i18n="management.users">Users</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="hiragana" data-i18n="management.hiragana">Hiragana</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="katakana" data-i18n="management.katakana">Katakana</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="kanji" data-i18n="management.kanji">Kanji</button>
+      <button class="tab-btn bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg" data-tab="vocabulary" data-i18n="management.vocabulary">Vocabulary</button>
     </div>
   </header>
 
@@ -30,7 +33,7 @@
     <section id="toolbar" class="flex flex-wrap gap-2 items-center mb-4"></section>
 
     <ul id="item-list" class="space-y-2">
-      <li class="text-slate-400 text-sm">Loading…</li>
+      <li class="text-slate-400 text-sm" data-i18n="management.loading">Loading…</li>
     </ul>
 
     <!-- create/edit dialog -->

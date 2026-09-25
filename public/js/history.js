@@ -23,7 +23,7 @@ $(function () {
       .find('p.font-medium').text(`${event.contentType} · ${event.cardId}`).end()
       .find('p.text-xs').text(new Date(event.reviewedAt).toLocaleString()).end()
       .find('span')
-        .text(correct ? '✓ correct' : '✗ wrong')
+        .text(correct ? I18n.t('history.correct') : I18n.t('history.wrong'))
         .addClass(correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')
       .end();
   }
@@ -40,8 +40,8 @@ $(function () {
         render(events, api.lastMeta);
       })
       .fail(function (err) {
-        $list.empty().append('<li class="text-slate-400 text-sm">No history available.</li>');
-        if (err.code !== 'NO_USER') showError(err.message || 'Could not load history');
+        $list.empty().append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('history.noHistory')));
+        if (err.code !== 'NO_USER') showError(err.message || I18n.t('history.loadError'));
       });
   }
 
@@ -50,7 +50,7 @@ $(function () {
     $('#summary').addClass('hidden');
 
     if (!items.length) {
-      $list.append('<li class="text-slate-400 text-sm">No review events for this period.</li>');
+      $list.append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('history.empty')));
       updatePager(meta);
       return;
     }
@@ -77,6 +77,11 @@ $(function () {
   });
   $('#month').on('change', function () {
     page = 1;
+    load();
+  });
+
+  $(document).on('locale:changed', function () {
+    I18n.apply();
     load();
   });
 

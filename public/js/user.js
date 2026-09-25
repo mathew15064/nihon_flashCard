@@ -21,7 +21,6 @@ $(function () {
           <p class="text-xs text-slate-400"></p>
         </div>
         <button class="select-btn bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm px-4 py-2 rounded-lg">
-          Select
         </button>
       </li>
     `)
@@ -30,6 +29,7 @@ $(function () {
         .text(inactive ? `${user.username} · inactive` : `@${user.username}`)
       .end()
       .find('.select-btn')
+        .text(I18n.t('userSelect.select'))
         .prop('disabled', inactive)
         .on('click', () => selectUser(user))
       .end();
@@ -45,13 +45,13 @@ $(function () {
       .done(function (users) {
         $list.empty();
         if (!users.length) {
-          $list.append('<li class="text-slate-400 text-sm">No users yet. Create one to start.</li>');
+          $list.append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('userSelect.noUsers')));
           return;
         }
         users.forEach((u) => $list.append(userCard(u)));
       })
       .fail(function (err) {
-        showError(err.message || 'Could not load users');
+        showError(err.message || I18n.t('userSelect.loadError'));
       });
   }
 
@@ -76,8 +76,13 @@ $(function () {
         selectUser(user);
       })
       .fail(function (err) {
-        showError(err.message || 'Could not create user');
+        showError(err.message || I18n.t('userSelect.createError'));
       });
+  });
+
+  $(document).on('locale:changed', function () {
+    I18n.apply();
+    loadUsers();
   });
 
   loadUsers();

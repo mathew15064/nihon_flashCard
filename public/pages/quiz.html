@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Japanese Flashcard — Quiz</title>
+  <title data-i18n="quiz.title">Japanese Flashcard — Quiz</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="/css/app.css" />
@@ -11,9 +11,12 @@
 <body class="bg-slate-100 min-h-screen">
   <header class="bg-white shadow-sm">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm">&larr; Dashboard</a>
-      <h1 class="font-bold text-slate-800">Quiz</h1>
-      <span></span>
+      <a href="/pages/dashboard.html" class="text-slate-600 hover:underline text-sm" data-i18n="nav.dashboard">&larr; Dashboard</a>
+      <h1 class="font-bold text-slate-800" data-i18n="quiz.title">Quiz</h1>
+      <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
+        <option value="vi">🇻🇳 Tiếng Việt</option>
+        <option value="en">🇺🇸 English</option>
+      </select>
     </div>
   </header>
 
@@ -23,21 +26,21 @@
     <!-- ============ CONFIG ============ -->
     <section id="config-view" class="bg-white rounded-2xl shadow p-6 space-y-5">
       <div>
-        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Content type</h2>
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2" data-i18n="quiz.contentType">Content type</h2>
         <div id="type-options" class="flex flex-wrap gap-2"></div>
       </div>
 
       <div>
-        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Number of questions</h2>
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2" data-i18n="quiz.questionCount">Number of questions</h2>
         <div id="count-options" class="flex gap-2"></div>
       </div>
 
       <div>
-        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Question type</h2>
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2" data-i18n="quiz.questionType">Question type</h2>
         <div id="qtype-options" class="flex flex-wrap gap-2"></div>
       </div>
 
-      <button id="start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl">
+      <button id="start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl" data-i18n="quiz.start">
         Start quiz
       </button>
     </section>
@@ -54,7 +57,7 @@
 
       <div id="feedback" class="hidden mt-4 rounded-xl p-4 text-center"></div>
 
-      <button id="next-btn" class="hidden mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl">
+      <button id="next-btn" class="hidden mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl" data-i18n="quiz.next">
         Next question
       </button>
     </section>
@@ -68,14 +71,17 @@
       <div id="result-breakdown" class="space-y-2 text-left max-h-80 overflow-y-auto mb-6"></div>
 
       <div class="flex flex-col sm:flex-row gap-3">
-        <button id="retry-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm">Retry</button>
-        <a href="/pages/dashboard.html" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-3 rounded-xl text-sm text-center">Back to dashboard</a>
+        <button id="retry-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm" data-i18n="quiz.retry">Retry</button>
+        <a href="/pages/dashboard.html" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-3 rounded-xl text-sm text-center" data-i18n="quiz.backToDashboard">Back to dashboard</a>
       </div>
     </section>
   </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/current-user.js"></script>
+  <script src="/js/i18n/en.js"></script>
+  <script src="/js/i18n/vi.js"></script>
+  <script src="/js/i18n/i18n.js"></script>
   <script src="/js/quiz.js"></script>
 </body>
 </html>

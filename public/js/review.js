@@ -19,50 +19,30 @@ $(function () {
   let queue = [];
   let current = null;
   let revealed = false;
+  let submitting = false;
   let answeredCount = 0;
 
-  function localizedMeaning(item) {
-    // Content translation fallback: selected locale -> English -> Vietnamese -> raw
-    if (item.meaning && typeof item.meaning === 'object') {
-      return item.meaning[I18n.locale()] || item.meaning.en || item.meaning.vi || '';
-    }
-    const base = (item.meaning || '').trim();
-    const vi = (item.meaningVi || '').trim();
-    return I18n.locale() === 'vi' ? (vi || base) : (base || vi);
-  }
-
-  function sides(card) {
-    const c = card.content || {};
-    if (card.contentType === 'kanji') {
-      return {
-        front: c.kanji,
-        reading: '',
-        romanization: '',
-        main: (c.meanings || []).join(', ') || '—',
-        extra: [
-          c.onyomi && c.onyomi.length ? 'On: ' + c.onyomi.join('、') : '',
-          c.kunyomi && c.kunyomi.length ? 'Kun: ' + c.kunyomi.join('、') : ''
-        ].filter(Boolean).join(' · ')
-      };
-    }
-    if (card.contentType === 'vocabulary') {
-      return {
-        front: c.word,
-        reading: c.reading && c.reading !== c.word ? c.reading : '',
-        romanization: c.romanization || '',
-        main: localizedMeaning(c) || '—',
-        extra: c.category || ''
-      };
-    }
-    return { front: c.character, reading: '', romanization: c.romaji || '', main: '', extra: '' };
+  function setText($el, text) {
+    $el.toggleClass('hidden', !text).text(text || '');
   }
 
   function showError(msg) {
     $('#error').text(msg).removeClass('hidden');
   }
 
-  function setText($el, text) {
-    $el.toggleClass('hidden', !text).text(text || '');
+  function hideError() {
+    $('#error').addClass('hidden');
+  }
+
+  function applySides() {
+    if (!current) return;
+    const s = CardRender.fromCard(current);
+    $typeLabel.text(current.contentType);
+    $front.text(s.front);
+    setText($answerReading, s.reading);
+    setText($answerRomanization, s.romanization);
+    $answerMain.text(s.main);
+    $answerExtra.text(s.extra);
   }
 
   function render() {
@@ -72,11 +52,12 @@ $(function () {
       return;
     }
     revealed = false;
+    submitting = false;
     $donePanel.addClass('hidden');
     $card.removeClass('hidden');
     $sessionInfo.text(I18n.t('review.cardsLeft', { n: queue.length + 1 }));
 
-    const s = sides(current);
+    const s = CardRender.fromCard(current);
     $typeLabel.text(current.contentType);
     $front.text(s.front);
     setText($answerReading, '');
@@ -96,7 +77,7 @@ $(function () {
   function reveal() {
     if (!current || revealed) return;
     revealed = true;
-    const s = sides(current);
+    const s = CardRender.fromCard(current);
     setText($answerReading, s.reading);
     setText($answerRomanization, s.romanization);
     $answerMain.text(s.main);
@@ -107,8 +88,12 @@ $(function () {
   }
 
   function answer(result) {
-    if (!revealed || !current) return;
+    if (!revealed || !current || submitting) return;
+    submitting = true;
     $correct.add($wrong).prop('disabled', true);
+    $reveal.prop('disabled', true);
+    hideError();
+
     api
       .post(`/api/learning/${currentUser.get()}/review`, {
         contentType: current.contentType,
@@ -125,11 +110,14 @@ $(function () {
         $('#status-line').text(
           `${labels[card.status] || card.status} · ${I18n.t('status.streak')} ${card.streak}`
         );
+        nextCard();
       })
       .fail(function (err) {
+        submitting = false;
+        $correct.add($wrong).prop('disabled', false);
+        $reveal.prop('disabled', true);
         showError(err.message || I18n.t('learn.error'));
-      })
-      .always(nextCard);
+      });
   }
 
   function showDone() {
@@ -143,7 +131,7 @@ $(function () {
   }
 
   function loadQueue() {
-    $('#error').addClass('hidden');
+    hideError();
     answeredCount = 0;
     const type = $('#content-type').val();
     let url = `/api/learning/${currentUser.get()}/review?count=15`;
@@ -181,8 +169,12 @@ $(function () {
   $(document).on('locale:changed', function () {
     I18n.apply();
     if (current) {
-      render();
-      if (revealed) reveal();
+      applySides();
+      if (revealed) {
+        $back.removeClass('hidden');
+      } else {
+        $back.addClass('hidden');
+      }
     } else {
       showDone();
     }

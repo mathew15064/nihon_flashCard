@@ -8,6 +8,7 @@ $(function () {
   const $form = $('#entity-form');
 
   let tab = 'users';
+  let page = 1;
   let filters = {};
   let editingId = null;
 
@@ -54,18 +55,20 @@ $(function () {
     ]
   };
 
-  const FILTERS = {
-    hiragana: [{ name: 'type', label: 'All types', options: ['basic', 'dakuten', 'handakuten', 'combination'] }],
-    katakana: [{ name: 'type', label: 'All types', options: ['basic', 'dakuten', 'handakuten', 'combination'] }],
-    kanji: [
-      { name: 'jlpt', label: 'All JLPT', options: ['N5', 'N4', 'N3', 'N2', 'N1'] },
-      { name: 'lesson', label: 'All lessons', options: ['1', '2', '3'], numeric: true }
-    ],
-    vocabulary: [
-      { name: 'lesson', label: 'All lessons', options: ['1', '2', '3'], numeric: true },
-      { name: 'category', label: 'All categories', options: [], freeText: true }
-    ]
-  };
+  function getFilters() {
+    return {
+      hiragana: [{ name: 'type', label: I18n.t('management.allTypes'), options: ['basic', 'dakuten', 'handakuten', 'combination'] }],
+      katakana: [{ name: 'type', label: I18n.t('management.allTypes'), options: ['basic', 'dakuten', 'handakuten', 'combination'] }],
+      kanji: [
+        { name: 'jlpt', label: I18n.t('management.allJlpt'), options: ['N5', 'N4', 'N3', 'N2', 'N1'] },
+        { name: 'lesson', label: I18n.t('management.allLessons'), options: ['1', '2', '3'], numeric: true }
+      ],
+      vocabulary: [
+        { name: 'lesson', label: I18n.t('management.allLessons'), options: ['1', '2', '3'], numeric: true },
+        { name: 'category', label: I18n.t('management.allCategories'), options: [], freeText: true }
+      ]
+    };
+  }
 
   function primaryLabel(item) {
     if (tab === 'users') return item.displayName + ' (@' + item.username + ')';
@@ -247,31 +250,28 @@ $(function () {
 
     if (tab === 'users' && item.status === 'inactive') {
       $btns.append(
-        $('<button class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg">Activate</button>').on(
-          'click',
-          () => updateUser(item.id, { status: 'active' })
-        )
+        $('<button class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg"></button>')
+          .text(I18n.t('management.activate'))
+          .on('click', () => updateUser(item.id, { status: 'active' }))
       );
     } else if (tab === 'users') {
       $btns.append(
-        $('<button class="bg-amber-500 text-white px-3 py-1.5 rounded-lg">Deactivate</button>').on(
-          'click',
-          () => updateUser(item.id, { status: 'inactive' })
-        )
+        $('<button class="bg-amber-500 text-white px-3 py-1.5 rounded-lg"></button>')
+          .text(I18n.t('management.deactivate'))
+          .on('click', () => updateUser(item.id, { status: 'inactive' }))
       );
     }
 
     $btns.append(
-      $('<button class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg">Edit</button>').on(
-        'click',
-        () => openForm(item)
-      )
+      $('<button class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg"></button>')
+        .text(I18n.t('management.edit'))
+        .on('click', () => openForm(item))
     );
 
     $btns.append(
-      $('<button class="bg-red-500 text-white px-3 py-1.5 rounded-lg">Delete</button>').on('click', () =>
-        deleteItem(item)
-      )
+      $('<button class="bg-red-500 text-white px-3 py-1.5 rounded-lg"></button>')
+        .text(I18n.t('management.delete'))
+        .on('click', () => deleteItem(item))
     );
 
     return $li;
@@ -289,12 +289,12 @@ $(function () {
       const items = await api.get(url);
       $list.empty();
       if (!items.length) {
-        $list.append('<li class="text-slate-400 text-sm">Nothing found.</li>');
+        $list.append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('management.empty')));
         return;
       }
       items.forEach((item) => $list.append(makeRow(item)));
     } catch (err) {
-      showError(err.message || 'Could not load items');
+      showError(err.message || I18n.t('management.loadError'));
     }
   }
 
@@ -307,7 +307,7 @@ $(function () {
     const searchDef = tab !== 'users';
     if (searchDef) {
       const $search = $(
-        '<input id="search-input" type="search" placeholder="Search…" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-48" />'
+        `<input id="search-input" type="search" placeholder="${I18n.t('management.search')}" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-48" />`
       );
       let timer;
       $search.on('input', function () {
@@ -322,7 +322,8 @@ $(function () {
       $toolbar.append($search);
     }
 
-    (FILTERS[tab] || []).forEach((f) => {
+    const currentFilters = getFilters();
+    (currentFilters[tab] || []).forEach((f) => {
       const $sel = $(`<select data-filter="${f.name}" class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm"></select>`);
       $sel.append(`<option value="">${f.label}</option>`);
       f.options.forEach((o) => $sel.append(`<option value="${o}">${o}</option>`));
@@ -347,7 +348,7 @@ $(function () {
     });
 
     $toolbar.append(
-      $('<button id="add-btn" class="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium">+ Add</button>').on(
+      $(`<button id="add-btn" class="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium">+ ${I18n.t('management.add')}</button>`).on(
         'click',
         () => openForm(null)
       )
@@ -360,7 +361,8 @@ $(function () {
     editingId = item ? item.id : null;
     $form.empty();
 
-    $form.append('<h3 class="text-lg font-semibold text-slate-700">' + (editingId ? 'Edit' : 'New') + ' ' + tab + '</h3>');
+    const titleText = (editingId ? I18n.t('management.edit') : I18n.t('management.add')) + ' ' + (I18n.t('management.' + tab) || tab);
+    $form.append($('<h3 class="text-lg font-semibold text-slate-700"></h3>').text(titleText));
 
     FIELDS[tab].forEach((f) => {
       const current = item ? item[f.name] : '';
@@ -382,8 +384,8 @@ $(function () {
 
     $form.append(
       $('<div class="flex gap-2 pt-2"></div>')
-        .append($('<button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium">Save</button>'))
-        .append($('<button type="button" id="cancel-btn" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg text-sm">Cancel</button>')
+        .append($(`<button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium">${I18n.t('management.save')}</button>`))
+        .append($(`<button type="button" id="cancel-btn" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg text-sm">${I18n.t('management.cancel')}</button>`)
           .on('click', () => $modal.addClass('hidden')))
     );
 
@@ -424,7 +426,7 @@ $(function () {
       $modal.addClass('hidden');
       load();
     } catch (err) {
-      showError(err.message || 'Save failed');
+      showError(err.message || I18n.t('management.saveError'));
       $modal.addClass('hidden');
     }
   }
@@ -435,16 +437,16 @@ $(function () {
       await api.put(`/api/users/${id}`, patch);
       load();
     } catch (err) {
-      showError(err.message || 'Update failed');
+      showError(err.message || I18n.t('management.saveError'));
     }
   }
 
   async function deleteItem(item) {
     hideError();
     let url = tab === 'users' ? `/api/users/${item.id}` : `/api/${tab}/${item.id}`;
-    if (tab === 'users' && confirm(`Delete ${item.username} and force-archive learning data?`)) {
+    if (tab === 'users' && confirm(I18n.t('management.confirmDeleteUser', { name: item.username }))) {
       url += '?force=true';
-    } else if (!confirm('Delete this item?')) {
+    } else if (!confirm(I18n.t('management.confirmDelete'))) {
       return;
     }
     try {
@@ -457,11 +459,11 @@ $(function () {
           load();
           return;
         } catch (e2) {
-          showError(e2.message || 'Delete failed');
+          showError(e2.message || I18n.t('management.deleteError'));
           return;
         }
       }
-      showError(err.message || 'Delete failed');
+      showError(err.message || I18n.t('management.deleteError'));
     }
   }
 
@@ -478,7 +480,12 @@ $(function () {
     load();
   });
 
-  let page = 1;
+  $(document).on('locale:changed', function () {
+    I18n.apply();
+    renderToolbar();
+    load();
+  });
+
   renderToolbar();
   load();
 });

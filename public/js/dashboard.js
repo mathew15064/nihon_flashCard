@@ -1,12 +1,12 @@
 'use strict';
 
 $(function () {
-  const TYPE_LABELS = {
-    hiragana: 'Hiragana',
-    katakana: 'Katakana',
-    kanji: 'Kanji',
-    vocabulary: 'Vocabulary'
-  };
+  let lastStats = null;
+  let currentUserObj = null;
+
+  function getContentTypeLabel(type) {
+    return I18n.t(`content.${type}`) || type;
+  }
 
   function statTile(label, value) {
     return $(`
@@ -34,11 +34,11 @@ $(function () {
         <p class="text-xs text-slate-400 mt-1"></p>
       </div>
     `);
-    row.find('span.font-medium').text(TYPE_LABELS[type] || type);
+    row.find('span.font-medium').text(getContentTypeLabel(type));
     row.find('span.text-slate-500').text(`${learned} / ${stats.total}`);
     row.find('.bg-indigo-500').css('width', pct + '%');
     row.find('p.text-xs').text(
-      `new ${stats.new} · learning ${stats.learning} · review ${stats.review} · mastered ${stats.mastered}`
+      `${I18n.t('status.new')} ${stats.new} · ${I18n.t('status.learning')} ${stats.learning} · ${I18n.t('status.review')} ${stats.review} · ${I18n.t('status.mastered')} ${stats.mastered}`
     );
     return row;
   }
@@ -47,28 +47,29 @@ $(function () {
     const pct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
     return $(`
       <div class="flex items-center gap-3 bg-white rounded-lg shadow px-4 py-2 text-sm">
-        <span class="w-20 text-slate-600">Lesson</span>
+        <span class="w-20 text-slate-600"></span>
         <span class="w-24 text-right text-slate-500"></span>
         <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
           <div class="h-full bg-emerald-500 rounded-full" style="width:0%"></div>
         </div>
       </div>
     `)
-      .find('span.w-20').append($(`<b class="text-slate-800 ml-1">${lesson}</b>`)).end()
+      .find('span.w-20').text(I18n.t('dashboard.lessonLabel')).append($(`<b class="text-slate-800 ml-1">${lesson}</b>`)).end()
       .find('span.w-24').text(`${stats.learned}/${stats.total}`).end()
       .find('.bg-emerald-500').css('width', pct + '%')
       .end();
   }
 
   function render(stats) {
+    lastStats = stats;
     $('#stats-loading').addClass('hidden');
     const t = stats.totals;
     $('#totals')
       .empty()
-      .append(statTile('Learned', t.learned))
-      .append(statTile('Due for review', t.reviewDue))
-      .append(statTile("Today's reviews", t.todayReviews))
-      .append(statTile('Day streak', t.streakDays));
+      .append(statTile(I18n.t('dashboard.learned'), t.learned))
+      .append(statTile(I18n.t('dashboard.dueForReview'), t.reviewDue))
+      .append(statTile(I18n.t('dashboard.todayReviews'), t.todayReviews))
+      .append(statTile(I18n.t('dashboard.dayStreak'), t.streakDays));
 
     const $byType = $('#by-type').empty();
     Object.entries(stats.byContentType).forEach(([type, s]) => {
@@ -88,14 +89,15 @@ $(function () {
   currentUser
     .validate()
     .done(function (user) {
+      currentUserObj = user;
       $('#current-user').text(user.displayName);
-      $('#welcome').text('Welcome back, ' + user.displayName + '!');
+      $('#welcome').text(I18n.t('dashboard.welcome', { name: user.displayName }));
 
       api
         .get(`/api/statistics/${user.id}`)
         .done(render)
         .fail(function (err) {
-          $('#stats-loading').text('Could not load statistics.').addClass('text-red-500');
+          $('#stats-loading').text(I18n.t('dashboard.loadError')).addClass('text-red-500');
           console.error(err);
         });
     })
@@ -107,5 +109,13 @@ $(function () {
   $('#switch-user-btn').on('click', function () {
     currentUser.clear();
     window.location.href = '/';
+  });
+
+  $(document).on('locale:changed', function () {
+    I18n.apply();
+    if (currentUserObj) {
+      $('#welcome').text(I18n.t('dashboard.welcome', { name: currentUserObj.displayName }));
+    }
+    if (lastStats) render(lastStats);
   });
 });

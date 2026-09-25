@@ -1,13 +1,15 @@
 'use strict';
 
 $(function () {
-  const CONTENT_TYPES = [
-    { value: 'hiragana', label: 'Hiragana' },
-    { value: 'katakana', label: 'Katakana' },
-    { value: 'kanji', label: 'Kanji' },
-    { value: 'vocabulary', label: 'Vocabulary' },
-    { value: 'mixed', label: 'Mixed' }
-  ];
+  function getContentTypes() {
+    return [
+      { value: 'hiragana', label: I18n.t('content.hiragana') || 'Hiragana' },
+      { value: 'katakana', label: I18n.t('content.katakana') || 'Katakana' },
+      { value: 'kanji', label: I18n.t('content.kanji') || 'Kanji' },
+      { value: 'vocabulary', label: I18n.t('content.vocabulary') || 'Vocabulary' },
+      { value: 'mixed', label: 'Mixed' }
+    ];
+  }
 
   const QUESTION_TYPES = {
     all: [
@@ -53,7 +55,7 @@ $(function () {
 
   function renderConfig() {
     const $types = $('#type-options').empty();
-    CONTENT_TYPES.forEach((t) =>
+    getContentTypes().forEach((t) =>
       $types.append(pill(t.value, t.label, 'type', t.value === selectedType)));
 
     const $counts = $('#count-options').empty();
@@ -95,7 +97,7 @@ $(function () {
 
   async function startQuiz() {
     hideError();
-    $('#start-btn').prop('disabled', true).text('Generating…');
+    $('#start-btn').prop('disabled', true).text(I18n.t('quiz.generating'));
     try {
       session = await api.post('/api/quiz/sessions', {
         userId: currentUser.get(),
@@ -108,16 +110,16 @@ $(function () {
       show('play');
       renderQuestion();
     } catch (err) {
-      showError(err.message || 'Could not create quiz');
+      showError(err.message || I18n.t('quiz.loadError'));
     } finally {
-      $('#start-btn').prop('disabled', false).text('Start quiz');
+      $('#start-btn').prop('disabled', false).text(I18n.t('quiz.start'));
     }
   }
 
   function renderQuestion() {
     const q = session.questions[index];
     locked = false;
-    $('#quiz-progress').text(`Question ${index + 1} / ${session.questions.length}`);
+    $('#quiz-progress').text(I18n.t('quiz.questionProgress', { n: index + 1, total: session.questions.length }));
     $('#question-prompt').text(q.prompt);
 
     const $options = $('#options').empty();
@@ -130,7 +132,7 @@ $(function () {
 
     $('#feedback').addClass('hidden').empty();
     $('#next-btn').addClass('hidden');
-    $('#next-btn').text(index === session.questions.length - 1 ? 'See result' : 'Next question');
+    $('#next-btn').text(index === session.questions.length - 1 ? I18n.t('quiz.seeResult') : I18n.t('quiz.next'));
   }
 
   function escapeHtml(s) {
@@ -166,12 +168,12 @@ $(function () {
       const $fb = $('#feedback')
         .removeClass('hidden bg-emerald-100 bg-red-100 text-emerald-800 text-red-700')
         .addClass(res.correct ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700');
-      $fb.append(`<p class="font-semibold">${res.correct ? '✓ Correct!' : '✗ Wrong'}</p>`);
+      $fb.append(`<p class="font-semibold">${res.correct ? I18n.t('quiz.correct') : I18n.t('quiz.wrong')}</p>`);
       $fb.append(`<p class="text-sm mt-1">${escapeHtml(res.explanation)}</p>`);
 
       $('#next-btn').removeClass('hidden').trigger('focus');
     } catch (err) {
-      showError(err.message || 'Could not submit answer');
+      showError(err.message || I18n.t('quiz.loadError'));
       locked = false;
     }
   }
@@ -188,12 +190,11 @@ $(function () {
         `/api/quiz/sessions/${session.sessionId}/result?userId=${currentUser.get()}`
       );
       $('#result-score').text(result.score + '%');
-      $('#result-summary').text(`${result.correct} correct · ${result.wrong} wrong (out of ${result.total})`);
+      $('#result-summary').text(I18n.t('quiz.resultSummary', { correct: result.correct, wrong: result.wrong, total: result.total }));
       $('#result-emoji').text(result.score >= 80 ? '🎉' : result.score >= 50 ? '👍' : '📚');
 
       const $bd = $('#result-breakdown').empty();
       result.questions.forEach((q, i) => {
-        const chosen = q.options ? null : null; // options not in result payload; use ids
         $bd.append($(`
           <div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 text-sm">
             <span class="truncate mr-2"></span>
@@ -208,7 +209,7 @@ $(function () {
       });
       show('result');
     } catch (err) {
-      showError(err.message || 'Could not load result');
+      showError(err.message || I18n.t('quiz.loadError'));
     }
   }
 
@@ -225,6 +226,14 @@ $(function () {
     else if ((e.key === 'Enter' || e.code === 'Space') && !$('#next-btn').hasClass('hidden')) {
       e.preventDefault();
       next();
+    }
+  });
+
+  $(document).on('locale:changed', function () {
+    I18n.apply();
+    renderConfig();
+    if (session && !$play.hasClass('hidden')) {
+      renderQuestion();
     }
   });
 
