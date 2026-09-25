@@ -8,7 +8,10 @@ const DATA_ROOT = path.join(__dirname, '..', '..', 'data');
 function resolveSafe(relativePath) {
   const full = path.resolve(DATA_ROOT, relativePath);
   if (!full.startsWith(DATA_ROOT + path.sep) && full !== DATA_ROOT) {
-    throw new Error('INVALID_PATH');
+    const err = new Error('INVALID_PATH');
+    err.code = 'INVALID_PATH';
+    err.status = 400;
+    throw err;
   }
   return full;
 }
@@ -21,16 +24,31 @@ function ensureDirectory(relativeDir) {
   fs.mkdirSync(resolveSafe(relativeDir), { recursive: true });
 }
 
+function listFiles(relativeDir, regex) {
+  const full = resolveSafe(relativeDir);
+  try {
+    return fs.readdirSync(full).filter((f) => !regex || regex.test(f));
+  } catch (err) {
+    return [];
+  }
+}
+
 function read(relativePath, defaultValue) {
   const full = resolveSafe(relativePath);
   if (!fs.existsSync(full)) {
     if (arguments.length > 1) return defaultValue;
-    throw new Error('FILE_NOT_FOUND: ' + relativePath);
+    const err = new Error('FILE_NOT_FOUND: ' + relativePath);
+    err.code = 'FILE_NOT_FOUND';
+    err.status = 404;
+    throw err;
   }
   try {
     return JSON.parse(fs.readFileSync(full, 'utf8'));
   } catch (err) {
-    throw new Error('CORRUPTED_JSON_FILE: ' + relativePath);
+    const e = new Error('CORRUPTED_JSON_FILE: ' + relativePath);
+    e.code = 'CORRUPTED_JSON_FILE';
+    e.status = 500;
+    throw e;
   }
 }
 
@@ -61,4 +79,4 @@ function atomicWrite(relativePath, value) {
   fs.renameSync(tmp, full);
 }
 
-module.exports = { exists, read, write, ensureDirectory };
+module.exports = { exists, read, write, ensureDirectory, listFiles };

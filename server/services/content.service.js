@@ -3,6 +3,7 @@
 const contentRepository = require('../repositories/content.repository');
 const userRepository = require('../repositories/user.repository');
 const historyRepository = require('../repositories/history.repository');
+const progressRepository = require('../repositories/progress.repository');
 const { CONTENT_TYPES, ALL_CONTENT_TYPES } = require('../constants/content-types');
 const { contentId } = require('../utils/id-generator');
 const imageService = require('./image/image.service');
@@ -184,7 +185,7 @@ function findReferences(cardId) {
   const referencing = [];
   for (const user of userRepository.getAll()) {
     try {
-      const progress = require('../repositories/progress.repository').getProgress(user.id);
+      const progress = progressRepository.getProgress(user.id);
       if (progress.cards[cardId]) {
         referencing.push(user.id);
         continue;

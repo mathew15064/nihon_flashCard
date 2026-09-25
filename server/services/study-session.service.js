@@ -88,7 +88,10 @@ function getSessionCards(userId, contentType, lesson, sessionIndex) {
   if (!Number.isInteger(idx) || idx < 1 || idx > data.totalSessions) {
     fail(404, 'SESSION_NOT_FOUND', `Session ${sessionIndex} does not exist for lesson ${lesson}`);
   }
-  return data.sessions[idx - 1];
+  const session = data.sessions[idx - 1];
+  const byId = new Map(contentRepository.getAll(contentType).map(i => [i.id, i]));
+  const items = session.contentIds.map(id => byId.get(id)).filter(Boolean);
+  return { ...session, items };
 }
 
 module.exports = { getLessonSessions, getSessionCards };

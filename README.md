@@ -39,32 +39,32 @@ npm run dev        # same, with auto-reload on changes
 Read in this order:
 
 ```text
-README.md                ← you are here (entry point)
+README.md                      ← entry point (stays at root)
     ↓
-ARCHITECTURE.md          ← how the system is designed
+docs/ARCHITECTURE.md           ← how the system is designed
     ↓
-OVERFLOW.md              ← current project state
+docs/OVERFLOW.md               ← current project state
     ↓
-logs/YYYY-MM-DD.md       ← only if historical context is needed
+logs/YYYY-MM-DD.md             ← only if historical context is needed
     ↓
 source code
 ```
-
+Reference docs: docs/API.md, docs/DATA_MODEL.md, docs/LEARNING_SYSTEM.md, docs/CODE_STYLE.md, docs/IMPLEMENTATION_PLAN.md, docs/spec/ (original specs)
 ## AI Agent Startup Protocol
 
 1. Read `README.md`
-2. Read `ARCHITECTURE.md`
-3. Read `OVERFLOW.md`
+2. Read `docs/ARCHITECTURE.md`
+3. Read `docs/OVERFLOW.md`
 4. Inspect source code relevant to the task
 5. Make changes
 6. Test changes
-7. Update `OVERFLOW.md` if the project state changed
+7. Update `docs/OVERFLOW.md` if the project state changed
 8. Create/update the daily log in `logs/YYYY-MM-DD.md`
 
 Do NOT read all historical logs by default — only when investigating a specific issue.
 
-Detailed references: `API.md` (endpoints), `DATA_MODEL.md` (JSON shapes),
-`LEARNING_SYSTEM.md` (scheduling rules), `doc/` (original specifications).
+Detailed references: `docs/API.md` (endpoints), `docs/DATA_MODEL.md` (JSON shapes),
+`docs/LEARNING_SYSTEM.md` (scheduling rules), `docs/spec/` (original specifications).
 
 ## Tech
 

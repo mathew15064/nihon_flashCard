@@ -1,3 +1,4 @@
+> Original specification. Superseded by docs/ARCHITECTURE.md
 # JAPANESE FLASHCARD APP — ARCHITECTURE SPECIFICATION
 
 ## 1. ROLE

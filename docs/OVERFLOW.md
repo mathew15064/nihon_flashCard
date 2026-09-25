@@ -14,41 +14,18 @@ CURRENT_BLOCKER:     NONE
 
 ## 2. Current Implementation
 
-- User system (create/select/switch, active/inactive, localStorage `currentUserId`)
-- Hiragana / Katakana / Kanji / Vocabulary content with CRUD APIs
-- Search, filtering (type/JLPT/lesson/category), pagination
-- Flashcard learn page (random practice queue)
-- Learning progress per user (`progress.json`, cards keyed by cardId)
-- Review scheduling (interval ladder 10m→1d→3d→7d→14d→30d; wrong → +10min)
-- Due-based review sessions (`GET /api/learning/:userId/review`)
-- Review history (append-only monthly files)
-- Dashboard statistics (learned/mastered/due/today/streak/byType/byLesson)
-- Management area (tabs for users + 4 content types, search/filters/CRUD)
-- Content-in-use delete guard (`CONTENT_IN_USE`)
-- Quiz system: multiple-choice quizzes (JP↔meaning, reading questions, mixed),
-  in-memory sessions, server-side answer keys, learning integration via
-  `learning.service.recordReview`, result screen with breakdown
-- Flashcard swipe gestures on learn page (pointer events; right = correct,
-  left = wrong; 100px threshold; same `handleAnswer` path as buttons/keyboard)
-- UI i18n: lightweight client-side system in `public/js/i18n/`
-  (`vi` default, `en`), locale switcher on learn/review pages,
-  persisted in localStorage key `locale`
-- Vocabulary cards display word → reading → romanization → localized meaning;
-  additive fields `romanization` + `meaningVi` on vocabulary items
-  (legacy `meaning` string preserved for quiz/search/management)
-- Mobile-first Learn page: 100dvh flex layout with card in the lower-middle
-  thumb zone, compact header, progress indicator (`n / total`),
-  large Correct/Wrong buttons + Reveal below the card, safe-area padding,
-  tap-to-reveal hint, swipe-feedback badge opacity scaled to drag distance
-- Optional vocabulary images: Wikimedia Commons provider (no API key),
-  `GET /api/images/search` for Management only, image metadata validated
-  (http/https) and stored in vocabulary JSON; flashcard shows image after
-  reveal with skeleton/error fallback and next-card preloading
-- Study Sessions: lessons auto-chunked into 10-card sessions
-  (`DEFAULT_SESSION_SIZE`), derived from content order (stable membership,
-  nothing persisted); `GET /api/learning/:uid/sessions[/cards]`; Learn page
-  has an "All lessons" filter — random mode unchanged, lesson mode shows a
-  mobile session list with derived progress, Continue and next-session hints
+- **Docs layout**: project documentation lives under `docs/`; original
+  pre-implementation specs archived under `docs/spec/`. Root keeps only
+  `README.md` as entry point and `logs/` for daily history.
+- **Error handling**: single shared `server/utils/error-handler.js`
+  (`sendServiceError`); every service/repository throws structured
+  `{code, status, message}` errors dispatched by code+status, never by
+  string matching on `err.message`.
+- **Layering**: every route delegates to a thin controller; controllers
+  import the shared error handler and contain zero business logic.
+- **fs access**: `server/utils/json-file.js` is the ONLY module that
+  imports `fs` / `path` for data access (added `listFiles()` helper);
+  `app.js` still imports `path` for static-file serving.
 
 ## 3. Current Data State
 

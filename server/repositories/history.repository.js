@@ -19,17 +19,9 @@ function getMonthEvents(userId, monthKey) {
 }
 
 function listMonths(userId) {
-  const fs = require('fs');
-  const path = require('path');
-  const dir = path.join(__dirname, '..', '..', 'data', 'learning', 'users', userId, 'history');
-  try {
-    return fs
-      .readdirSync(dir)
-      .filter((f) => /^\d{4}-\d{2}\.json$/.test(f))
-      .map((f) => f.replace('.json', ''));
-  } catch (err) {
-    return [];
-  }
+  return jsonFile
+    .listFiles(`learning/users/${userId}/history`, /^\d{4}-\d{2}\.json$/)
+    .map((f) => f.replace('.json', ''));
 }
 
 function hasAnyHistory(userId) {

@@ -59,4 +59,4 @@ Sequential phases. Each phase is independently implementable and testable. Compl
 ## Phase 10 — Polish
 - Responsive layout pass, loading states, empty states, error toasts from API envelope.
 - Export/backup script (zip/copy of `data/`) — only if requested.
-- Code cleanup, final OVERFLOW.md update against Definition of Done (doc/overflow.md §48).
+- Code cleanup, final OVERFLOW.md update against Definition of Done (docs/spec/spec-overflow.md §48).

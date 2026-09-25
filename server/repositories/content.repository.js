@@ -12,7 +12,10 @@ const FILES = {
 
 function assertValidType(contentType) {
   if (!FILES[contentType]) {
-    throw new Error('INVALID_CONTENT_TYPE: ' + contentType);
+    const err = new Error('Invalid content type');
+    err.code = 'INVALID_CONTENT_TYPE';
+    err.status = 400;
+    throw err;
   }
 }
 

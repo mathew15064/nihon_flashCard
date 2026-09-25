@@ -16,23 +16,11 @@ function assertUser(userId) {
 }
 
 function listAvailableMonths(userId) {
-  return jsonListMonths(userId);
-}
-
-function jsonListMonths(userId) {
-  const fs = require('fs');
-  const path = require('path');
-  const dir = path.join(__dirname, '..', '..', 'data', 'learning', 'users', userId, 'history');
-  try {
-    return fs
-      .readdirSync(dir)
-      .filter((f) => MONTH_RE.test(f.replace('.json', '')))
-      .map((f) => f.replace('.json', ''))
-      .sort()
-      .reverse();
-  } catch (err) {
-    return [];
-  }
+  assertUser(userId);
+  return historyRepository
+    .listMonths(userId)
+    .sort()
+    .reverse();
 }
 
 function getHistory(userId, query = {}) {

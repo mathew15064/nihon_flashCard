@@ -1,3 +1,6 @@
+> Original specification. Superseded by docs/README.md and
+> docs/ARCHITECTURE.md. Kept for historical reference.
+
 # 🇯🇵 Japanese Flashcard
 
 A lightweight Japanese language learning and flashcard web application.
@@ -66,7 +69,8 @@ OVERFLOW.md
 Relevant source code
 ```
 
-## README.md
+#> Original specification. Superseded by /README.md
+# README.md
 
 This file explains:
 

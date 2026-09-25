@@ -1,3 +1,4 @@
+> Original specification. Superseded by /OVERFLOW.md
 # JAPANESE FLASHCARD — OVERFLOW / PROJECT CONTEXT
 
 ## 1. PURPOSE

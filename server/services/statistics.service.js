@@ -25,21 +25,12 @@ function dayKey(date) {
 
 function computeStreakDays(userId) {
   // Consecutive UTC days with at least one review, ending today or yesterday.
-  const fs = require('fs');
-  const path = require('path');
-  const dir = path.join(__dirname, '..', '..', 'data', 'learning', 'users', userId, 'history');
-
-  let files;
-  try {
-    files = fs.readdirSync(dir).filter((f) => /^\d{4}-\d{2}\.json$/.test(f));
-  } catch (err) {
-    return 0;
-  }
+  const months = historyRepository.listMonths(userId);
 
   const days = new Set();
-  for (const file of files) {
+  for (const month of months) {
     try {
-      for (const event of historyRepository.getMonthEvents(userId, file.replace('.json', ''))) {
+      for (const event of historyRepository.getMonthEvents(userId, month)) {
         days.add(dayKey(new Date(event.reviewedAt)));
       }
     } catch (err) {

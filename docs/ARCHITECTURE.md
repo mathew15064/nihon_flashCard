@@ -1,6 +1,6 @@
 # ARCHITECTURE — Japanese Flashcard
 
-Authoritative architecture document. `doc/architecture.md` is the source specification; this file restates the decided architecture for implementation.
+Authoritative architecture document. `docs/spec/spec-architecture.md` is the source specification; this file restates the decided architecture for implementation.
 
 ## 1. System Overview
 
@@ -26,7 +26,9 @@ JSON files (data/)
 ```text
 japanese-flashcard/
 ├── package.json
-├── README.md / ARCHITECTURE.md / OVERFLOW.md
+├── README.md
+├── docs/                    # all project docs (ARCHITECTURE, OVERFLOW, API, ...)
+│   └── spec/                # original pre-implementation specs
 │
 ├── server/
 │   ├── app.js              # Express app setup, middleware, route mounting
@@ -210,7 +212,7 @@ server/services/image/
 
 Startup: read `currentUserId` from localStorage → validate via `GET /api/users/:id` → dashboard if valid, else user selection. User switching always allowed.
 
-## 11. i18n Architecture
+## 12. i18n Architecture
 
 Two distinct concepts that must not be mixed:
 
@@ -238,7 +240,7 @@ public/js/i18n/
 - Language switcher (`#locale-select`, 🇻🇳/🇺🇸) is included in learn.html and
   review.html headers.
 
-## 12. Flashcard Gesture Architecture
+## 13. Flashcard Gesture Architecture
 
 `public/js/flashcard.js` exposes named responsibilities:
 `loadCards → renderCard → revealCard → handleAnswer → showFeedback → nextCard`,
@@ -258,7 +260,7 @@ plus `handleSwipe*` and keyboard handling.
 - Swipe is an enhancement only — buttons and keyboard shortcuts remain fully
   functional and accessible.
 
-## 12b. Study Sessions (lesson chunking)
+## 14. Study Sessions (lesson chunking)
 
 A CONTENT LESSON and a LEARNING SESSION are different concepts:
 
@@ -300,7 +302,7 @@ PROGRESS: stays per card in progress.json — sessions own nothing
   commits an answer; the two are mutually exclusive per gesture
   (`dragMoved` suppresses click-reveal after real drags).
 
-## 13. Vocabulary Display Model
+## 15. Vocabulary Display Model
 
 Vocabulary schema (additive extension, backward compatible):
 
