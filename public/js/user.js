@@ -15,17 +15,17 @@ $(function () {
   function userCard(user) {
     const inactive = user.status === 'inactive';
     return $(`
-      <li class="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between">
+      <li class="apple-card flex items-center justify-between">
         <div>
-          <p class="font-semibold text-slate-800"></p>
-          <p class="text-xs text-slate-400"></p>
+          <p class="font-semibold text-ink"></p>
+          <p class="apple-caption"></p>
         </div>
-        <button class="select-btn bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm px-4 py-2 rounded-lg">
+        <button class="select-btn apple-btn apple-btn-primary">
         </button>
       </li>
     `)
       .find('p.font-semibold').text(user.displayName).end()
-      .find('p.text-xs')
+      .find('p.apple-caption')
         .text(inactive ? `${user.username} · inactive` : `@${user.username}`)
       .end()
       .find('.select-btn')
@@ -45,7 +45,7 @@ $(function () {
       .done(function (users) {
         $list.empty();
         if (!users.length) {
-          $list.append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('userSelect.noUsers')));
+          $list.append($('<li class="text-ink-muted text-sm"></li>').text(I18n.t('userSelect.noUsers')));
           return;
         }
         users.forEach((u) => $list.append(userCard(u)));

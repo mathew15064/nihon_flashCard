@@ -9,8 +9,8 @@ window.I18N_EN = {
     empty: 'No cards available for this content type yet.',
     reveal: 'Reveal',
     tapToReveal: 'Tap to reveal',
-    correct: 'Correct →',
-    wrong: '← Wrong',
+    correct: 'Correct',
+    wrong: 'Wrong',
     error: 'Could not record answer',
     loadError: 'Could not load cards',
     hint: 'Space: reveal / next · ← Wrong · → Correct · swipe right = Correct, swipe left = Wrong'
@@ -73,8 +73,8 @@ window.I18N_EN = {
     loadError: 'Could not search images'
   },
   swipe: {
-    correct: '✓ Correct',
-    wrong: '✕ Wrong'
+    correct: 'Correct',
+    wrong: 'Wrong'
   },
   dashboard: {
     title: 'Dashboard',
@@ -100,8 +100,8 @@ window.I18N_EN = {
     loadError: 'Could not load history',
     prev: 'Previous',
     next: 'Next',
-    correct: '✓ correct',
-    wrong: '✗ wrong'
+    correct: 'correct',
+    wrong: 'wrong'
   },
   management: {
     title: 'Management',
@@ -138,8 +138,8 @@ window.I18N_EN = {
     start: 'Start quiz',
     generating: 'Generating…',
     questionProgress: 'Question {n} / {total}',
-    correct: '✓ Correct!',
-    wrong: '✗ Wrong',
+    correct: 'Correct!',
+    wrong: 'Wrong',
     next: 'Next question',
     seeResult: 'See result',
     retry: 'Retry',
@@ -152,7 +152,7 @@ window.I18N_EN = {
     title: 'Japanese Flashcard',
     subtitle: 'Who is learning today?',
     users: 'Users',
-    newUser: '+ New user',
+    newUser: 'New user',
     create: 'Create',
     username: 'Username',
     displayName: 'Display name (optional)',

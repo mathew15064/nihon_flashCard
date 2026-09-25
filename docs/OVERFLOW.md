@@ -81,9 +81,9 @@ CURRENT_BLOCKER:
 None
 
 NEXT_RECOMMENDED_ACTION:
-Wait for explicit request. Possible follow-ups: extend i18n to remaining
-pages (dashboard/history/management/quiz), add swipe gestures to review page,
-backfill romanization for future vocabulary seeds.
+None. All features in scope are implemented and tested.
+Possible follow-ups: SQLite backup/restore CLI, additional
+image providers, SM-2 spaced repetition, dashboard caching.
 ```
 
 ## 7. Agent Handoff
@@ -91,5 +91,7 @@ backfill romanization for future vocabulary seeds.
 - Entry point: README.md → ARCHITECTURE.md → this file → relevant source code.
 - Historical context (what happened when, why): read only the specific day in `logs/`.
 - API reference: API.md. Data shapes: DATA_MODEL.md. Scheduling rules: LEARNING_SYSTEM.md.
+- Tests: docs/TESTING.md. Dev workflow: docs/DEVELOPMENT.md.
+- Run npm test and npm run test:e2e after any backend change; both must pass.
 - When adding a feature: follow layering route → controller → service → repository,
   reuse existing services, test, update OVERFLOW.md if state changed, append to today's log.

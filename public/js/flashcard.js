@@ -178,7 +178,7 @@ $(function () {
         : s.completed > 0 ? I18n.t('session.continueSession') : I18n.t('session.start');
 
       const $row = $(`
-        <div class="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between gap-3">
+        <div class="apple-card flex items-center justify-between gap-3">
           <div class="min-w-0">
             <p class="font-medium text-slate-800 text-sm"></p>
             <p class="text-xs text-slate-400"></p>
@@ -186,7 +186,7 @@ $(function () {
               <div class="h-full bg-emerald-500"></div>
             </div>
           </div>
-          <button class="shrink-0 min-h-[44px] px-5 rounded-xl text-white text-sm font-medium"></button>
+          <button class="apple-btn apple-btn-secondary shrink-0 !text-sm"></button>
         </div>
       `);
 
@@ -197,8 +197,8 @@ $(function () {
       $row.find('p.text-xs').text(`${I18n.t('session.cards', { n: s.count })} · ${I18n.t('session.minutes', { n: minutes })}`);
       $row.find('.h-full').css('width', `${s.progress}%`);
       const $btn = $row.find('button')
-        .toggleClass('bg-emerald-500', !isDone)
-        .toggleClass('bg-slate-400', isDone)
+        .toggleClass('apple-btn-primary', !isDone)
+        .toggleClass('apple-btn-secondary', isDone)
         .text(actionLabel)
         .on('click', () => startSession(s.sessionIndex));
 
@@ -380,12 +380,12 @@ $(function () {
       .toggleClass('hidden', false)
       .css('opacity', strength);
     if (dx > 0) {
-      $badge.removeClass('text-red-500 border-red-400 bg-red-50')
-        .addClass('text-emerald-600 border-emerald-500 bg-emerald-50')
+      $badge.removeClass('text-wrong border-wrong')
+        .addClass('text-correct border-correct')
         .text(I18n.t('swipe.correct'));
     } else {
-      $badge.removeClass('text-emerald-600 border-emerald-500 bg-emerald-50')
-        .addClass('text-red-500 border-red-400 bg-red-50')
+      $badge.removeClass('text-correct border-correct')
+        .addClass('text-wrong border-wrong')
         .text(I18n.t('swipe.wrong'));
     }
   }

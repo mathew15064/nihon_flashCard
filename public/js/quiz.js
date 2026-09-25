@@ -3,17 +3,17 @@
 $(function () {
   function getContentTypes() {
     return [
-      { value: 'hiragana', label: I18n.t('content.hiragana') || 'Hiragana' },
-      { value: 'katakana', label: I18n.t('content.katakana') || 'Katakana' },
-      { value: 'kanji', label: I18n.t('content.kanji') || 'Kanji' },
-      { value: 'vocabulary', label: I18n.t('content.vocabulary') || 'Vocabulary' },
+      { value: 'hiragana', label: I18n.t('content.hiragana') },
+      { value: 'katakana', label: I18n.t('content.katakana') },
+      { value: 'kanji', label: I18n.t('content.kanji') },
+      { value: 'vocabulary', label: I18n.t('content.vocabulary') },
       { value: 'mixed', label: 'Mixed' }
     ];
   }
 
   const QUESTION_TYPES = {
     all: [
-      { value: 'random', label: '🎲 Random' },
+      { value: 'random', label: 'Random' },
       { value: 'jp-to-meaning', label: 'JP → Meaning' },
       { value: 'meaning-to-jp', label: 'Meaning → JP' }
     ],
@@ -49,8 +49,8 @@ $(function () {
   }
 
   function pill(value, label, group, active) {
-    return $(`<button data-group="${group}" data-value="${value}"
-      class="px-4 py-2 rounded-lg text-sm border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'}">${label}</button>`);
+    const cls = 'apple-btn text-sm !py-2 !px-5 ' + (active ? 'apple-btn-primary' : 'apple-btn-secondary');
+    return $(`<button data-group="${group}" data-value="${value}" class="${cls}">${label}</button>`);
   }
 
   function renderConfig() {
@@ -84,8 +84,8 @@ $(function () {
 
     $(this).closest('div').find('button').each(function () {
       $(this)
-        .toggleClass('bg-indigo-600 text-white border-indigo-600', $(this).data('value') == value)
-        .toggleClass('bg-white text-slate-700 border-slate-300 hover:border-indigo-400', $(this).data('value') != value);
+        .toggleClass('apple-btn-primary', $(this).data('value') == value)
+        .toggleClass('apple-btn-secondary', $(this).data('value') != value);
     });
   });
 
@@ -125,7 +125,7 @@ $(function () {
     const $options = $('#options').empty();
     q.options.forEach((o) => {
       $options.append(
-        $(`<button data-option="${o.id}" class="opt-btn bg-white border-2 border-slate-200 hover:border-indigo-400 rounded-xl px-4 py-4 text-lg font-medium text-slate-800 break-all transition-colors">${o.id}. ${escapeHtml(o.text)}</button>`)
+        $(`<button data-option="${o.id}" class="opt-btn apple-card w-full text-left text-lg font-medium text-ink break-words hover:border-action transition-colors">${o.id}. ${escapeHtml(o.text)}</button>`)
           .on('click', () => answer(o.id))
       );
     });
@@ -152,11 +152,11 @@ $(function () {
       $('.opt-btn').each(function () {
         const $b = $(this);
         const id = $b.data('option');
-        $b.prop('disabled', true).removeClass('hover:border-indigo-400');
+        $b.prop('disabled', true).removeClass('hover:border-action hover:border-indigo-400');
         if (id === res.correctOptionId) {
-          $b.addClass('border-emerald-500 bg-emerald-50 text-emerald-800');
+          $b.addClass('!border-correct !text-correct');
         } else if (id === optionId) {
-          $b.addClass('border-red-500 bg-red-50 text-red-700 line-through');
+          $b.addClass('!border-wrong !text-wrong line-through');
         } else {
           $b.addClass('opacity-50');
         }
@@ -166,8 +166,8 @@ $(function () {
       else score.wrong += 1;
 
       const $fb = $('#feedback')
-        .removeClass('hidden bg-emerald-100 bg-red-100 text-emerald-800 text-red-700')
-        .addClass(res.correct ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700');
+        .removeClass('hidden bg-correct/10 text-correct bg-wrong/10 text-wrong')
+        .addClass(res.correct ? 'bg-correct/10 text-correct' : 'bg-wrong/10 text-wrong');
       $fb.append(`<p class="font-semibold">${res.correct ? I18n.t('quiz.correct') : I18n.t('quiz.wrong')}</p>`);
       $fb.append(`<p class="text-sm mt-1">${escapeHtml(res.explanation)}</p>`);
 
@@ -191,20 +191,20 @@ $(function () {
       );
       $('#result-score').text(result.score + '%');
       $('#result-summary').text(I18n.t('quiz.resultSummary', { correct: result.correct, wrong: result.wrong, total: result.total }));
-      $('#result-emoji').text(result.score >= 80 ? '🎉' : result.score >= 50 ? '👍' : '📚');
+      $('#result-emoji').text(result.score >= 80 ? 'Excellent' : result.score >= 50 ? 'Good' : 'Keep practicing');
 
       const $bd = $('#result-breakdown').empty();
       result.questions.forEach((q, i) => {
         $bd.append($(`
-          <div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 text-sm">
+          <div class="flex items-center justify-between bg-parchment rounded-lg px-3 py-2 text-sm">
             <span class="truncate mr-2"></span>
             <span class="shrink-0 font-semibold"></span>
           </div>
         `)
           .find('span.truncate').text(`${i + 1}. ${q.prompt}`).end()
           .find('span.font-semibold')
-            .text(q.correct ? '✓' : `✗ (${q.correctOptionId})`)
-            .addClass(q.correct ? 'text-emerald-600' : 'text-red-600')
+            .text(q.correct ? 'Correct' : `Wrong (${q.correctOptionId})`)
+            .addClass(q.correct ? 'text-correct' : 'text-wrong')
           .end());
       });
       show('result');

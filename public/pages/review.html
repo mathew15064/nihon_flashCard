@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Japanese Flashcard — Review</title>
+  <title>Review — Japanese Flashcard</title>
+  <script src="/js/tailwind-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="/css/app.css" />
 </head>
-<body class="bg-slate-100 min-h-screen">
-  <header class="bg-white shadow-sm">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-      <a href="/pages/dashboard.html" data-i18n="nav.dashboard" class="text-slate-600 hover:underline text-sm whitespace-nowrap">&larr; Dashboard</a>
-      <h1 class="font-bold text-slate-800" data-i18n="review.title">Review</h1>
+<body class="bg-parchment min-h-screen">
+
+  <nav class="apple-nav">
+    <div class="max-w-3xl w-full mx-auto px-4 flex items-center justify-between gap-3">
+      <a href="/pages/dashboard.html" class="apple-nav-brand" data-i18n="nav.dashboard">Dashboard</a>
       <div class="flex items-center gap-2">
-        <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
-          <option value="vi">🇻🇳 Tiếng Việt</option>
-          <option value="en">🇺🇸 English</option>
+        <select id="locale-select" class="bg-transparent border border-white/30 rounded-full px-2 py-0.5 text-xs text-white" aria-label="Language">
+          <option value="vi">VI</option>
+          <option value="en">EN</option>
         </select>
-        <select id="content-type" class="border border-slate-300 rounded-lg px-2 py-1 text-sm">
+        <select id="content-type" class="bg-transparent border border-white/30 rounded-full px-2 py-0.5 text-xs text-white" aria-label="Content type">
           <option value="" data-i18n="review.allTypes">All types</option>
           <option value="hiragana" data-i18n="content.hiragana">Hiragana</option>
           <option value="katakana" data-i18n="content.katakana">Katakana</option>
@@ -27,40 +28,41 @@
         </select>
       </div>
     </div>
-  </header>
+  </nav>
 
-  <main class="max-w-2xl mx-auto px-4 py-10">
-    <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
+  <main class="max-w-3xl mx-auto px-4 py-10">
+    <header class="text-center mb-8">
+      <h1 class="apple-headline" data-i18n="review.title">Review</h1>
+    </header>
 
-    <div id="session-info" class="text-center text-sm text-slate-500 mb-4"></div>
+    <p id="error" class="hidden mb-4 rounded-lg bg-red-50 text-red-700 px-4 py-2 text-sm"></p>
 
-    <div id="card" class="hidden bg-white rounded-2xl shadow-lg p-10 min-h-[16rem] flex flex-col items-center justify-center text-center cursor-pointer select-none">
-      <p class="text-xs uppercase tracking-wide text-slate-400 mb-3"></p>
-      <p id="card-front" class="text-5xl sm:text-8xl font-semibold text-slate-800 break-all"></p>
-      <div id="card-back" class="hidden mt-6 border-t border-slate-200 pt-6 w-full">
-        <p id="answer-reading" class="hidden text-2xl text-slate-600"></p>
-        <p id="answer-romanization" class="hidden text-lg italic text-slate-400"></p>
-        <p id="answer-main" class="mt-4 text-3xl font-medium text-indigo-700"></p>
-        <p id="answer-extra" class="mt-2 text-slate-500 break-words"></p>
+    <div id="session-info" class="text-center apple-caption mb-4"></div>
+
+    <div id="card" class="hidden bg-white border border-hairline rounded-[18px] p-10 min-h-[16rem] flex flex-col items-center justify-center text-center cursor-pointer select-none">
+      <p class="apple-caption uppercase tracking-wide mb-3"></p>
+      <p id="card-front" class="text-5xl sm:text-7xl font-semibold text-ink break-all"></p>
+      <div id="card-back" class="hidden mt-6 border-t border-hairline pt-6 w-full">
+        <p id="answer-reading" class="hidden text-2xl text-ink-soft"></p>
+        <p id="answer-romanization" class="hidden text-lg italic text-ink-muted"></p>
+        <p id="answer-main" class="mt-4 text-3xl font-semibold text-action"></p>
+        <p id="answer-extra" class="mt-2 text-ink-muted break-words"></p>
       </div>
     </div>
 
-    <div id="done-panel" class="hidden bg-white rounded-2xl shadow-lg p-10 text-center">
-      <p class="text-5xl mb-4">🎉</p>
-      <p class="text-xl font-semibold text-slate-800 mb-2" data-i18n="review.sessionComplete">Session complete</p>
-      <p id="done-summary" class="text-slate-500"></p>
-      <button id="reload-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-medium" data-i18n="review.loadMore">
-        Load more
-      </button>
+    <div id="done-panel" class="hidden apple-card p-10 text-center">
+      <p class="apple-headline text-2xl mb-3" data-i18n="review.sessionComplete">Session complete</p>
+      <p id="done-summary" class="apple-caption mb-6"></p>
+      <button id="reload-btn" class="apple-btn apple-btn-primary" data-i18n="review.loadMore">Load more</button>
     </div>
 
-    <div class="mt-8 flex justify-center gap-4">
-      <button id="wrong-btn" disabled class="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.wrong">Wrong</button>
-      <button id="reveal-btn" class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.reveal">Reveal</button>
-      <button id="correct-btn" disabled class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium px-8 py-3 rounded-xl w-32" data-i18n="learn.correct">Correct</button>
+    <div class="mt-10 flex justify-center gap-3 max-w-md mx-auto">
+      <button id="wrong-btn" disabled class="apple-btn apple-btn-wrong flex-1" data-i18n="learn.wrong">Wrong</button>
+      <button id="reveal-btn" class="apple-btn apple-btn-dark flex-1" data-i18n="learn.reveal">Reveal</button>
+      <button id="correct-btn" disabled class="apple-btn apple-btn-correct flex-1" data-i18n="learn.correct">Correct</button>
     </div>
-    <p id="status-line" class="text-center text-xs text-emerald-700 mt-2 h-4"></p>
-    <p class="text-center text-xs text-slate-400 mt-3" data-i18n="learn.hint">Space: reveal / next · ← Wrong · → Correct</p>
+    <p id="status-line" class="text-center apple-caption mt-3 h-4"></p>
+    <p class="text-center apple-caption mt-2" data-i18n="learn.hint"></p>
   </main>
 
   <script src="/js/api.js"></script>

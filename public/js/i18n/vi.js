@@ -9,8 +9,8 @@ window.I18N_VI = {
     empty: 'Chưa có thẻ nào cho loại nội dung này.',
     reveal: 'Lật thẻ',
     tapToReveal: 'Chạm để lật',
-    correct: 'Đúng →',
-    wrong: '← Sai',
+    correct: 'Đúng',
+    wrong: 'Sai',
     error: 'Không thể ghi nhận câu trả lời',
     loadError: 'Không thể tải thẻ',
     hint: 'Space: lật / tiếp theo · ← Sai · → Đúng · quẹt phải = Đúng, quẹt trái = Sai'
@@ -73,8 +73,8 @@ window.I18N_VI = {
     loadError: 'Không thể tìm ảnh'
   },
   swipe: {
-    correct: '✓ Đúng',
-    wrong: '✕ Sai'
+    correct: 'Đúng',
+    wrong: 'Sai'
   },
   dashboard: {
     title: 'Bảng điều khiển',
@@ -84,7 +84,7 @@ window.I18N_VI = {
     switchUser: 'Đổi người dùng',
     learned: 'Đã học',
     dueForReview: 'Cần ôn tập',
-    todayReviews: 'Ôn hôm nay',
+    todayReviews: 'Ôn tập hôm nay',
     dayStreak: 'Chuỗi ngày',
     progressByType: 'Tiến độ theo loại nội dung',
     vocabByLesson: 'Từ vựng theo bài học',
@@ -95,13 +95,13 @@ window.I18N_VI = {
     thisMonth: 'Tháng này',
     allMonths: 'Tất cả các tháng',
     loading: 'Đang tải lịch sử…',
-    empty: 'Không có sự kiện ôn tập nào trong khoảng thời gian này.',
-    noHistory: 'Không có lịch sử.',
+    empty: 'Không có sự kiện nào trong khoảng thời gian này.',
+    noHistory: 'Chưa có lịch sử.',
     loadError: 'Không thể tải lịch sử',
     prev: 'Trước',
-    next: 'Tiếp',
-    correct: '✓ đúng',
-    wrong: '✗ sai'
+    next: 'Sau',
+    correct: 'đúng',
+    wrong: 'sai'
   },
   management: {
     title: 'Quản lý',
@@ -113,22 +113,22 @@ window.I18N_VI = {
     search: 'Tìm kiếm…',
     allTypes: 'Tất cả loại',
     allJlpt: 'Tất cả JLPT',
-    allLessons: 'Tất cả bài học',
+    allLessons: 'Tất cả bài',
     allCategories: 'Tất cả danh mục',
     add: 'Thêm',
     edit: 'Sửa',
-    delete: 'Xóa',
+    delete: 'Xoá',
     save: 'Lưu',
-    cancel: 'Hủy',
+    cancel: 'Huỷ',
     activate: 'Kích hoạt',
-    deactivate: 'Hủy kích hoạt',
-    confirmDelete: 'Xóa mục này?',
-    confirmDeleteUser: 'Xóa {name} và lưu trữ dữ liệu học tập?',
+    deactivate: 'Vô hiệu',
+    confirmDelete: 'Xoá mục này?',
+    confirmDeleteUser: 'Xoá {name} và lưu trữ dữ liệu học tập?',
     loading: 'Đang tải…',
-    empty: 'Không tìm thấy gì.',
+    empty: 'Không tìm thấy.',
     loadError: 'Không thể tải danh sách',
     saveError: 'Lưu thất bại',
-    deleteError: 'Xóa thất bại'
+    deleteError: 'Xoá thất bại'
   },
   quiz: {
     title: 'Trắc nghiệm',
@@ -138,8 +138,8 @@ window.I18N_VI = {
     start: 'Bắt đầu trắc nghiệm',
     generating: 'Đang tạo…',
     questionProgress: 'Câu hỏi {n} / {total}',
-    correct: '✓ Đúng!',
-    wrong: '✗ Sai',
+    correct: 'Đúng!',
+    wrong: 'Sai',
     next: 'Câu tiếp theo',
     seeResult: 'Xem kết quả',
     retry: 'Làm lại',
@@ -150,16 +150,16 @@ window.I18N_VI = {
   },
   userSelect: {
     title: 'Japanese Flashcard',
-    subtitle: 'Hôm nay ai sẽ học?',
+    subtitle: 'Hôm nay ai học?',
     users: 'Người dùng',
-    newUser: '+ Thêm người dùng',
+    newUser: 'Người dùng mới',
     create: 'Tạo',
-    username: 'Tên người dùng',
-    displayName: 'Tên hiển thị (tùy chọn)',
-    noUsers: 'Chưa có người dùng nào. Hãy tạo một tài khoản để bắt đầu.',
+    username: 'Tên đăng nhập',
+    displayName: 'Tên hiển thị (tuỳ chọn)',
+    noUsers: 'Chưa có người dùng. Tạo mới để bắt đầu.',
     select: 'Chọn',
     loading: 'Đang tải người dùng…',
-    loadError: 'Không thể tải người dùng',
+    loadError: 'Không thể tải danh sách người dùng',
     createError: 'Không thể tạo người dùng'
   }
 };

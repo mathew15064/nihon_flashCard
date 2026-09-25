@@ -13,8 +13,14 @@ Errors:
 ```
 
 Common error codes:
-`VALIDATION_ERROR` (400), `USER_NOT_FOUND` (404), `CONTENT_NOT_FOUND` (404),
-`USERNAME_TAKEN` (409), `USER_INACTIVE` (409), `INVALID_CONTENT_TYPE` (400),
+`VALIDATION_ERROR` (400), `USER_NOT_FOUND` (404), `USERNAME_TAKEN` (409),
+`USER_INACTIVE` (409), `USER_HAS_LEARNING_DATA` (409), `CONTENT_NOT_FOUND` (404),
+`INVALID_CONTENT_TYPE` (400), `CONTENT_IN_USE` (409), `NOT_FOUND` (404),
+`LESSON_NOT_FOUND` (404), `SESSION_NOT_FOUND` (404), `SESSION_FORBIDDEN` (403),
+`QUESTION_NOT_FOUND` (404), `ALREADY_ANSWERED` (409), `QUIZ_INCOMPLETE` (409),
+`INVALID_QUESTION_TYPE` (400), `INSUFFICIENT_CONTENT` (409), `FILE_NOT_FOUND` (404),
+`INVALID_PATH` (400), `CORRUPTED_JSON_FILE` (500),
+`IMAGE_PROVIDER_UNAVAILABLE` (503), `IMAGE_PROVIDER_ERROR` (502),
 `INTERNAL_ERROR` (500).
 
 ---
@@ -105,3 +111,18 @@ Derived entirely from content + progress + history at request time.
 ## Static
 
 Express serves `public/` only. `/data` is never exposed.
+
+## Testing
+
+See `TESTING.md` for the full test workflow.
+
+Quick reference:
+
+```bash
+npm test           # API tests, Node built-in runner
+npm run test:e2e   # Playwright end-to-end tests
+npm run test:all   # both, in sequence
+```
+
+Every test run uses an isolated SQLite database via the `DB_PATH`
+environment variable (default for the dev server: `data/app.db`).

@@ -3,57 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="dashboard.title">Japanese Flashcard — Dashboard</title>
+  <title>Dashboard</title>
+  <script src="/js/tailwind-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="/css/app.css" />
 </head>
-<body class="bg-slate-100 min-h-screen">
-  <header class="bg-white shadow-sm">
-    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-      <h1 class="font-bold text-slate-800">🇯🇵 Japanese Flashcard</h1>
-      <div class="flex items-center gap-3 text-sm">
-        <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
-          <option value="vi">🇻🇳 Tiếng Việt</option>
-          <option value="en">🇺🇸 English</option>
+<body class="bg-parchment min-h-screen">
+
+  <nav class="apple-nav">
+    <div class="max-w-5xl w-full mx-auto px-6 flex items-center justify-between gap-3">
+      <span class="apple-nav-brand">Japanese Flashcard</span>
+      <div class="flex items-center gap-3">
+        <span id="current-user" class="text-white/70"></span>
+        <button id="switch-user-btn" data-i18n="dashboard.switchUser">Switch user</button>
+        <select id="locale-select" class="bg-transparent border border-white/30 rounded-full px-3 py-1 text-xs text-white" aria-label="Language">
+          <option value="vi">VI</option>
+          <option value="en">EN</option>
         </select>
-        <span id="current-user" class="text-slate-600"></span>
-        <button id="switch-user-btn" class="text-indigo-600 hover:underline" data-i18n="dashboard.switchUser">Switch user</button>
       </div>
     </div>
-  </header>
+  </nav>
 
-  <main class="max-w-3xl mx-auto px-4 py-8">
-    <p id="welcome" class="text-xl text-slate-700 mb-6"></p>
-    <p id="stats-loading" class="text-slate-400 text-sm mb-6" data-i18n="dashboard.statsLoading">Loading statistics…</p>
+  <main class="max-w-5xl mx-auto px-6 py-12">
+    <header class="mb-10">
+      <h1 id="welcome" class="apple-headline mb-3"></h1>
+      <p id="stats-loading" class="apple-caption" data-i18n="dashboard.statsLoading">Loading statistics…</p>
+    </header>
 
-    <section id="totals" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"></section>
+    <section id="totals" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"></section>
 
-    <nav class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-      <a href="/pages/learn.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
-        <p class="text-xl font-semibold text-slate-800" data-i18n="learn.title">📚 Learn</p>
+    <nav class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+      <a href="/pages/learn.html" class="apple-card hover:border-action transition-colors text-center py-6">
+        <p class="text-base font-semibold">Learn</p>
       </a>
-      <a href="/pages/history.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
-        <p class="text-xl font-semibold text-slate-800" data-i18n="history.title">📜 History</p>
+      <a href="/pages/review.html" class="apple-card hover:border-action transition-colors text-center py-6">
+        <p class="text-base font-semibold">Review</p>
       </a>
-      <a href="/pages/review.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
-        <p class="text-xl font-semibold text-slate-800" data-i18n="review.title">🔁 Review</p>
+      <a href="/pages/quiz.html" class="apple-card hover:border-action transition-colors text-center py-6">
+        <p class="text-base font-semibold">Quiz</p>
       </a>
-      <a href="/pages/quiz.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
-        <p class="text-xl font-semibold text-slate-800" data-i18n="quiz.title">🧠 Quiz</p>
+      <a href="/pages/history.html" class="apple-card hover:border-action transition-colors text-center py-6">
+        <p class="text-base font-semibold">History</p>
       </a>
-      <a href="/pages/management.html" class="bg-white rounded-xl shadow p-5 hover:shadow-md">
-        <p class="text-xl font-semibold text-slate-800" data-i18n="management.title">⚙️ Manage</p>
+      <a href="/pages/management.html" class="apple-card hover:border-action transition-colors text-center py-6">
+        <p class="text-base font-semibold">Manage</p>
       </a>
     </nav>
 
-    <section class="mb-8">
-      <h2 class="text-lg font-semibold text-slate-700 mb-3" data-i18n="dashboard.progressByType">Progress by content type</h2>
+    <section class="mb-10">
+      <h2 class="apple-headline text-2xl mb-4" data-i18n="dashboard.progressByType">Progress by content type</h2>
       <div id="by-type" class="space-y-3"></div>
     </section>
 
     <section id="lesson-section" class="hidden">
-      <h2 class="text-lg font-semibold text-slate-700 mb-3" data-i18n="dashboard.vocabByLesson">Vocabulary by lesson</h2>
+      <h2 class="apple-headline text-2xl mb-4" data-i18n="dashboard.vocabByLesson">Vocabulary by lesson</h2>
       <div id="by-lesson" class="space-y-2"></div>
     </section>
   </main>

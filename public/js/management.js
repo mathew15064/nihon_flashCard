@@ -1,48 +1,48 @@
 'use strict';
 
 $(function () {
+  let tab = 'users'; // 'users' | 'hiragana' | 'katakana' | 'kanji' | 'vocabulary'
+  let filters = {};
+  let editingId = null;
+
   const $list = $('#item-list');
   const $toolbar = $('#toolbar');
   const $error = $('#error');
   const $modal = $('#form-modal');
   const $form = $('#entity-form');
 
-  let tab = 'users';
-  let page = 1;
-  let filters = {};
-  let editingId = null;
-
   function showError(msg) {
     $error.text(msg).removeClass('hidden');
   }
+
   function hideError() {
     $error.addClass('hidden');
   }
 
-  /* ---------------- field definitions ---------------- */
+  /* ---------------- schema definitions for CRUD ---------------- */
 
   const FIELDS = {
     users: [
       { name: 'username', label: 'Username', required: true },
-      { name: 'displayName', label: 'Display name' },
+      { name: 'displayName', label: 'Display Name' },
       { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] }
     ],
     hiragana: [
       { name: 'character', label: 'Character', required: true },
-      { name: 'romaji', label: 'Romaji' },
+      { name: 'romaji', label: 'Romaji', required: true },
       { name: 'type', label: 'Type', type: 'select', options: ['basic', 'dakuten', 'handakuten', 'combination'] }
     ],
     katakana: [
       { name: 'character', label: 'Character', required: true },
-      { name: 'romaji', label: 'Romaji' },
+      { name: 'romaji', label: 'Romaji', required: true },
       { name: 'type', label: 'Type', type: 'select', options: ['basic', 'dakuten', 'handakuten', 'combination'] }
     ],
     kanji: [
       { name: 'kanji', label: 'Kanji', required: true },
-      { name: 'onyomi', label: 'Onyomi (comma separated)' },
-      { name: 'kunyomi', label: 'Kunyomi (comma separated)' },
-      { name: 'meanings', label: 'Meanings (comma separated)' },
-      { name: 'jlpt', label: 'JLPT', type: 'select', options: ['', 'N5', 'N4', 'N3', 'N2', 'N1'] },
+      { name: 'onyomi', label: 'Onyomi (comma-separated)' },
+      { name: 'kunyomi', label: 'Kunyomi (comma-separated)' },
+      { name: 'meanings', label: 'Meanings (comma-separated)', required: true },
+      { name: 'jlpt', label: 'JLPT', type: 'select', options: ['N5', 'N4', 'N3', 'N2', 'N1'] },
       { name: 'lesson', label: 'Lesson', type: 'number' }
     ],
     vocabulary: [
@@ -103,18 +103,18 @@ $(function () {
     const $modal = $(
       '<div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-20"></div>'
     );
-    const $panel = $('<div class="bg-white rounded-xl shadow-xl p-5 w-full max-w-lg space-y-3 max-h-[90vh] overflow-y-auto"></div>');
-    const $title = $('<h3 class="text-lg font-semibold text-slate-700"></h3>').text(
+    const $panel = $('<div class="bg-white rounded-[18px] border border-hairline p-5 w-full max-w-lg space-y-3 max-h-[90vh] overflow-y-auto"></div>');
+    const $title = $('<h3 class="text-lg font-semibold text-ink"></h3>').text(
       `${I18n.t('image.searchBtn')} — ${item.word}`
     );
     const $searchRow = $('<div class="flex gap-2"></div>');
     const $input = $(
-      '<input type="text" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm" />'
+      '<input type="text" class="apple-input flex-1 text-sm !py-2 !px-3" />'
     ).val(imageQuery(item)).attr('placeholder', I18n.t('image.searchPlaceholder'));
     const $searchBtn = $(
-      '<button class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium"></button>'
+      '<button class="apple-btn apple-btn-primary !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>'
     ).text(I18n.t('image.searchBtn'));
-    const $status = $('<p class="text-sm text-slate-500"></p>');
+    const $status = $('<p class="apple-caption"></p>');
     const $grid = $('<div class="grid grid-cols-3 gap-2"></div>');
     const $preview = $('<div class="hidden space-y-1"></div>');
     let selected = null;
@@ -127,17 +127,17 @@ $(function () {
       selected = meta;
       $preview.empty().removeClass('hidden');
 
-      const $imgWrap = $('<div class="rounded-xl overflow-hidden bg-slate-100 aspect-[4/3] max-w-[240px]"></div>');
+      const $imgWrap = $('<div class="rounded-[18px] overflow-hidden bg-parchment aspect-[4/3] max-w-[240px]"></div>');
       const $img = $('<img class="w-full h-full object-cover" />');
       $img[0].src = meta.thumbnailUrl || meta.url;
       $imgWrap.append($img);
 
-      const $metaText = $('<p class="text-xs text-slate-500 break-words"></p>').text(metadataLine(meta));
-      const $link = $('<a target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 hover:underline block"></a>')
+      const $metaText = $('<p class="apple-caption break-words"></p>').text(metadataLine(meta));
+      const $link = $('<a target="_blank" rel="noopener noreferrer" class="text-xs text-action hover:underline block"></a>')
         .attr('href', meta.sourceUrl)
         .text(meta.sourceUrl);
       const $actions = $('<div class="flex gap-2 pt-1"></div>');
-      const $save = $('<button class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium"></button>')
+      const $save = $('<button class="apple-btn apple-btn-primary !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
         .text(I18n.t('image.save'))
         .on('click', async () => {
           try {
@@ -148,7 +148,7 @@ $(function () {
             $status.text(err.message || I18n.t('review.loadError'));
           }
         });
-      const $remove = $('<button class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm"></button>')
+      const $remove = $('<button class="apple-btn apple-btn-wrong !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
         .text(I18n.t('image.remove'))
         .on('click', async () => {
           try {
@@ -159,11 +159,11 @@ $(function () {
             $status.text(err.message || I18n.t('review.loadError'));
           }
         });
-      const $cancel = $('<button class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm">Cancel</button>')
+      const $cancel = $('<button class="apple-btn apple-btn-secondary !min-h-[36px] !py-1.5 !px-3 !text-sm">Cancel</button>')
         .on('click', () => $modal.remove());
 
       $preview.append(
-        $('<p class="text-xs font-medium text-slate-400"></p>').text(I18n.t('image.selected')),
+        $('<p class="apple-caption font-medium"></p>').text(I18n.t('image.selected')),
         $imgWrap,
         $metaText,
         $link,
@@ -186,13 +186,13 @@ $(function () {
         }
         results.forEach((meta) => {
           const $cell = $(
-            '<button class="rounded-lg overflow-hidden border-2 border-transparent hover:border-indigo-500 focus:border-indigo-600 bg-slate-100 aspect-square"></button>'
+            '<button class="rounded-[11px] overflow-hidden border-2 border-transparent hover:border-action focus:border-action bg-parchment aspect-square"></button>'
           );
           const $thumb = $('<img class="w-full h-full object-cover" />');
           $thumb[0].src = meta.thumbnailUrl || meta.url;
           $cell.attr('title', meta.title).append($thumb).on('click', () => {
-            $grid.find('button').addClass('border-transparent').removeClass('border-indigo-600');
-            $cell.removeClass('border-transparent').addClass('border-indigo-600');
+            $grid.find('button').addClass('border-transparent').removeClass('border-action');
+            $cell.removeClass('border-transparent').addClass('border-action');
             showPreview(meta);
           });
           $grid.append($cell);
@@ -210,7 +210,7 @@ $(function () {
       }
     });
 
-    const $close = $('<button class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm">Close</button>')
+    const $close = $('<button class="apple-btn apple-btn-secondary !min-h-[36px] !py-1.5 !px-3 !text-sm">Close</button>')
       .on('click', () => $modal.remove());
 
     $searchRow.append($input, $searchBtn);
@@ -224,52 +224,51 @@ $(function () {
 
   function makeRow(item) {
     const $li = $(`
-      <li class="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between gap-3">
+      <li class="apple-card flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="font-medium text-slate-800 truncate"></p>
-          <p class="text-xs text-slate-400"></p>
+          <p class="font-medium text-ink truncate"></p>
+          <p class="apple-caption"></p>
         </div>
         <div class="flex gap-2 shrink-0 text-xs"></div>
       </li>
     `);
     $li.find('p.font-medium').text(primaryLabel(item));
-    $li.find('p.text-xs').text(secondaryLabel(item));
+    $li.find('p.apple-caption').text(secondaryLabel(item));
 
     const $btns = $li.find('div.flex.gap-2');
 
     if (tab === 'vocabulary') {
+      const hasImage = Boolean(item.image);
+      const label = hasImage ? `${I18n.t('image.searchBtn')} [Image]` : I18n.t('image.searchBtn');
       $btns.append(
-        $('<button class="bg-slate-600 text-white px-3 py-1.5 rounded-lg"></button>')
-          .text(I18n.t('image.searchBtn'))
+        $('<button class="apple-btn apple-btn-secondary !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
+          .text(label)
           .on('click', () => openImagePicker(item))
       );
-      if (item.image && item.image.url) {
-        $li.find('p.text-xs').prepend('🖼 ');
-      }
     }
 
     if (tab === 'users' && item.status === 'inactive') {
       $btns.append(
-        $('<button class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg"></button>')
+        $('<button class="apple-btn apple-btn-primary !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
           .text(I18n.t('management.activate'))
           .on('click', () => updateUser(item.id, { status: 'active' }))
       );
     } else if (tab === 'users') {
       $btns.append(
-        $('<button class="bg-amber-500 text-white px-3 py-1.5 rounded-lg"></button>')
+        $('<button class="apple-btn apple-btn-secondary !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
           .text(I18n.t('management.deactivate'))
           .on('click', () => updateUser(item.id, { status: 'inactive' }))
       );
     }
 
     $btns.append(
-      $('<button class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg"></button>')
+      $('<button class="apple-btn apple-btn-primary !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
         .text(I18n.t('management.edit'))
         .on('click', () => openForm(item))
     );
 
     $btns.append(
-      $('<button class="bg-red-500 text-white px-3 py-1.5 rounded-lg"></button>')
+      $('<button class="apple-btn apple-btn-wrong !min-h-[36px] !py-1.5 !px-3 !text-sm"></button>')
         .text(I18n.t('management.delete'))
         .on('click', () => deleteItem(item))
     );
@@ -289,7 +288,7 @@ $(function () {
       const items = await api.get(url);
       $list.empty();
       if (!items.length) {
-        $list.append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('management.empty')));
+        $list.append($('<li class="apple-caption"></li>').text(I18n.t('management.empty')));
         return;
       }
       items.forEach((item) => $list.append(makeRow(item)));
@@ -307,7 +306,7 @@ $(function () {
     const searchDef = tab !== 'users';
     if (searchDef) {
       const $search = $(
-        `<input id="search-input" type="search" placeholder="${I18n.t('management.search')}" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-48" />`
+        `<input id="search-input" type="search" placeholder="${I18n.t('management.search')}" class="apple-input text-sm !py-1.5 !px-3 w-full sm:w-48" />`
       );
       let timer;
       $search.on('input', function () {
@@ -324,13 +323,13 @@ $(function () {
 
     const currentFilters = getFilters();
     (currentFilters[tab] || []).forEach((f) => {
-      const $sel = $(`<select data-filter="${f.name}" class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm"></select>`);
+      const $sel = $(`<select data-filter="${f.name}" class="apple-input text-sm !py-1.5 !px-3 w-full sm:w-36"></select>`);
       $sel.append(`<option value="">${f.label}</option>`);
       f.options.forEach((o) => $sel.append(`<option value="${o}">${o}</option>`));
       if (f.freeText) {
         $sel.remove();
         const $input = $(
-          `<input type="text" placeholder="${f.label}" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-36" />`
+          `<input type="text" placeholder="${f.label}" class="apple-input text-sm !py-1.5 !px-3 w-full sm:w-36" />`
         ).on('change', function () {
           if ($(this).val()) filters[f.name] = $(this).val();
           else delete filters[f.name];
@@ -348,7 +347,7 @@ $(function () {
     });
 
     $toolbar.append(
-      $(`<button id="add-btn" class="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium">+ ${I18n.t('management.add')}</button>`).on(
+      $(`<button id="add-btn" class="ml-auto apple-btn apple-btn-primary !min-h-[36px] !py-1.5 !px-4 !text-sm">+ ${I18n.t('management.add')}</button>`).on(
         'click',
         () => openForm(null)
       )
@@ -362,30 +361,30 @@ $(function () {
     $form.empty();
 
     const titleText = (editingId ? I18n.t('management.edit') : I18n.t('management.add')) + ' ' + (I18n.t('management.' + tab) || tab);
-    $form.append($('<h3 class="text-lg font-semibold text-slate-700"></h3>').text(titleText));
+    $form.append($('<h3 class="text-lg font-semibold text-ink"></h3>').text(titleText));
 
     FIELDS[tab].forEach((f) => {
       const current = item ? item[f.name] : '';
       let $field;
       if (f.type === 'select') {
-        $field = $(`<select name="${f.name}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"></select>`);
+        $field = $(`<select name="${f.name}" class="apple-input w-full text-sm !py-2 !px-3"></select>`);
         f.options.forEach((o) => $field.append(`<option value="${o}">${o === '' ? '—' : o}</option>`));
         if (current !== undefined && current !== null) $field.val(String(current));
       } else if (f.type === 'number') {
-        $field = $(`<input type="number" min="1" name="${f.name}" value="${current ?? ''}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />`);
+        $field = $(`<input type="number" min="1" name="${f.name}" value="${current ?? ''}" class="apple-input w-full text-sm !py-2 !px-3" />`);
       } else {
         const val = Array.isArray(current) ? current.join(', ') : current ?? '';
-        $field = $(`<input type="text" name="${f.name}" value="${String(val).replace(/"/g, '&quot;')}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />`);
+        $field = $(`<input type="text" name="${f.name}" value="${String(val).replace(/"/g, '&quot;')}" class="apple-input w-full text-sm !py-2 !px-3" />`);
       }
       $form.append(
-        $('<label class="block"><span class="text-xs text-slate-500">' + f.label + (f.required ? ' *' : '') + '</span></label>').append($field)
+        $('<label class="block"><span class="apple-caption block mb-1">' + f.label + (f.required ? ' *' : '') + '</span></label>').append($field)
       );
     });
 
     $form.append(
       $('<div class="flex gap-2 pt-2"></div>')
-        .append($(`<button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium">${I18n.t('management.save')}</button>`))
-        .append($(`<button type="button" id="cancel-btn" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg text-sm">${I18n.t('management.cancel')}</button>`)
+        .append($(`<button type="submit" class="apple-btn apple-btn-primary flex-1 !min-h-[36px] !py-2">${I18n.t('management.save')}</button>`))
+        .append($(`<button type="button" id="cancel-btn" class="apple-btn apple-btn-secondary flex-1 !min-h-[36px] !py-2">${I18n.t('management.cancel')}</button>`)
           .on('click', () => $modal.addClass('hidden')))
     );
 
@@ -473,9 +472,9 @@ $(function () {
     tab = $(this).data('tab');
     page = 1;
     $('.tab-btn')
-      .removeClass('bg-indigo-600 text-white')
-      .addClass('bg-slate-200 text-slate-700');
-    $(this).addClass('bg-indigo-600 text-white').removeClass('bg-slate-200 text-slate-700');
+      .removeClass('apple-btn-primary')
+      .addClass('apple-btn-secondary');
+    $(this).addClass('apple-btn-primary').removeClass('apple-btn-secondary');
     renderToolbar();
     load();
   });

@@ -1,15 +1,208 @@
-/* App-specific styles beyond Tailwind utilities */
+/* Apple-inspired design system + app helpers */
 
-/* Safe-area helpers for mobile devices with home indicators */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
+/* --- Base typography --- */
+body {
+  font-family: 'SF Pro Text', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1d1d1f;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.pt-safe {
-  padding-top: env(safe-area-inset-bottom);
+h1, h2, h3, h4 {
+  font-family: 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
-/* Flashcard page fills the viewport without unwanted scrolling */
+/* --- Headline utilities --- */
+.apple-headline {
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.28px;
+  color: #1d1d1f;
+}
+.apple-headline-lg {
+  font-size: 56px;
+  line-height: 1.07;
+}
+.apple-subhead {
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  color: #7a7a7a;
+}
+.apple-caption {
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  color: #7a7a7a;
+}
+
+/* --- Buttons: pill grammar, press = scale(0.95), no shadow --- */
+.apple-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 11px 22px;
+  border-radius: 9999px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.374px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.apple-btn:active {
+  transform: scale(0.95);
+}
+.apple-btn:focus-visible {
+  outline: 2px solid #0071e3;
+  outline-offset: 2px;
+}
+.apple-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.apple-btn-primary {
+  background: #0066cc;
+  color: #ffffff;
+}
+.apple-btn-primary:hover:not(:disabled) {
+  background: #0071e3;
+}
+
+.apple-btn-secondary {
+  background: transparent;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+}
+.apple-btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 102, 204, 0.06);
+}
+
+.apple-btn-dark {
+  background: #1d1d1f;
+  color: #ffffff;
+}
+.apple-btn-dark:hover:not(:disabled) {
+  background: #333333;
+}
+
+.apple-btn-correct {
+  background: #1d8f4e;
+  color: #ffffff;
+}
+.apple-btn-correct:hover:not(:disabled) {
+  background: #15703d;
+}
+
+.apple-btn-wrong {
+  background: #d70015;
+  color: #ffffff;
+}
+.apple-btn-wrong:hover:not(:disabled) {
+  background: #a50010;
+}
+
+/* --- Nav bars --- */
+.apple-nav {
+  background: #000000;
+  color: #ffffff;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: -0.12px;
+}
+.apple-nav a,
+.apple-nav button {
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  opacity: 0.85;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+  font-size: inherit;
+}
+.apple-nav a:hover,
+.apple-nav button:hover {
+  opacity: 1;
+}
+.apple-nav .apple-nav-brand {
+  opacity: 1;
+  font-weight: 500;
+}
+
+/* Frosted sub-nav */
+.apple-subnav {
+  background: rgba(245, 245, 247, 0.8);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  height: 52px;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Utility card --- */
+.apple-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 18px;
+  padding: 24px;
+}
+
+/* --- Full-bleed tile grammar --- */
+.apple-tile {
+  padding: 80px 24px;
+  text-align: center;
+}
+.apple-tile-light { background: #ffffff; color: #1d1d1f; }
+.apple-tile-parchment { background: #f5f5f7; color: #1d1d1f; }
+.apple-tile-dark { background: #272729; color: #ffffff; }
+.apple-tile-dark a { color: #2997ff; }
+
+/* --- Form input (pill) --- */
+.apple-input {
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 17px;
+  letter-spacing: -0.374px;
+  padding: 12px 20px;
+  min-height: 44px;
+  border-radius: 9999px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  color: #1d1d1f;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.apple-input:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+/* --- Existing safe-area + flashcard helpers (preserved) --- */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-bottom); }
 .flashcard-screen {
   min-height: 100vh;
   min-height: 100dvh;

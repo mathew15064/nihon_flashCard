@@ -2,7 +2,7 @@
 
 $(function () {
   const $card = $('#card');
-  const $typeLabel = $('#card .text-xs.uppercase');
+  const $typeLabel = $('#card .apple-caption.uppercase, #card .text-xs.uppercase');
   const $front = $('#card-front');
   const $back = $('#card-back');
   const $answerReading = $('#answer-reading');

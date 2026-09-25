@@ -9,6 +9,8 @@ JSON files are the entire persistence layer — there is intentionally no databa
 npm install
 npm start          # http://localhost:3005  (PORT env to override)
 npm run dev        # same, with auto-reload on changes
+npm test           # API tests (Node built-in runner)
+npm run test:e2e   # Playwright end-to-end tests
 ```
 
 ## Features
@@ -33,6 +35,11 @@ npm run dev        # same, with auto-reload on changes
   Wikimedia Commons (license/source/author metadata preserved); admins search
   and select images in the Management area — no live internet lookups during
   learning
+- SQLite persistence via Node 22 built-in `node:sqlite`
+  (no runtime dependency; DB auto-created and content imported on
+  first boot)
+- Test infrastructure: `npm test` for API, `npm run test:e2e` for
+  browser-driven smoke and flow tests
 
 ## Documentation navigation
 
@@ -45,11 +52,16 @@ docs/ARCHITECTURE.md           ← how the system is designed
     ↓
 docs/OVERFLOW.md               ← current project state
     ↓
-logs/YYYY-MM-DD.md             ← only if historical context is needed
+docs/TESTING.md                ← how to run tests
+docs/DEVELOPMENT.md            ← local setup, DB, workflows
+    ↓
+logs/YYYY-MM-DD.md             (only if historical context is needed)
     ↓
 source code
 ```
-Reference docs: docs/API.md, docs/DATA_MODEL.md, docs/LEARNING_SYSTEM.md, docs/CODE_STYLE.md, docs/IMPLEMENTATION_PLAN.md, docs/spec/ (original specs)
+
+Reference docs: `docs/API.md`, `docs/DATA_MODEL.md`, `docs/LEARNING_SYSTEM.md`, `docs/CODE_STYLE.md`, `docs/TESTING.md`, `docs/DEVELOPMENT.md`, `docs/IMPLEMENTATION_PLAN.md`, `docs/spec/` (original specs).
+
 ## AI Agent Startup Protocol
 
 1. Read `README.md`
@@ -70,8 +82,11 @@ Detailed references: `docs/API.md` (endpoints), `docs/DATA_MODEL.md` (JSON shape
 
 - Backend: Node.js + Express.js (single dependency)
 - Frontend: HTML + Tailwind CSS + jQuery (CDN)
-- Storage: JSON files under `data/` (never served statically)
+- Storage: SQLite via `node:sqlite` (`data/app.db`, auto-created;
+  content imported once from `data/content/*.json`)
 
 ## Data backup
 
-Copy the `data/` directory — it contains users, content, and all learning data.
+The database file is `data/app.db` (plus `-wal` / `-shm`
+siblings while the server is running). Run `npm run backup`
+to snapshot the current data into `data/backups/`.

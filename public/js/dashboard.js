@@ -1,44 +1,44 @@
 'use strict';
 
 $(function () {
-  let lastStats = null;
-  let currentUserObj = null;
-
-  function getContentTypeLabel(type) {
-    return I18n.t(`content.${type}`) || type;
-  }
+  const TYPE_LABELS = {
+    hiragana: 'Hiragana',
+    katakana: 'Katakana',
+    kanji: 'Kanji',
+    vocabulary: 'Vocabulary'
+  };
 
   function statTile(label, value) {
     return $(`
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <p class="text-2xl font-bold text-slate-800"></p>
-        <p class="text-xs text-slate-500"></p>
+      <div class="apple-card text-center">
+        <p class="text-4xl font-semibold text-ink"></p>
+        <p class="apple-caption mt-1"></p>
       </div>
     `)
-      .find('p.font-bold').text(value).end()
-      .find('p.text-xs').text(label).end();
+      .find('p.font-semibold').text(value).end()
+      .find('p.apple-caption').text(label).end();
   }
 
   function typeBar(type, stats) {
     const learned = stats.learning + stats.review + stats.mastered;
     const pct = stats.total ? Math.round((learned / stats.total) * 100) : 0;
     const row = $(`
-      <div class="bg-white rounded-xl shadow p-4">
-        <div class="flex justify-between text-sm mb-2">
-          <span class="font-medium text-slate-700"></span>
-          <span class="text-slate-500"></span>
+      <div class="apple-card">
+        <div class="flex justify-between items-baseline mb-3">
+          <span class="text-base font-semibold"></span>
+          <span class="apple-caption"></span>
         </div>
-        <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div class="h-full bg-indigo-500 rounded-full" style="width:0%"></div>
+        <div class="h-1.5 bg-divider rounded-full overflow-hidden">
+          <div class="h-full bg-action rounded-full transition-all" style="width:0%"></div>
         </div>
-        <p class="text-xs text-slate-400 mt-1"></p>
+        <p class="apple-caption mt-2"></p>
       </div>
     `);
-    row.find('span.font-medium').text(getContentTypeLabel(type));
-    row.find('span.text-slate-500').text(`${learned} / ${stats.total}`);
-    row.find('.bg-indigo-500').css('width', pct + '%');
-    row.find('p.text-xs').text(
-      `${I18n.t('status.new')} ${stats.new} · ${I18n.t('status.learning')} ${stats.learning} · ${I18n.t('status.review')} ${stats.review} · ${I18n.t('status.mastered')} ${stats.mastered}`
+    row.find('span.font-semibold').text(TYPE_LABELS[type] || type);
+    row.find('span.apple-caption').first().text(`${learned} / ${stats.total}`);
+    row.find('.bg-action').css('width', pct + '%');
+    row.find('p.apple-caption').text(
+      `new ${stats.new} · learning ${stats.learning} · review ${stats.review} · mastered ${stats.mastered}`
     );
     return row;
   }
@@ -46,22 +46,21 @@ $(function () {
   function lessonRow(lesson, stats) {
     const pct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
     return $(`
-      <div class="flex items-center gap-3 bg-white rounded-lg shadow px-4 py-2 text-sm">
-        <span class="w-20 text-slate-600"></span>
-        <span class="w-24 text-right text-slate-500"></span>
-        <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div class="h-full bg-emerald-500 rounded-full" style="width:0%"></div>
+      <div class="apple-card flex items-center gap-4 py-4">
+        <span class="text-sm text-ink-muted whitespace-nowrap"></span>
+        <span class="text-sm text-ink-muted w-20 text-right"></span>
+        <div class="flex-1 h-1.5 bg-divider rounded-full overflow-hidden">
+          <div class="h-full bg-correct rounded-full transition-all" style="width:0%"></div>
         </div>
       </div>
     `)
-      .find('span.w-20').text(I18n.t('dashboard.lessonLabel')).append($(`<b class="text-slate-800 ml-1">${lesson}</b>`)).end()
-      .find('span.w-24').text(`${stats.learned}/${stats.total}`).end()
-      .find('.bg-emerald-500').css('width', pct + '%')
+      .find('span').first().append($(`<b class="text-ink font-semibold">${lesson}</b>`)).end()
+      .find('span.w-20').text(`${stats.learned}/${stats.total}`).end()
+      .find('.bg-correct').css('width', pct + '%')
       .end();
   }
 
   function render(stats) {
-    lastStats = stats;
     $('#stats-loading').addClass('hidden');
     const t = stats.totals;
     $('#totals')
@@ -89,7 +88,6 @@ $(function () {
   currentUser
     .validate()
     .done(function (user) {
-      currentUserObj = user;
       $('#current-user').text(user.displayName);
       $('#welcome').text(I18n.t('dashboard.welcome', { name: user.displayName }));
 
@@ -97,7 +95,10 @@ $(function () {
         .get(`/api/statistics/${user.id}`)
         .done(render)
         .fail(function (err) {
-          $('#stats-loading').text(I18n.t('dashboard.loadError')).addClass('text-red-500');
+          $('#stats-loading')
+            .text(I18n.t('dashboard.loadError'))
+            .removeClass('apple-caption')
+            .addClass('text-red-600');
           console.error(err);
         });
     })
@@ -113,9 +114,10 @@ $(function () {
 
   $(document).on('locale:changed', function () {
     I18n.apply();
-    if (currentUserObj) {
-      $('#welcome').text(I18n.t('dashboard.welcome', { name: currentUserObj.displayName }));
-    }
-    if (lastStats) render(lastStats);
+    currentUser.validate().done(function (user) {
+      $('#current-user').text(user.displayName);
+      $('#welcome').text(I18n.t('dashboard.welcome', { name: user.displayName }));
+      api.get(`/api/statistics/${user.id}`).done(render);
+    });
   });
 });

@@ -12,19 +12,19 @@ $(function () {
   function eventRow(event) {
     const correct = event.result === 'correct';
     return $(`
-      <li class="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between">
+      <li class="apple-card flex items-center justify-between">
         <div>
-          <p class="text-slate-800 font-medium text-sm"></p>
-          <p class="text-xs text-slate-400"></p>
+          <p class="text-sm font-medium text-ink"></p>
+          <p class="apple-caption"></p>
         </div>
         <span class="text-xs font-semibold px-3 py-1 rounded-full"></span>
       </li>
     `)
       .find('p.font-medium').text(`${event.contentType} · ${event.cardId}`).end()
-      .find('p.text-xs').text(new Date(event.reviewedAt).toLocaleString()).end()
+      .find('p.apple-caption').text(new Date(event.reviewedAt).toLocaleString()).end()
       .find('span')
         .text(correct ? I18n.t('history.correct') : I18n.t('history.wrong'))
-        .addClass(correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')
+        .addClass(correct ? 'bg-correct/10 text-correct' : 'bg-wrong/10 text-wrong')
       .end();
   }
 
@@ -40,7 +40,7 @@ $(function () {
         render(events, api.lastMeta);
       })
       .fail(function (err) {
-        $list.empty().append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('history.noHistory')));
+        $list.empty().append($('<li class="apple-caption"></li>').text(I18n.t('history.noHistory')));
         if (err.code !== 'NO_USER') showError(err.message || I18n.t('history.loadError'));
       });
   }
@@ -50,7 +50,7 @@ $(function () {
     $('#summary').addClass('hidden');
 
     if (!items.length) {
-      $list.append($('<li class="text-slate-400 text-sm"></li>').text(I18n.t('history.empty')));
+      $list.append($('<li class="apple-caption"></li>').text(I18n.t('history.empty')));
       updatePager(meta);
       return;
     }

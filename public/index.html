@@ -3,43 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="userSelect.title">Japanese Flashcard — Select User</title>
+  <title>Japanese Flashcard</title>
+  <script src="/js/tailwind-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="/css/app.css" />
 </head>
-<body class="bg-slate-100 min-h-screen">
-  <div class="max-w-xl mx-auto px-4 pt-6 flex justify-end">
-    <select id="locale-select" class="border border-slate-300 rounded-lg px-2 py-1 text-sm" aria-label="Language">
-      <option value="vi">🇻🇳 Tiếng Việt</option>
-      <option value="en">🇺🇸 English</option>
-    </select>
-  </div>
-  <main class="max-w-xl mx-auto px-4 py-4">
-    <h1 class="text-3xl font-bold text-slate-800 text-center mb-1" data-i18n="userSelect.title">🇯🇵 Japanese Flashcard</h1>
-    <p class="text-slate-500 text-center mb-8" data-i18n="userSelect.subtitle">Who is learning today?</p>
+<body class="bg-parchment min-h-screen">
 
-    <p id="error" class="hidden mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-2 text-sm"></p>
+  <nav class="apple-nav">
+    <div class="max-w-4xl w-full mx-auto px-6 flex items-center justify-between">
+      <span class="apple-nav-brand">Japanese Flashcard</span>
+      <select id="locale-select" class="bg-transparent border border-white/30 rounded-full px-3 py-1 text-xs text-white" aria-label="Language">
+        <option value="vi">VI</option>
+        <option value="en">EN</option>
+      </select>
+    </div>
+  </nav>
 
-    <section>
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold text-slate-700" data-i18n="userSelect.users">Users</h2>
-        <button id="new-user-btn"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg" data-i18n="userSelect.newUser">
-          + New user
-        </button>
+  <main class="max-w-2xl mx-auto px-6 py-16">
+    <header class="text-center mb-12">
+      <h1 class="apple-headline apple-headline-lg mb-3" data-i18n="userSelect.title">Japanese Flashcard</h1>
+      <p class="apple-subhead" data-i18n="userSelect.subtitle">Who is learning today?</p>
+    </header>
+
+    <p id="error" class="hidden mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm"></p>
+
+    <section class="apple-card">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold" data-i18n="userSelect.users">Users</h2>
+        <button id="new-user-btn" class="apple-btn apple-btn-primary" data-i18n="userSelect.newUser">New user</button>
       </div>
 
-      <form id="new-user-form" class="hidden mb-4 bg-white rounded-xl shadow p-4 flex gap-2">
+      <form id="new-user-form" class="hidden mb-6 flex flex-wrap gap-2">
         <input id="username-input" type="text" placeholder="Username" required maxlength="50"
-          class="flex-1 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          class="apple-input flex-1 min-w-[10rem]" />
         <input id="displayname-input" type="text" placeholder="Display name (optional)" maxlength="50"
-          class="flex-1 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg" data-i18n="userSelect.create">Create</button>
+          class="apple-input flex-1 min-w-[10rem]" />
+        <button type="submit" class="apple-btn apple-btn-primary" data-i18n="userSelect.create">Create</button>
       </form>
 
-      <ul id="user-list" class="space-y-2">
-        <li class="text-slate-400 text-sm" data-i18n="userSelect.loading">Loading users…</li>
+      <ul id="user-list" class="space-y-3">
+        <li class="text-ink-muted text-sm" data-i18n="userSelect.loading">Loading users…</li>
       </ul>
     </section>
   </main>
