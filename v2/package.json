@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
+    "import:legacy": "tsx scripts/import-legacy-cli.ts",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {

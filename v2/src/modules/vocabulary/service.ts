@@ -4,12 +4,9 @@ import { and, eq, like, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { vocabularyEntries, vocabularySenses } from "@/db/schema";
 import { type VocabularyInput } from "./schema";
+import { normalizedKey } from "./normalize";
 
-export function normalizedKey(input: {word: string; reading: string; partOfSpeech?: string | null}) {
-  return [input.word, input.reading, input.partOfSpeech || ""]
-    .map((value) => value.normalize("NFKC").toLowerCase().trim())
-    .join("|");
-}
+export { normalizedKey } from "./normalize";
 
 function attachSenses(rows: (typeof vocabularyEntries.$inferSelect)[]) {
   return rows.map((row) => ({

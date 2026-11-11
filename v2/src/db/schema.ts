@@ -62,6 +62,15 @@ export const legacyIdMap = sqliteTable("legacy_id_map", {
   newId: text("new_id").notNull().references(() => vocabularyEntries.id),
 });
 
+/** Exact source JSON is retained for audit and future reprocessing. */
+export const legacyImportRecords = sqliteTable("legacy_import_records", {
+  oldId: text("old_id").primaryKey().references(() => legacyIdMap.oldId),
+  rawData: text("raw_data").notNull(),
+  legacyCreatedAt: text("legacy_created_at"),
+  legacyUpdatedAt: text("legacy_updated_at"),
+  importedAt: text("imported_at").notNull(),
+}, (t) => [index("idx_legacy_imported_at").on(t.importedAt)]);
+
 export const reviewCards = sqliteTable("review_cards", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),

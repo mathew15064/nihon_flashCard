@@ -17,6 +17,26 @@ No shared database paths: v2 uses v2/data/nihon.sqlite, never the original data/
 
 Open http://localhost:3000, /vocabulary, or /practice.
 
+## Safe v1 vocabulary import
+
+Legacy JSON and SQLite vocabulary sources can be imported into the separate v2
+database with automatic destination backup and ID mapping. This does **not**
+migrate user profiles or SRS history.
+
+From the v2 directory, first run a preview:
+
+```bash
+npm run import:legacy -- --source ../data/content/vocabulary.json --target ./data/nihon.sqlite
+```
+
+After checking the report, apply explicitly:
+
+```bash
+npm run import:legacy -- --source ../data/content/vocabulary.json --target ./data/nihon.sqlite --apply
+```
+
+Imported entries are drafts. Full details: [Legacy Import Guide](docs/LEGACY_VOCABULARY_IMPORT.md).
+
 ## Checks
 - npm run typecheck
 - npm run lint
@@ -39,7 +59,7 @@ Do not commit keys. Requests without configured secrets are rejected.
 
 ## Current limitations
 - The /practice page is a non-persistent flashcard preview; legacy SRS/progress have NOT been migrated.
-- Admin UI login, full import/restore, AI generation, provider keys, draft publishing and production-grade MCP OAuth are not yet implemented.
+- Admin UI login, user/SRS-history migration, full restore drills, AI generation, provider keys, draft publishing and production-grade MCP OAuth are not yet implemented.
 - MCP integration is intended for trusted clients with a separately configured integration token; remote public exposure requires proper authorization and origin protection.
 - Admin endpoint is an interim API-token solution; no public deployment until full authentication, authorization, rate-limiting, backup/restore and import audit are complete.
 - The sample seed is intentionally DEV-ONLY. Existing users and production data were not migrated or modified.
