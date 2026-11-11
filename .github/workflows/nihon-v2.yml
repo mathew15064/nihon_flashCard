@@ -1,0 +1,31 @@
+name: Nihon v2 checks
+on:
+  pull_request:
+    paths:
+      - "v2/**"
+      - ".github/workflows/nihon-v2.yml"
+  push:
+    branches:
+      - "feat/next-monolith-foundation"
+    paths:
+      - "v2/**"
+      - ".github/workflows/nihon-v2.yml"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build

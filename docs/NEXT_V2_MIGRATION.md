@@ -1,0 +1,25 @@
+# Nihon v2 — migration plan
+
+## Decision record
+- Product: Japanese vocabulary first; JLPT levels and communication topics are metadata, not separate learning curricula for now.
+- Framework: one Next.js 16 full-stack monolith, React, TypeScript, Route Handlers for REST and MCP.
+- Database: new SQLite file managed by Drizzle; isolate it from the legacy Express production SQLite file.
+- API keys: Admin-managed secrets only on the Next.js server.
+- Deployment: a single Next.js server; the old Express app is NOT part of the target production topology.
+
+## Current migration slice
+The new app is intentionally isolated in v2/ on this development branch so the production code and real learning data stay untouched.
+- Implemented: Next scaffold; SQLite schema and explicit migration CLI; demo data; vocabulary listing; draft create API behind bearer token; MCP tools behind a separate bearer token; read-only UI; preview-only flashcard; tests and build.
+- NOT implemented: real user authentication, source data migration, durable SRS, publishing workflow, AI provider, AI Studio, full rate limiting or public remote MCP OAuth.
+- Do not publish this version to the internet until the missing security and data migration items are resolved.
+
+## Next steps
+1. Build proper authentication and authorization and replace interim admin token authentication for UI use.
+2. Add legacy SQLite backup/restore and dry-run migration with ID mapping, counts and rollback.
+3. Develop deck CRUD, publishing, SRS review events and preserved learning progress.
+4. Add batch import and AI generation candidates with cost/quota management and admin preview/approval.
+5. Harden remote MCP OAuth, scopes, origin validation, audit and rate limiting.
+6. Run integration and end-to-end tests, compare v1/v2 data, then cut over production.
+7. Remove legacy Express runtime from the deployment and eventually archive old source.
+
+No destructive migrations and no writes to data/app.db are authorized by this plan.
