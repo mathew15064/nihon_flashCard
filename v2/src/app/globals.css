@@ -24,6 +24,28 @@ a{text-decoration:none;color:inherit}
 .vocab-title{display:flex;justify-content:space-between;align-items:center;gap:6px}.vocab-title strong{font-size:26px}.level-badge{background:#eaf2e7;color:#427354;font-weight:700;border-radius:20px;padding:5px 9px;font-size:11px}.muted{color:#8a9d90;font-size:13px}.tile-rule{height:1px;background:var(--line);margin:15px 0}.vocab-tile p{font-size:15px}
 .notice{border-radius:15px;padding:26px;background:#f3f7ef;color:#637b65;border:1px solid #dce9d9}.practice-area{max-width:520px;margin:35px auto}.practice-progress{text-align:center;color:#809685;font-size:13px;margin-bottom:15px}
 .practice-card{background:#f4f7ed;color:var(--ink);border:1px solid #ddebd9;border-radius:24px;width:100%;min-height:350px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:15px;padding:32px;cursor:pointer}
+.admin-nav{display:flex;align-items:center;gap:18px;margin:22px 35px 0;padding:13px 20px;background:#eef5ed;border-radius:14px;color:#365a44;font-weight:700;font-size:13px;flex-wrap:wrap}
+.admin-nav form{margin-left:auto}
+.admin-nav button{background:transparent;border:0;color:#66846c;cursor:pointer;font:inherit}
+.admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:22px 0}
+.admin-panel{display:block;border:1px solid var(--line);border-radius:17px;padding:24px;background:#fff;margin:22px 0}
+.admin-panel h2{font-size:20px;letter-spacing:-.3px;margin:0 0 14px}
+.admin-stat{display:block;font-size:50px;margin:20px 0 0;color:var(--green)}
+.admin-login{max-width:540px;margin:auto}
+.admin-form{display:flex;flex-direction:column;gap:13px}
+.admin-form label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700}
+.admin-form input,.admin-form select{border:1px solid #d4e0d4;border-radius:10px;padding:12px;color:var(--ink);font-size:14px;background:white;max-width:100%}
+.admin-form .button{align-self:start}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.form-grid .button{align-self:end}
+.form-error{color:#ac3636}
+.review-list{display:flex;flex-direction:column;gap:0}
+.review-row{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--line);padding:15px 0}
+.review-description{min-width:0;flex:1}
+.review-description strong{font-size:20px}
+.review-description p{margin:6px 0}
+.deck-heading{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:650px){.admin-grid,.form-grid{grid-template-columns:1fr}.admin-nav{margin:14px 0 0}.review-row{flex-wrap:wrap}.site-nav{font-size:12px;gap:8px}}
 .practice-card strong{font-size:70px}.practice-card>span{color:#698674}.practice-card .card-answer{font-size:24px;color:var(--ink);font-weight:700}.flip-hint{font-size:13px;margin-top:15px}.practice-controls{display:flex;justify-content:space-between;gap:15px;margin-top:20px}
 @media(max-width:830px){.hero{grid-template-columns:1fr;padding:45px 10px;gap:36px}.hero-card{max-width:500px;width:100%;margin:auto}.features,.vocab-grid{grid-template-columns:1fr 1fr}.site-nav{gap:12px}.header-tag{display:none}}
 @media(max-width:560px){.site-header{height:70px;padding:0 17px}.brand{font-size:17px}.brand-mark{width:35px;height:35px}.brand-sub{display:none}.site-main{padding:0 14px}.hero h1{font-size:49px}.hero-card{min-height:310px}.hero-japanese{font-size:64px}.features,.vocab-grid{grid-template-columns:1fr;margin-left:0;margin-right:0}.content-page{padding:36px 5px}.filters{flex-direction:column}.site-footer{padding:18px}.practice-card strong{font-size:54px}}

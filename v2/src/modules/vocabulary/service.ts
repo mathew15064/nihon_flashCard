@@ -68,3 +68,20 @@ export function createVocabularyDraft(input: VocabularyInput) {
   });
   return { created: true as const, item: getVocabulary(id, true)! };
 }
+
+/**
+ * Publish only an explicitly reviewed draft with a Vietnamese meaning.
+ * Imported legacy records are never published by the import tool.
+ */
+export function publishVocabulary(id: string) {
+  const item = getVocabulary(id, true);
+  if (!item) throw new Error("VOCABULARY_NOT_FOUND");
+  if (item.status !== "draft") throw new Error("VOCABULARY_NOT_DRAFT");
+  if (!item.senses.some((sense) => sense.language === "vi" && sense.meaning.trim())) {
+    throw new Error("VOCABULARY_NEEDS_VI_MEANING");
+  }
+  db.update(vocabularyEntries)
+    .set({ status: "published", updatedAt: new Date().toISOString() })
+    .where(and(eq(vocabularyEntries.id, id), eq(vocabularyEntries.status, "draft"))).run();
+  return getVocabulary(id, true)!;
+}

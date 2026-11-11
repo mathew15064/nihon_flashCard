@@ -16,6 +16,8 @@ export default function RootLayout({ children }: Readonly<{children: React.React
           <nav className="site-nav" aria-label="Điều hướng">
             <Link href="/vocabulary">Kho từ vựng</Link>
             <Link href="/practice">Luyện tập</Link>
+            <Link href="/decks">Bộ từ</Link>
+            <Link href="/admin">Admin</Link>
           </nav>
           <span className="header-tag">v2 · Preview</span>
         </header>
