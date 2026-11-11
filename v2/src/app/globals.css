@@ -46,6 +46,12 @@ a{text-decoration:none;color:inherit}
 .review-description p{margin:6px 0}
 .deck-heading{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 @media(max-width:650px){.admin-grid,.form-grid{grid-template-columns:1fr}.admin-nav{margin:14px 0 0}.review-row{flex-wrap:wrap}.site-nav{font-size:12px;gap:8px}}
+.ai-status{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:18px 22px;background:#eef6ed;border:1px solid #daead6;border-radius:14px;margin:20px 0}
+.ai-status p{margin:5px 0 0}
+.candidate-list{display:flex;flex-direction:column;gap:8px}
+.candidate-card{margin:8px 0}
+.candidate-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px}
+.candidate-actions form{margin:0}
 .practice-card strong{font-size:70px}.practice-card>span{color:#698674}.practice-card .card-answer{font-size:24px;color:var(--ink);font-weight:700}.flip-hint{font-size:13px;margin-top:15px}.practice-controls{display:flex;justify-content:space-between;gap:15px;margin-top:20px}
 @media(max-width:830px){.hero{grid-template-columns:1fr;padding:45px 10px;gap:36px}.hero-card{max-width:500px;width:100%;margin:auto}.features,.vocab-grid{grid-template-columns:1fr 1fr}.site-nav{gap:12px}.header-tag{display:none}}
 @media(max-width:560px){.site-header{height:70px;padding:0 17px}.brand{font-size:17px}.brand-mark{width:35px;height:35px}.brand-sub{display:none}.site-main{padding:0 14px}.hero h1{font-size:49px}.hero-card{min-height:310px}.hero-japanese{font-size:64px}.features,.vocab-grid{grid-template-columns:1fr;margin-left:0;margin-right:0}.content-page{padding:36px 5px}.filters{flex-direction:column}.site-footer{padding:18px}.practice-card strong{font-size:54px}}

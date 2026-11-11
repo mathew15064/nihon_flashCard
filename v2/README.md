@@ -58,6 +58,45 @@ reverse-proxy safeguards, CSRF/origin review and production deployment checks.
 The legacy bearer-token admin API and MCP integration tokens are separate
 from Admin web login; they remain disabled when their secrets are unset.
 
+## AI Vocabulary Studio (Admin-only)
+
+Open `/admin/ai-studio` after signing in with the local Admin account.
+Generation requires a server-side OpenAI API key. Add these **only** to your
+untracked `.env.local` on the application host, then restart Next.js:
+
+```dotenv
+OPENAI_API_KEY=YOUR_PRIVATE_API_KEY
+NIHON_AI_MODEL=gpt-4.1-mini
+NIHON_AI_DAILY_LIMIT=10
+```
+
+The application never accepts AI provider API keys from web forms or MCP calls,
+and never returns them to the browser. Without a configured key, generation is
+disabled and the page shows configuration instructions.
+
+Workflow:
+1. Admin enters a topic, approximate JLPT level and quantity (1–20 words).
+2. Server calls the OpenAI **Responses API** with strict JSON schema and a
+   45-second timeout. A 24-hour, SQLite-backed request quota and single-flight
+   guard limit accidental spending. No price estimate is presented as a charge.
+3. Job and token counts are stored. Generated words are **candidates**, not
+   publicly visible vocabulary.
+4. Admin edits each candidate, checks possible duplicates and chooses
+   **Add as draft** or Reject.
+5. Accepted words, Vietnamese/English meanings and Japanese example sentences
+   are saved transactionally, linked to the generation job. Publish later in
+   `/admin/vocabulary`.
+
+API/network calls are **not** executed in the automated tests. Tests use
+an injected fake provider and do not require any real key. Model outputs may be
+wrong; require human review. The JLPT label is an approximation.
+
+**Limits / remaining work:** only OpenAI Responses API is wired initially;
+no model/provider selection UI, audio/image generation, cost calculation, full
+content audit, retries/job resume across process restarts or OAuth for public
+MCP. Login still needs persistent rate limiting and security hardening before
+internet exposure.
+
 ## Safe v1 vocabulary import
 
 Legacy JSON and SQLite vocabulary sources can be imported into the separate v2
@@ -100,7 +139,7 @@ Do not commit keys. Requests without configured secrets are rejected.
 
 ## Current limitations
 - The /practice page is a non-persistent flashcard preview; legacy SRS/progress have NOT been migrated.
-- One-person Admin login, draft approval and public deck publishing are implemented. Multi-user accounts, user/SRS-history migration, full restore drills, AI generation, provider keys and production-grade MCP OAuth are not yet implemented.
+- One-person Admin login, draft approval and public deck publishing are implemented. Multi-user accounts, user/SRS-history migration, full restore drills, alternate AI providers, audio/image generation and production-grade MCP OAuth are not yet implemented.
 - MCP integration is intended for trusted clients with a separately configured integration token; remote public exposure requires proper authorization and origin protection.
 - Admin endpoint is an interim API-token solution; no public deployment until full authentication, authorization, rate-limiting, backup/restore and import audit are complete.
 - The sample seed is intentionally DEV-ONLY. Existing users and production data were not migrated or modified.

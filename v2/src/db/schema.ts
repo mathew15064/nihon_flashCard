@@ -48,6 +48,9 @@ export const generationJobs = sqliteTable("generation_jobs", {
   createdAt: text("created_at").notNull(),
   completedAt: text("completed_at"),
   error: text("error"),
+  paramsJson: text("params_json"),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
 });
 
 export const generationCandidates = sqliteTable("generation_candidates", {
@@ -55,7 +58,16 @@ export const generationCandidates = sqliteTable("generation_candidates", {
   jobId: text("job_id").notNull().references(() => generationJobs.id, { onDelete: "cascade" }),
   payload: text("payload").notNull(),
   status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
-});
+  acceptedEntryId: text("accepted_entry_id").references(() => vocabularyEntries.id),
+}, (t) => [index("idx_generation_candidates_job").on(t.jobId)]);
+
+export const vocabularyExamples = sqliteTable("vocabulary_examples", {
+  id: text("id").primaryKey(),
+  entryId: text("entry_id").notNull().references(() => vocabularyEntries.id, { onDelete: "cascade" }),
+  sentence: text("sentence").notNull(),
+  translationVi: text("translation_vi"),
+  source: text("source").notNull().default("manual"),
+}, (t) => [index("idx_vocabulary_examples_entry").on(t.entryId)]);
 
 export const legacyIdMap = sqliteTable("legacy_id_map", {
   oldId: text("old_id").primaryKey(),
