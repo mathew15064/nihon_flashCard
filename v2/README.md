@@ -97,6 +97,51 @@ content audit, retries/job resume across process restarts or OAuth for public
 MCP. Login still needs persistent rate limiting and security hardening before
 internet exposure.
 
+## Flashcard + Spaced Repetition (guest pilot)
+
+The `/practice` page now persists real learning progress in **v2 SQLite**.
+Open `/decks` and select a published deck, or use the quick-start button
+to add up to 20 previously unstudied published words at a time.
+
+Learning sessions use a signed, `HttpOnly`, `SameSite=Lax` cookie with a
+90-day browser lifetime. Configure either `NIHON_GUEST_SESSION_SECRET` (32+
+characters, recommended) or `AUTH_SECRET` on the Next.js server. No secret
+means the guest study endpoints fail closed with 503. No user ID is supplied by
+the browser in a JSON body. Cross-origin POST requests are rejected.
+
+**SRS scheduling:** the same 6-step interval ladder as Nihon v1:
+10 minutes, 1 day, 3 days, 7 days, 14 days, 30 days. Wrong answers reset
+the streak and schedule another review after 10 minutes. A mastered card
+continues repeating every 30 days.
+
+All grading updates are transactional: current schedule, counters and an
+immutable review event are written together. Every submission has a unique
+request ID so retries cannot double-count a review. A review made before the
+next due time returns 409.
+
+### Guest learning API
+
+- `GET /api/v1/me/session`: create/validate a signed guest session.
+- `GET /api/v1/me/progress`: counts, due items and next review.
+- `GET /api/v1/me/reviews/due?limit=20`: due/new cards with Japanese text
+  and Vietnamese meaning (never unpublished vocabulary).
+- `POST /api/v1/me/vocabulary/enroll`: enroll next 20 published words.
+- `POST /api/v1/me/decks/:id/enroll`: enroll a public deck only.
+- `POST /api/v1/me/reviews`: grade a due card with
+  `{ "cardId": "UUID", "result": "correct", "requestId": "UUID" }`.
+  `wrong` is the other valid result.
+
+**Important limitations:** guest sessions are per browser, not account-bound.
+Deleting cookies or changing device loses access to that guest history.
+The v1 users, review history, progress and card IDs have **NOT** been migrated.
+Remote deployment still needs user accounts, rate limiting, robust backup/
+restore, login security hardening and migration acceptance checks.
+Do not deploy guest SRS as a production multi-user account solution.
+
+The existing local v2 database was backed up before applying
+`004_srs_learning.sql`. Migration only extends the v2 schema; it does not read
+or modify the v1 database.
+
 ## Safe v1 vocabulary import
 
 Legacy JSON and SQLite vocabulary sources can be imported into the separate v2
@@ -138,7 +183,7 @@ Generate separate high-entropy credentials in your server environment:
 Do not commit keys. Requests without configured secrets are rejected.
 
 ## Current limitations
-- The /practice page is a non-persistent flashcard preview; legacy SRS/progress have NOT been migrated.
+- The /practice page persists new guest SRS progress in v2 SQLite; legacy v1 users/SRS/history still have NOT been migrated.
 - One-person Admin login, draft approval and public deck publishing are implemented. Multi-user accounts, user/SRS-history migration, full restore drills, alternate AI providers, audio/image generation and production-grade MCP OAuth are not yet implemented.
 - MCP integration is intended for trusted clients with a separately configured integration token; remote public exposure requires proper authorization and origin protection.
 - Admin endpoint is an interim API-token solution; no public deployment until full authentication, authorization, rate-limiting, backup/restore and import audit are complete.

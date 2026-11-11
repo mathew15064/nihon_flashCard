@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDeckWithEntries } from "@/modules/decks/service";
 
@@ -12,6 +13,7 @@ export default async function PublicDeckDetails({
       <span className="eyebrow">Nihon · Bộ từ vựng</span>
       <h1>{deck.name}</h1>
       <p className="page-intro">{deck.description ?? "Học từ vựng tiếng Nhật"}</p>
+      <p><Link className="button primary" href={`/practice?deck=${deck.id}`}>Học bộ từ này →</Link></p>
       <div className="vocab-grid">{deck.entries.map(entry=>
         <div className="vocab-tile" key={entry.id}>
           <div className="vocab-title"><strong>{entry.word}</strong><span className="level-badge">{entry.jlptLevel ?? "—"}</span></div>

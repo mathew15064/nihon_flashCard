@@ -9,7 +9,8 @@
 
 ## Current migration slice
 The new app is intentionally isolated in v2/ on this development branch so the production code and real learning data stay untouched.
-- Implemented: Next scaffold; SQLite versioned migrations; demo data; vocabulary listing; draft create API behind bearer token; MCP tools behind a separate bearer token; read-only UI; preview-only flashcard; tests and build.
+- Implemented: Next scaffold; SQLite versioned migrations; demo data; vocabulary listing; draft create API behind bearer token; MCP tools behind a separate bearer token; tests and build.
+- Added: v1-compatible six-step SRS, signed HttpOnly per-browser guest sessions, enrollment in public decks or published words, transactional review scheduling and event history, replay idempotency, due queue, progress metrics, and a real interactive /practice screen. Original v1 learning records remain untouched.
 - Added: read-only dry-run and explicit-apply import from legacy SQLite OR tracked vocabulary JSON; automatic v2 destination backup; legacy ID mapping; raw source JSON preservation; draft-only imports; idempotency checks and tests.
 - Added: single-Admin Auth.js login (hashed server-only password and signed cookie), Admin draft approval, private deck management and public deck publishing with integrity checks. Public API returns only public decks and published entries.
 - Added: Admin-only AI Vocabulary Studio with OpenAI Responses structured output, SQLite generation jobs/candidates, editing, duplicate checks, accepting as drafts with examples, generation request quota and safe provider failure codes. Tests use a fake provider; no real API key is supplied.
@@ -19,7 +20,7 @@ The new app is intentionally isolated in v2/ on this development branch so the p
 ## Next steps
 1. Harden the one-admin login with persistent anti-brute-force protections, auditing and secure deployment; later introduce multi-user RBAC when needed.
 2. Extend migration from vocabulary into users, progress and SRS review history; verify v1 backups, restore drills, old/new ID counts and a reversible production cutover.
-3. Expand deck editing/archiving and content review audit; implement SRS review events and preserve learning progress.
+3. Expand deck editing/archiving and content review audit; link new guest SRS records to real user accounts and reconcile v1 progress and historical reviews.
 4. Expand AI Studio with import/enrichment batches, accurate cost accounting, provider adapters, managed retries and content audit.
 5. Harden remote MCP OAuth, scopes, origin validation, audit and rate limiting.
 6. Run integration and end-to-end tests, compare v1/v2 data, then cut over production.

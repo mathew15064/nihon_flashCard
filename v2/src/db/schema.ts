@@ -89,11 +89,33 @@ export const reviewCards = sqliteTable("review_cards", {
   entryId: text("entry_id").notNull().references(() => vocabularyEntries.id),
   status: text("status").notNull().default("new"),
   nextReviewAt: text("next_review_at"),
-}, (t) => [uniqueIndex("uq_review_user_entry").on(t.userId, t.entryId)]);
+  streak: integer("streak").notNull().default(0),
+  timesReviewed: integer("times_reviewed").notNull().default(0),
+  correctCount: integer("correct_count").notNull().default(0),
+  wrongCount: integer("wrong_count").notNull().default(0),
+  lastReviewedAt: text("last_reviewed_at"),
+}, (t) => [
+  uniqueIndex("uq_review_user_entry").on(t.userId, t.entryId),
+  index("idx_review_cards_user_due").on(t.userId, t.nextReviewAt),
+]);
 
 export const reviewEvents = sqliteTable("review_events", {
   id: text("id").primaryKey(),
   cardId: text("card_id").notNull().references(() => reviewCards.id),
   result: text("result").notNull(),
   reviewedAt: text("reviewed_at").notNull(),
-}, (t) => [index("idx_review_events_card").on(t.cardId)]);
+  requestId: text("request_id"),
+}, (t) => [
+  index("idx_review_events_card").on(t.cardId),
+  index("idx_review_events_reviewed").on(t.reviewedAt),
+  uniqueIndex("uq_review_request").on(t.requestId),
+]);
+
+export const userDeckEnrollments = sqliteTable("user_deck_enrollments", {
+  userId: text("user_id").notNull(),
+  deckId: text("deck_id").notNull().references(() => decks.id, { onDelete: "restrict" }),
+  enrolledAt: text("enrolled_at").notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.deckId] }),
+  index("idx_enrollments_user").on(t.userId),
+]);

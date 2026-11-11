@@ -52,6 +52,22 @@ a{text-decoration:none;color:inherit}
 .candidate-card{margin:8px 0}
 .candidate-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px}
 .candidate-actions form{margin:0}
+.learning-workspace{display:flex;flex-direction:column;gap:26px}
+.study-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.study-stats>div{background:#eef6ed;border:1px solid #dce9db;padding:16px 20px;border-radius:14px;display:flex;flex-direction:column;gap:7px}
+.study-stats strong{font-size:28px;color:#254e39}
+.study-stats span{color:#67816d;font-size:12px}
+.study-enroll{margin-top:8px}
+.study-enroll h2{font-size:23px;margin:12px 0}
+.study-enroll>p{line-height:1.7}
+.study-deck-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}
+.study-deck-grid .admin-panel{margin:0}
+.study-deck-grid h3{margin:0 0 8px;font-size:18px}
+.study-deck-grid p{min-height:36px}
+.study-empty{display:flex;flex-direction:column;align-items:flex-start;gap:16px}
+.study-empty .button{align-self:flex-start}
+.practice-reading{font-size:17px;color:#56715d!important}
+@media(max-width:650px){.study-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.study-deck-grid{grid-template-columns:1fr}}
 .practice-card strong{font-size:70px}.practice-card>span{color:#698674}.practice-card .card-answer{font-size:24px;color:var(--ink);font-weight:700}.flip-hint{font-size:13px;margin-top:15px}.practice-controls{display:flex;justify-content:space-between;gap:15px;margin-top:20px}
 @media(max-width:830px){.hero{grid-template-columns:1fr;padding:45px 10px;gap:36px}.hero-card{max-width:500px;width:100%;margin:auto}.features,.vocab-grid{grid-template-columns:1fr 1fr}.site-nav{gap:12px}.header-tag{display:none}}
 @media(max-width:560px){.site-header{height:70px;padding:0 17px}.brand{font-size:17px}.brand-mark{width:35px;height:35px}.brand-sub{display:none}.site-main{padding:0 14px}.hero h1{font-size:49px}.hero-card{min-height:310px}.hero-japanese{font-size:64px}.features,.vocab-grid{grid-template-columns:1fr;margin-left:0;margin-right:0}.content-page{padding:36px 5px}.filters{flex-direction:column}.site-footer{padding:18px}.practice-card strong{font-size:54px}}
