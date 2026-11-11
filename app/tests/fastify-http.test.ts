@@ -20,6 +20,7 @@ test("Fastify protects Admin routes, rejects CSRF and isolates drafts",async()=>
     DB_PATH:process.env.DB_PATH,AUTH_SECRET:process.env.AUTH_SECRET,
     NIHON_ADMIN_PASSWORD_HASH:process.env.NIHON_ADMIN_PASSWORD_HASH,
     NODE_ENV:process.env.NODE_ENV,OPENAI_API_KEY:process.env.OPENAI_API_KEY,
+    PUBLIC_ORIGIN:process.env.PUBLIC_ORIGIN,
   };
   process.env.DB_PATH=filename;
   process.env.AUTH_SECRET="test-fastify-auth-secret-1234567890123456789";
@@ -74,6 +75,47 @@ test("Fastify protects Admin routes, rejects CSRF and isolates drafts",async()=>
       const forgedCookie=cookie.replace(/.$/,"X");
       assert.equal((await app.inject({method:"GET",url:"/api/v1/admin/vocabulary",
         headers:{cookie:forgedCookie}})).statusCode,401);
+
+      // In production, a missing PUBLIC_ORIGIN must not trust a forged Host header.
+      process.env.NODE_ENV="production";
+      delete process.env.PUBLIC_ORIGIN;
+      assert.equal((await app.inject({
+        method:"POST",url:"/api/v1/auth/admin/login",
+        headers:{origin:"http://localhost:80",host:"localhost:80"},
+        payload:{password:"long-fastify-admin-test-password"},
+      })).statusCode,403);
+      process.env.PUBLIC_ORIGIN="https://nihon.example";
+      assert.equal((await app.inject({
+        method:"POST",url:"/api/v1/auth/admin/login",
+        headers:{origin:"https://nihon.example","sec-fetch-site":"cross-site"},
+        payload:{password:"long-fastify-admin-test-password"},
+      })).statusCode,403);
+      assert.equal((await app.inject({
+        method:"POST",url:"/api/v1/auth/admin/login",
+        headers:{origin:"https://nihon.example"},
+        payload:{password:"long-fastify-admin-test-password"},
+      })).statusCode,200);
+      process.env.NODE_ENV="test";
+      delete process.env.PUBLIC_ORIGIN;
+
+      // Ignore attacker-supplied forwarded IPs (trustProxy is explicitly false).
+      for(let i=0;i<25;i++){
+        const attempt=await app.inject({
+          method:"POST",url:"/api/v1/auth/learner/login",
+          headers:{origin:"https://evil.invalid","x-forwarded-for":`198.51.100.${i}`},
+          payload:{username:"unknown",password:"wrong"},
+        });
+        assert.equal(attempt.statusCode,403);
+      }
+      const limited=await app.inject({
+        method:"POST",url:"/api/v1/auth/learner/login",
+        headers:{origin:"https://evil.invalid","x-forwarded-for":"203.0.113.10"},
+        payload:{username:"unknown",password:"wrong"},
+      });
+      assert.equal(limited.statusCode,429);
+      assert.equal(limited.json().error.code,"RATE_LIMITED");
+      assert.ok(Number(limited.headers["retry-after"])>0);
+      assert.equal((await app.inject({method:"GET",url:"/api/v1/health"})).statusCode,200);
     }finally{await app.close();}
   }finally{
     for(const [key,value] of Object.entries(old)){

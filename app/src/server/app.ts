@@ -4,6 +4,7 @@ import fastifyStatic from "@fastify/static";
 import { resolve } from "node:path";
 import { registerRoutes } from "./routes";
 import { registerMcp } from "./mcp";
+import { registerAuthRateLimits } from "./rate-limit";
 
 export async function buildApp(options?:{staticAssets?:boolean}){
   const app=Fastify({
@@ -12,6 +13,7 @@ export async function buildApp(options?:{staticAssets?:boolean}){
     trustProxy:false,
   });
   await app.register(cookie);
+  registerAuthRateLimits(app);
   app.addHook("onSend",async(req,reply,payload)=>{
     reply.header("X-Content-Type-Options","nosniff");
     reply.header("Referrer-Policy","strict-origin-when-cross-origin");

@@ -52,8 +52,10 @@ explicitly configured with NIHON_ENABLE_SIGNUP=true.
 
 Signed HttpOnly cookies are used for Admin (8h), learner (30d) and guest
 learning (90d). POST/PATCH browser requests require a matching Origin.
-Login lockouts and local signup quota live in SQLite. Full production
-rate limiting, OAuth, recovery and security review are still pending.
+Login lockouts and local signup quota live in SQLite. A bounded per-process IP limit covers Admin/learner login and registration;
+account-level lockouts persist in SQLite. Because trustProxy is false, traffic
+from a reverse proxy shares the proxy's IP bucket; configure trusted edge IP
+rate limiting as well. OAuth, recovery and broader abuse review are pending.
 
 ## AI Studio
 
@@ -131,9 +133,28 @@ migrated or safely associated with new learner accounts.
     docker run --rm -p 127.0.0.1:3000:3000 --env-file .env.production -v nihon-data:/opt/nihon/data nihon-fastify
 
 Keep the env file private and set PUBLIC_ORIGIN to your external HTTPS origin
-behind the reverse proxy. Image entrypoint runs SQLite migrations and starts
-one non-root Fastify process. Store the DB in a persistent volume and test
-backup/restore before production.
+behind the reverse proxy. Without it, browser state-changing requests are
+denied in production. Image entrypoint runs SQLite migrations and starts
+one non-root Fastify process. Store the DB in a persistent volume.
+
+## SQLite backup and restore (no overwrite)
+
+After `npm run build`, the backup CLI uses Node's SQLite online backup API,
+so it includes committed WAL changes without touching the source database:
+
+    npm run db:backup -- --source ./data/nihon.sqlite --target /secure/backups/nihon-backup.sqlite
+
+Restore **only into a new file** for a verification drill:
+
+    npm run db:restore -- --source /secure/backups/nihon-backup.sqlite --target ./data/nihon-restored.sqlite
+
+Both commands refuse existing destination paths and require an existing parent
+directory. Copies use 0600 permissions and must pass SQLite integrity_check;
+failed copies are discarded. Restore never replaces the running DB, updates
+DB_PATH, or deploys anything. For cutover, stop the application, verify the
+restored copy and counts on an isolated instance, then explicitly choose a
+rollback/cutover procedure. Mount a separate protected backup location when
+running in Docker; do not keep the only backup inside the live SQLite volume.
 
 ## Verification
 

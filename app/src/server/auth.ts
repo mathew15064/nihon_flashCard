@@ -95,8 +95,10 @@ export function ensureGuest(request:FastifyRequest,reply:FastifyReply):boolean {
 export function safeOrigin(request:FastifyRequest):boolean {
   const origin=request.headers.origin;
   if(typeof origin!=="string")return false;
-  const expected=process.env.PUBLIC_ORIGIN?.trim() ||
-    request.protocol+"://"+request.headers.host;
+  const configured=process.env.PUBLIC_ORIGIN?.trim();
+  // Never derive a production CSRF allowlist from the attacker-controlled Host header.
+  if(process.env.NODE_ENV==="production" && !configured)return false;
+  const expected=configured || request.protocol+"://"+request.headers.host;
   try{
     return new URL(origin).origin===new URL(expected).origin &&
       request.headers["sec-fetch-site"]!=="cross-site";
