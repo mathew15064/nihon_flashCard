@@ -1,0 +1,35 @@
+name: Nihon Fastify / Vite checks
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "docs/FASTIFY_MIGRATION.md"
+      - ".github/workflows/nihon-fastify.yml"
+  push:
+    branches:
+      - feat/fastify-vite-monolith
+    paths:
+      - "app/**"
+      - "docs/FASTIFY_MIGRATION.md"
+      - ".github/workflows/nihon-fastify.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
