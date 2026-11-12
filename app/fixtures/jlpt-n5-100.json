@@ -1,0 +1,730 @@
+{
+  "topicName": "Tiếng Nhật N5 – 100 từ nền tảng",
+  "lessons": [
+    {
+      "lessonName": "Bài 01 – Con người và gia đình",
+      "items": [
+        {
+          "word": "私",
+          "reading": "わたし",
+          "romanization": "watashi",
+          "meaningVi": "tôi",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "あなた",
+          "reading": "あなた",
+          "romanization": "anata",
+          "meaningVi": "bạn",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "人",
+          "reading": "ひと",
+          "romanization": "hito",
+          "meaningVi": "người",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "男",
+          "reading": "おとこ",
+          "romanization": "otoko",
+          "meaningVi": "đàn ông",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "女",
+          "reading": "おんな",
+          "romanization": "onna",
+          "meaningVi": "phụ nữ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "子供",
+          "reading": "こども",
+          "romanization": "kodomo",
+          "meaningVi": "trẻ em",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "友達",
+          "reading": "ともだち",
+          "romanization": "tomodachi",
+          "meaningVi": "bạn; người bạn",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "先生",
+          "reading": "せんせい",
+          "romanization": "sensei",
+          "meaningVi": "giáo viên",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "学生",
+          "reading": "がくせい",
+          "romanization": "gakusei",
+          "meaningVi": "học sinh; sinh viên",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "父",
+          "reading": "ちち",
+          "romanization": "chichi",
+          "meaningVi": "bố (của mình)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "母",
+          "reading": "はは",
+          "romanization": "haha",
+          "meaningVi": "mẹ (của mình)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "兄",
+          "reading": "あに",
+          "romanization": "ani",
+          "meaningVi": "anh trai (của mình)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "姉",
+          "reading": "あね",
+          "romanization": "ane",
+          "meaningVi": "chị gái (của mình)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "弟",
+          "reading": "おとうと",
+          "romanization": "otouto",
+          "meaningVi": "em trai (của mình)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "妹",
+          "reading": "いもうと",
+          "romanization": "imouto",
+          "meaningVi": "em gái (của mình)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "家族",
+          "reading": "かぞく",
+          "romanization": "kazoku",
+          "meaningVi": "gia đình",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "名前",
+          "reading": "なまえ",
+          "romanization": "namae",
+          "meaningVi": "tên",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "日本",
+          "reading": "にほん",
+          "romanization": "nihon",
+          "meaningVi": "Nhật Bản",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "日本人",
+          "reading": "にほんじん",
+          "romanization": "nihonjin",
+          "meaningVi": "người Nhật",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "誰",
+          "reading": "だれ",
+          "romanization": "dare",
+          "meaningVi": "ai",
+          "jlptLevel": "N5"
+        }
+      ]
+    },
+    {
+      "lessonName": "Bài 02 – Trường học và đồ dùng",
+      "items": [
+        {
+          "word": "学校",
+          "reading": "がっこう",
+          "romanization": "gakkou",
+          "meaningVi": "trường học",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "教室",
+          "reading": "きょうしつ",
+          "romanization": "kyoushitsu",
+          "meaningVi": "phòng học",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "本",
+          "reading": "ほん",
+          "romanization": "hon",
+          "meaningVi": "sách",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "辞書",
+          "reading": "じしょ",
+          "romanization": "jisho",
+          "meaningVi": "từ điển",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "ノート",
+          "reading": "ノート",
+          "romanization": "nooto",
+          "meaningVi": "vở ghi",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "鉛筆",
+          "reading": "えんぴつ",
+          "romanization": "enpitsu",
+          "meaningVi": "bút chì",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "ペン",
+          "reading": "ペン",
+          "romanization": "pen",
+          "meaningVi": "bút",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "紙",
+          "reading": "かみ",
+          "romanization": "kami",
+          "meaningVi": "giấy",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "机",
+          "reading": "つくえ",
+          "romanization": "tsukue",
+          "meaningVi": "bàn học; bàn làm việc",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "椅子",
+          "reading": "いす",
+          "romanization": "isu",
+          "meaningVi": "ghế",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "時計",
+          "reading": "とけい",
+          "romanization": "tokei",
+          "meaningVi": "đồng hồ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "電話",
+          "reading": "でんわ",
+          "romanization": "denwa",
+          "meaningVi": "điện thoại",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "鞄",
+          "reading": "かばん",
+          "romanization": "kaban",
+          "meaningVi": "cặp; túi xách",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "窓",
+          "reading": "まど",
+          "romanization": "mado",
+          "meaningVi": "cửa sổ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "ドア",
+          "reading": "ドア",
+          "romanization": "doa",
+          "meaningVi": "cửa ra vào",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "黒板",
+          "reading": "こくばん",
+          "romanization": "kokuban",
+          "meaningVi": "bảng đen",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "宿題",
+          "reading": "しゅくだい",
+          "romanization": "shukudai",
+          "meaningVi": "bài tập về nhà",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "勉強",
+          "reading": "べんきょう",
+          "romanization": "benkyou",
+          "meaningVi": "việc học; học tập",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "読む",
+          "reading": "よむ",
+          "romanization": "yomu",
+          "meaningVi": "đọc",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "書く",
+          "reading": "かく",
+          "romanization": "kaku",
+          "meaningVi": "viết",
+          "jlptLevel": "N5"
+        }
+      ]
+    },
+    {
+      "lessonName": "Bài 03 – Thời gian và số đếm",
+      "items": [
+        {
+          "word": "一",
+          "reading": "いち",
+          "romanization": "ichi",
+          "meaningVi": "một",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "二",
+          "reading": "に",
+          "romanization": "ni",
+          "meaningVi": "hai",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "三",
+          "reading": "さん",
+          "romanization": "san",
+          "meaningVi": "ba",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "四",
+          "reading": "よん",
+          "romanization": "yon",
+          "meaningVi": "bốn",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "五",
+          "reading": "ご",
+          "romanization": "go",
+          "meaningVi": "năm",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "六",
+          "reading": "ろく",
+          "romanization": "roku",
+          "meaningVi": "sáu",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "七",
+          "reading": "なな",
+          "romanization": "nana",
+          "meaningVi": "bảy",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "八",
+          "reading": "はち",
+          "romanization": "hachi",
+          "meaningVi": "tám",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "九",
+          "reading": "きゅう",
+          "romanization": "kyuu",
+          "meaningVi": "chín",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "十",
+          "reading": "じゅう",
+          "romanization": "juu",
+          "meaningVi": "mười",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "今日",
+          "reading": "きょう",
+          "romanization": "kyou",
+          "meaningVi": "hôm nay",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "明日",
+          "reading": "あした",
+          "romanization": "ashita",
+          "meaningVi": "ngày mai",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "昨日",
+          "reading": "きのう",
+          "romanization": "kinou",
+          "meaningVi": "hôm qua",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "朝",
+          "reading": "あさ",
+          "romanization": "asa",
+          "meaningVi": "buổi sáng",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "昼",
+          "reading": "ひる",
+          "romanization": "hiru",
+          "meaningVi": "buổi trưa",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "夜",
+          "reading": "よる",
+          "romanization": "yoru",
+          "meaningVi": "buổi tối; ban đêm",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "今",
+          "reading": "いま",
+          "romanization": "ima",
+          "meaningVi": "bây giờ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "毎日",
+          "reading": "まいにち",
+          "romanization": "mainichi",
+          "meaningVi": "mỗi ngày",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "時間",
+          "reading": "じかん",
+          "romanization": "jikan",
+          "meaningVi": "thời gian; tiếng (đơn vị giờ)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "半",
+          "reading": "はん",
+          "romanization": "han",
+          "meaningVi": "một nửa; rưỡi (giờ)",
+          "jlptLevel": "N5"
+        }
+      ]
+    },
+    {
+      "lessonName": "Bài 04 – Ăn uống và mua sắm",
+      "items": [
+        {
+          "word": "水",
+          "reading": "みず",
+          "romanization": "mizu",
+          "meaningVi": "nước",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "お茶",
+          "reading": "おちゃ",
+          "romanization": "ocha",
+          "meaningVi": "trà; trà xanh",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "牛乳",
+          "reading": "ぎゅうにゅう",
+          "romanization": "gyuunyuu",
+          "meaningVi": "sữa bò",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "ご飯",
+          "reading": "ごはん",
+          "romanization": "gohan",
+          "meaningVi": "cơm; bữa ăn",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "パン",
+          "reading": "パン",
+          "romanization": "pan",
+          "meaningVi": "bánh mì",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "卵",
+          "reading": "たまご",
+          "romanization": "tamago",
+          "meaningVi": "trứng",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "魚",
+          "reading": "さかな",
+          "romanization": "sakana",
+          "meaningVi": "cá",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "肉",
+          "reading": "にく",
+          "romanization": "niku",
+          "meaningVi": "thịt",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "野菜",
+          "reading": "やさい",
+          "romanization": "yasai",
+          "meaningVi": "rau củ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "果物",
+          "reading": "くだもの",
+          "romanization": "kudamono",
+          "meaningVi": "trái cây",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "りんご",
+          "reading": "りんご",
+          "romanization": "ringo",
+          "meaningVi": "táo",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "みかん",
+          "reading": "みかん",
+          "romanization": "mikan",
+          "meaningVi": "quýt",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "食べる",
+          "reading": "たべる",
+          "romanization": "taberu",
+          "meaningVi": "ăn",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "飲む",
+          "reading": "のむ",
+          "romanization": "nomu",
+          "meaningVi": "uống",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "買う",
+          "reading": "かう",
+          "romanization": "kau",
+          "meaningVi": "mua",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "店",
+          "reading": "みせ",
+          "romanization": "mise",
+          "meaningVi": "cửa hàng",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "お金",
+          "reading": "おかね",
+          "romanization": "okane",
+          "meaningVi": "tiền",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "安い",
+          "reading": "やすい",
+          "romanization": "yasui",
+          "meaningVi": "rẻ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "高い",
+          "reading": "たかい",
+          "romanization": "takai",
+          "meaningVi": "cao; đắt",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "おいしい",
+          "reading": "おいしい",
+          "romanization": "oishii",
+          "meaningVi": "ngon",
+          "jlptLevel": "N5"
+        }
+      ]
+    },
+    {
+      "lessonName": "Bài 05 – Địa điểm, đi lại và hoạt động",
+      "items": [
+        {
+          "word": "家",
+          "reading": "いえ",
+          "romanization": "ie",
+          "meaningVi": "nhà",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "駅",
+          "reading": "えき",
+          "romanization": "eki",
+          "meaningVi": "nhà ga",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "車",
+          "reading": "くるま",
+          "romanization": "kuruma",
+          "meaningVi": "ô tô; xe hơi",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "電車",
+          "reading": "でんしゃ",
+          "romanization": "densha",
+          "meaningVi": "tàu điện",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "自転車",
+          "reading": "じてんしゃ",
+          "romanization": "jitensha",
+          "meaningVi": "xe đạp",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "道",
+          "reading": "みち",
+          "romanization": "michi",
+          "meaningVi": "con đường",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "公園",
+          "reading": "こうえん",
+          "romanization": "kouen",
+          "meaningVi": "công viên",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "病院",
+          "reading": "びょういん",
+          "romanization": "byouin",
+          "meaningVi": "bệnh viện",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "銀行",
+          "reading": "ぎんこう",
+          "romanization": "ginkou",
+          "meaningVi": "ngân hàng",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "郵便局",
+          "reading": "ゆうびんきょく",
+          "romanization": "yuubinkyoku",
+          "meaningVi": "bưu điện",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "行く",
+          "reading": "いく",
+          "romanization": "iku",
+          "meaningVi": "đi",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "来る",
+          "reading": "くる",
+          "romanization": "kuru",
+          "meaningVi": "đến",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "帰る",
+          "reading": "かえる",
+          "romanization": "kaeru",
+          "meaningVi": "trở về",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "見る",
+          "reading": "みる",
+          "romanization": "miru",
+          "meaningVi": "xem; nhìn",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "聞く",
+          "reading": "きく",
+          "romanization": "kiku",
+          "meaningVi": "nghe; hỏi",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "話す",
+          "reading": "はなす",
+          "romanization": "hanasu",
+          "meaningVi": "nói; trò chuyện",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "歩く",
+          "reading": "あるく",
+          "romanization": "aruku",
+          "meaningVi": "đi bộ",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "走る",
+          "reading": "はしる",
+          "romanization": "hashiru",
+          "meaningVi": "chạy",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "乗る",
+          "reading": "のる",
+          "romanization": "noru",
+          "meaningVi": "lên (phương tiện)",
+          "jlptLevel": "N5"
+        },
+        {
+          "word": "降りる",
+          "reading": "おりる",
+          "romanization": "oriru",
+          "meaningVi": "xuống (phương tiện)",
+          "jlptLevel": "N5"
+        }
+      ]
+    }
+  ]
+}
