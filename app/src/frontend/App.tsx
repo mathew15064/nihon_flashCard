@@ -5,6 +5,7 @@ import Vocabulary from "./pages/Vocabulary";
 import {Decks,DeckDetails} from "./pages/Decks";
 import Practice from "./pages/Practice";
 import {AccountLogin,AccountRegister,AdminLogin} from "./pages/Login";
+import AccountSecurity from "./pages/AccountSecurity";
 import Admin from "./pages/Admin";
 import AIStudio from "./pages/AIStudio";
 
@@ -69,7 +70,7 @@ export default function App(){
         {actor?.role==="admin"?<NavLink to="/admin">Admin</NavLink>:null}
       </nav>
       <div className="header-account">
-        {actor?<><span className="muted">{actor.name}</span><button type="button" className="quiet-button" onClick={logout}>Đăng xuất</button></>:
+        {actor?<><span className="muted">{actor.name}</span>{actor.role==="learner"?<Link to="/account/security">Bảo mật</Link>:null}<button type="button" className="quiet-button" onClick={logout}>Đăng xuất</button></>:
           <Link className="button outline" to="/account/login">Đăng nhập</Link>}
       </div>
     </header>
@@ -83,6 +84,7 @@ export default function App(){
           <Route path="/practice" element={<Practice/>}/>
           <Route path="/account/login" element={<AccountLogin/>}/>
           <Route path="/account/register" element={<AccountRegister/>}/>
+          <Route path="/account/security" element={actor?.role==="learner"?<AccountSecurity/>:<Navigate to="/account/login" replace/>}/>
           <Route path="/admin/login" element={<AdminLogin/>}/>
           <Route path="/admin" element={actor?.role==="admin"?<Admin/>:<Navigate to="/admin/login" replace/>}/>
           <Route path="/admin/ai-studio" element={actor?.role==="admin"?<AIStudio/>:<Navigate to="/admin/login" replace/>}/>

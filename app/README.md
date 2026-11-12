@@ -49,6 +49,10 @@ Set NIHON_ADMIN_PASSWORD_HASH to the output. There is no default password.
 Admin login: /admin/login. Learner login: /account/login.
 Learner registration: /account/register, disabled until the server is
 explicitly configured with NIHON_ENABLE_SIGNUP=true.
+Learner password change: /account/security, only for an authenticated learner
+who knows the current password. Changing it revokes sessions on other devices
+and rotates the active browser session. Unverified password reset is not
+available; see docs/ACCOUNT_SECURITY.md.
 
 Signed HttpOnly cookies are used for Admin (8h), learner (30d) and guest
 learning (90d). Admin/learner sessions additionally require a hashed SQLite
@@ -85,6 +89,7 @@ Auth:
 - GET /api/v1/auth/me
 - POST /api/v1/auth/admin/login
 - POST /api/v1/auth/learner/login and /register
+- POST /api/v1/auth/learner/password (reauthenticated password change)
 - POST /api/v1/auth/logout
 
 Admin:

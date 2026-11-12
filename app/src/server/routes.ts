@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { registerLearner, authenticateLearner, signupEnabled } from "@/modules/accounts/service";
+import { registerLearner, authenticateLearner, changeLearnerPassword, signupEnabled } from "@/modules/accounts/service";
 import { registerInputSchema } from "@/modules/accounts/schema";
 import { verifyAdminPassword } from "@/lib/admin-password";
 import { listVocabulary, getVocabulary, createVocabularyDraft, publishVocabulary } from "@/modules/vocabulary/service";
@@ -62,6 +62,21 @@ export function registerRoutes(app:FastifyInstance):void {
       setAuthCookie(request,reply,learner.id);
       return ok({id:learner.id,name:learner.name,role:"learner"});
     }catch(err){return fail(reply,err);}
+  });
+  app.post("/api/v1/auth/learner/password",async(request,reply)=>{
+    if(!requireSameOrigin(request,reply))return;
+    const actor=getActor(request);
+    if(actor?.role!=="learner")
+      return reply.code(401).send({success:false,error:{code:"LEARNER_REQUIRED"}});
+    try{
+      changeLearnerPassword(actor.id,request.body);
+      setAuthCookie(request,reply,actor.id);
+      return ok({passwordChanged:true,otherSessionsRevoked:true});
+    }catch(error){
+      if(error instanceof Error && ["INVALID_CREDENTIALS","LEARNER_REQUIRED"].includes(error.message))
+        return reply.code(401).send({success:false,error:{code:"INVALID_CREDENTIALS"}});
+      return fail(reply,error);
+    }
   });
   app.post("/api/v1/auth/logout",async(request,reply)=>{
     if(!requireSameOrigin(request,reply))return;

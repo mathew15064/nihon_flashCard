@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { learnerAccounts, learnerLoginLimits, learnerSignupEvents } from "@/db/schema";
+import { authSessions, learnerAccounts, learnerLoginLimits, learnerSignupEvents } from "@/db/schema";
 import { hashAdminPassword, verifyAdminPassword } from "@/lib/admin-password";
-import { normalizeUsername, registerInputSchema, usernameSchema } from "./schema";
+import { changePasswordInputSchema, normalizeUsername, registerInputSchema, usernameSchema } from "./schema";
 
 const MAX_SIGNUPS_PER_HOUR = 10;
 const MAX_LOGIN_FAILURES = 5;
@@ -44,6 +44,33 @@ export function registerLearner(raw: unknown) {
     }).run();
     tx.insert(learnerSignupEvents).values({id:randomUUID(),createdAt:now}).run();
     return {id:"learner:"+id,username:input.username,displayName:input.displayName};
+  });
+}
+
+/**
+ * Self-service password rotation. Only a currently authenticated learner can
+ * invoke this. Re-authenticates using the existing DB-backed lockout mechanism.
+ * All the learner's sessions are revoked atomically with the password update.
+ * The HTTP route issues a fresh cookie for the current device after commit.
+ */
+export function changeLearnerPassword(actorId: string, raw: unknown):void {
+  const input=changePasswordInputSchema.parse(raw);
+  const learner=getLearnerById(actorId);
+  if(!learner)throw new Error("LEARNER_REQUIRED");
+  if(!authenticateLearner(learner.username,input.currentPassword))
+    throw new Error("INVALID_CREDENTIALS");
+  if(input.currentPassword===input.newPassword)
+    throw new Error("PASSWORD_REUSE_NOT_ALLOWED");
+  const passwordHash=hashAdminPassword(input.newPassword);
+  const now=new Date().toISOString();
+  const id=learner.id.slice("learner:".length);
+  db.transaction(tx=>{
+    const current=tx.select({status:learnerAccounts.status})
+      .from(learnerAccounts).where(eq(learnerAccounts.id,id)).get();
+    if(current?.status!=="active")throw new Error("LEARNER_REQUIRED");
+    tx.update(learnerAccounts).set({passwordHash,updatedAt:now})
+      .where(eq(learnerAccounts.id,id)).run();
+    tx.delete(authSessions).where(eq(authSessions.actorId,actorId)).run();
   });
 }
 
