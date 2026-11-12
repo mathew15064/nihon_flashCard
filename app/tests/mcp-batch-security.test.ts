@@ -167,11 +167,11 @@ test("MCP HTTP: 5 read/9 write tools, no anonymous Admin draft disclosure",{
     const topic=await api("/api/v1/admin/topics","POST",{
       name:"Restricted Security Topic",description:secret,
     },cookie);
-    assert.equal(topic.status,200,JSON.stringify(topic.json));
+    assert.equal(topic.status,201,JSON.stringify(topic.json));
     const lesson=await api("/api/v1/admin/lessons","POST",{
       name:"Restricted Security Lesson",description:secret,topicId:topic.json.data.id,
     },cookie);
-    assert.equal(lesson.status,200,JSON.stringify(lesson.json));
+    assert.equal(lesson.status,201,JSON.stringify(lesson.json));
     const lessonId=lesson.json.data.id as string;
     const batch=await api("/api/v1/admin/lessons/"+lessonId+"/batch","POST",{
       items:[{word:secret,reading:"ないぶ",meaningVi:secret}],
