@@ -1,5 +1,7 @@
 # LEARNING_SYSTEM — Japanese Flashcard
 
+> **Lưu trữ lịch sử v1:** Tài liệu này mô tả ứng dụng Express cũ, không phải Fastify v2. Nihon v2 chỉ dùng MySQL 8.4; xem [hướng dẫn cài đặt mới](UI_FIRST_INSTALL.md) và [app/README.md](../app/README.md).
+
 All logic in this document lives in `server/services/learning.service.js` (plus a small `review-scheduler.js` for interval math). The frontend only renders results.
 
 ## 1. Learning States

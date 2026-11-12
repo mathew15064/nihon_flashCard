@@ -6,7 +6,7 @@ import type { openMySQL } from "./connector";
 import { mysqlAuth } from "./auth";
 import { mysqlVocabulary } from "./vocabulary";
 import { vocabularyInput } from "@/modules/vocabulary/schema";
-import { mcpHostAllowed } from "@/server/mcp";
+import { mcpHostAllowed } from "@/lib/mcp-host";
 import { FixedWindowLimiter } from "@/server/rate-limit";
 
 type Db=ReturnType<typeof openMySQL>["db"];

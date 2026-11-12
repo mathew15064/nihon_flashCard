@@ -1,7 +1,8 @@
 import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes } from "node:crypto";
 import { createReadStream, createWriteStream, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { appendFile, open, readFile, unlink } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join,resolve } from "node:path";
+import { dataDirectory } from "@/lib/bootstrap-storage";
 import { createGzip, createGunzip, gunzipSync } from "node:zlib";
 import { Readable, Writable } from "node:stream";
 import { StringDecoder } from "node:string_decoder";
@@ -35,8 +36,7 @@ function quote(id:string){
   return "`"+id+"`";
 }
 function privateDir():string{
-  const data=dirname(resolve(process.env.DB_PATH||"./data/nihon.sqlite"));
-  const dir=join(data,"mysql-backups");
+  const dir=join(dataDirectory(),"mysql-backups");
   mkdirSync(dir,{recursive:true,mode:0o700});
   const stats=lstatSync(dir);
   if(!stats.isDirectory()||(stats.mode&0o077)!==0)

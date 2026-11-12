@@ -19,7 +19,7 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
   const corruptedStage="nihon_restore_"+randomBytes(7).toString("hex");
   const admin=await mysql.createConnection(server);
   const dir=mkdtempSync(join(tmpdir(),"nihon-full-mysql-it-"));
-  const keys=["DB_PATH","AUTH_SECRET","NODE_ENV","PUBLIC_ORIGIN",
+  const keys=["NIHON_DATA_DIR","DB_PATH","AUTH_SECRET","NODE_ENV","PUBLIC_ORIGIN",
     "NIHON_ADMIN_PASSWORD_HASH","NIHON_MCP_TOKEN","NIHON_MCP_READ_TOKEN"] as const;
   const old=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
   let app:Awaited<ReturnType<typeof import("../src/server/app").buildApp>>|undefined;
@@ -28,9 +28,12 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     await admin.query("CREATE DATABASE `"+stagingName+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
     await admin.query("CREATE DATABASE `"+corruptedStage+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
     for(const key of keys)delete process.env[key];
-    process.env.DB_PATH=join(dir,"bootstrap.sqlite");
+    process.env.NIHON_DATA_DIR=dir;
     process.env.NODE_ENV="test";
     prepareLocalStorage();
+    assert.equal(existsSync(join(dir,"nihon.sqlite")),false);
+    assert.equal(existsSync(join(dir,"bootstrap.sqlite")),false);
+    assert.equal(statSync(join(dir,"instance-secret.key")).mode&0o777,0o600);
     const {buildApp}=await import("../src/server/app");
     const {installationCodeForIsolatedTests}=await import("../src/server/installation");
     app=await buildApp({staticAssets:false});
@@ -55,6 +58,12 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     };
     const before=await request("/api/v1/setup/status");
     assert.equal(before.data.data.installed,false);
+    assert.deepEqual(before.data.data.engines,[{id:"mysql",available:true}]);
+    const rejectedSQLite=await request("/api/v1/setup/initialize","POST",{
+      setupCode:code,origin:url,database:"sqlite",mysql:connection,
+      adminPassword:password,repeatPassword:password,enableSignup:true,
+    });
+    assert.equal(rejectedSQLite.status,400);
     const checked=await request("/api/v1/setup/mysql/test","POST",{
       setupCode:code,origin:url,connection,
     });
@@ -66,6 +75,14 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     });
     assert.equal(init.status,201,JSON.stringify(init.data));
     assert.equal(init.data.data.database,"mysql");
+    const configFile=join(dir,"mysql-connection.enc");
+    const ciphertext=readFileSync(configFile,"utf8");
+    assert.match(ciphertext,/^enc1\./);
+    assert.equal(statSync(configFile).mode&0o777,0o600);
+    assert.ok(!ciphertext.includes(server.password));
+    assert.ok(existsSync(join(dir,"mysql-installed.marker")));
+    assert.equal(existsSync(join(dir,"nihon.sqlite")),false);
+    assert.equal(existsSync(join(dir,"bootstrap.sqlite")),false);
     assert.equal((await request("/api/v1/setup/status")).data.data.installed,true);
     assert.equal((await request("/api/v1/health")).data.data.database,"mysql");
     const login=await request("/api/v1/auth/admin/login","POST",{password});
@@ -263,6 +280,7 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     const reopened=await app.inject({method:"GET",url:"/api/v1/setup/status"});
     assert.equal(reopened.json().data.installed,true);
     assert.equal(reopened.json().data.database,"mysql");
+    assert.equal(existsSync(join(dir,"nihon.sqlite")),false);
     const learnerRows=await admin.query(
       "SELECT COUNT(*) AS n FROM `"+name+"`.learner_accounts"
     );

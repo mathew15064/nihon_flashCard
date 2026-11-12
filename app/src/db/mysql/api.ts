@@ -59,8 +59,15 @@ export function mysqlApi(db:Db){
   return async function handle(request:FastifyRequest,reply:FastifyReply):Promise<void>{
     const method=request.method;
     const pathname=new URL(request.url,"http://localhost").pathname;
-    const params=request.params as {id?:string};
-    const parameter=()=>uuid.parse(params.id);
+    // MySQL-only Fastify deliberately has no legacy SQLite route registrations.
+    // Extract the exact UUID from the matched REST path, not request.params.
+    const parameter=()=>{
+      const parts=pathname.split("/").filter(Boolean);
+      const last=parts[parts.length-1];
+      const suffixes=new Set(["publish","entries","enroll","accept","reject"]);
+      const candidate=suffixes.has(last??"")?parts[parts.length-2]:last;
+      return uuid.parse(candidate);
+    };
     const protect=()=>auth.requireAdmin(request,reply);
     const csrf=()=>auth.requireSameOrigin(request,reply);
     try{

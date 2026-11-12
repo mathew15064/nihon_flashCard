@@ -80,7 +80,7 @@ export default function MySQLBackups(){
       hoặc ghi đè database</strong>.
     </p>
     <p className="muted">
-      Quan trọng: giữ riêng <code>instance-secret.key</code> và SQLite bootstrap
+      Quan trọng: giữ riêng <code>instance-secret.key</code> và file cấu hình kết nối MySQL đã mã hóa
       trong volume ứng dụng. Không có khóa này, file backup mã hóa không thể khôi phục.
       Giới hạn phiên bản này: tối đa 100.000 dòng và 128 MiB dữ liệu thô mỗi lần sao lưu.
     </p>

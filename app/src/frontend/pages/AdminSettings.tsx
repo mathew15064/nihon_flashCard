@@ -72,8 +72,8 @@ export default function AdminSettings(){
     {!settings?<div className="notice">Đang tải cấu hình…</div>:<>
       <div className="admin-panel">
         <h2>Cơ sở dữ liệu</h2>
-        <p><strong>{settings.database==="mysql"?"MySQL + Drizzle":"SQLite + Drizzle"}</strong> · Đang hoạt động</p>
-        <p className="muted">SQLite và MySQL đều được hỗ trợ khi khởi tạo lần đầu. Không đổi trực tiếp engine của database đã có dữ liệu; chuyển đổi cần backup, import, đối soát và cutover riêng.</p>
+        <p><strong>MySQL + Drizzle</strong> · Đang hoạt động</p>
+        <p className="muted">Nihon chỉ sử dụng MySQL. Không chuyển database đang hoạt động bằng cách nhập tên database khác; dùng backup, kiểm tra và cutover riêng nếu cần.</p>
       </div>
       {settings.database==="mysql"?<><MySQLConnection/><MySQLBackups/></>:null}
       <div className="admin-panel">

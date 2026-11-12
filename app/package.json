@@ -9,25 +9,17 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch src/server/index.ts",
     "start": "node dist/server/index.mjs",
-    "build": "npm run typecheck && vite build && esbuild src/server/index.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/server/index.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && esbuild scripts/migrate.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/scripts/migrate.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && esbuild scripts/db-snapshot.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/scripts/db-snapshot.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && esbuild scripts/audit-v1-srs.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/scripts/audit-v1-srs.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && esbuild scripts/db-drill.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/scripts/db-drill.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+    "build": "npm run typecheck && vite build && esbuild src/server/index.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/server/index.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src scripts tests",
     "test": "node --import tsx --test tests/*.test.ts",
-    "db:migrate": "tsx scripts/migrate.ts",
-    "db:backup": "node dist/scripts/db-snapshot.mjs backup",
-    "db:restore": "node dist/scripts/db-snapshot.mjs restore",
-    "db:seed:demo": "tsx scripts/seed-demo.ts",
-    "import:legacy": "tsx scripts/import-legacy-cli.ts",
-    "db:audit-v1-srs": "node dist/scripts/audit-v1-srs.mjs",
-    "admin:hash": "tsx scripts/hash-admin-password.ts",
-    "db:drill": "node dist/scripts/db-drill.mjs"
+    "admin:hash": "tsx scripts/hash-admin-password.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.5",
     "@fastify/static": "^10.1.10",
     "@modelcontextprotocol/node": "^2.1.2",
     "@modelcontextprotocol/server": "^2.4.0",
-    "dotenv": "^17.2.3",
     "drizzle-orm": "1.0.0-rc.5",
     "fastify": "^5.12.8",
     "mysql2": "^3.24.6",

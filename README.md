@@ -1,4 +1,17 @@
-# 🇯🇵 Japanese Flashcard
+# Nihon Vocabulary v2 — MySQL-only
+
+**Bản Fastify + React mới chỉ dùng MySQL 8.4**, không tạo hoặc chạy
+SQLite. Cài đặt qua giao diện tại /setup và cấu hình qua Admin → Settings.
+Xem [app/README.md](app/README.md) và
+[docs/UI_FIRST_INSTALL.md](docs/UI_FIRST_INSTALL.md).
+
+---
+
+> **Phần bên dưới mô tả ứng dụng Express v1 cũ để tham khảo lịch sử.**
+> Không áp dụng các hướng dẫn lưu trữ v1 cho Fastify v2.
+> Dữ liệu v1 chưa được chuyển tự động sang MySQL.
+
+# 🇯🇵 Japanese Flashcard (legacy v1)
 
 A lightweight Japanese learning / flashcard web app for personal or small-group use.
 JSON files are the entire persistence layer — there is intentionally no database.

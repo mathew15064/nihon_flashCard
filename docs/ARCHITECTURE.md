@@ -1,5 +1,7 @@
 # ARCHITECTURE — Japanese Flashcard
 
+> **Lưu trữ lịch sử v1:** Tài liệu này mô tả ứng dụng Express cũ, không phải Fastify v2. Nihon v2 chỉ dùng MySQL 8.4; xem [hướng dẫn cài đặt mới](UI_FIRST_INSTALL.md) và [app/README.md](../app/README.md).
+
 Authoritative architecture document. `docs/spec/spec-architecture.md` is the source specification; this file restates the decided architecture for implementation.
 
 ## 1. System Overview

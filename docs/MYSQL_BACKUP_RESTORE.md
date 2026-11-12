@@ -22,7 +22,7 @@ and it never replaces the active MySQL database.
    expected migration metadata. This check is read-only.
 4. Click **Tải về** to download the encrypted `.nihonbak` file. Store it on
    a protected, separate backup system. **Independently back up
-   `instance-secret.key` and the small local bootstrap SQLite file** through
+   `instance-secret.key` and the encrypted `mysql-connection.enc` file** through
    your hosting provider's protected volume/snapshot workflow. The encrypted
    file cannot be recovered without the matching instance key.
 5. To **test a real restore without cutover**, provision an additional,
@@ -80,8 +80,8 @@ TLS/network outage recovery, binlog continuity, loss of the encryption key,
 or migration of legacy v1 user identities. For production, configure provider
 snapshots or MySQL-native physical/logical backups and retention separately.
 The current UI download requires an active Admin session, so the original
-bootstrap configuration must be recovered before using an offsite archive in
-a rebuilt instance.
+private key and encrypted connection file must be recovered before using an
+offsite archive in a rebuilt instance.
 
 This is a **beta backup and staging restore workflow**. Keep PR #2 Draft and
 do not deploy production or cut over user databases without independent

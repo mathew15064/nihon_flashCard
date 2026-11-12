@@ -3,7 +3,6 @@ import { write } from "../api";
 
 type SetupResult={installed:boolean;database:string};
 export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
-  const [database,setDatabase]=useState<"sqlite"|"mysql">("sqlite");
   const [setupCode,setSetupCode]=useState("");
   const [adminPassword,setAdminPassword]=useState("");
   const [repeatPassword,setRepeatPassword]=useState("");
@@ -40,9 +39,9 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
     e.preventDefault();setError("");setBusy(true);
     try{
       const result=await write<SetupResult>("/api/v1/setup/initialize",{
-        setupCode,database,adminPassword,repeatPassword,origin,enableSignup,
-        ...(database==="mysql"?{mysql:{host:mysqlHost,port:mysqlPort,
-          database:mysqlDatabase,user:mysqlUser,password:mysqlPassword,tls:mysqlTls}}:{}),
+        setupCode,database:"mysql",adminPassword,repeatPassword,origin,enableSignup,
+        mysql:{host:mysqlHost,port:mysqlPort,database:mysqlDatabase,
+          user:mysqlUser,password:mysqlPassword,tls:mysqlTls},
       });
       if(!result.installed)throw new Error("INSTALL_FAILED");
       setSetupCode("");setAdminPassword("");setRepeatPassword("");
@@ -53,13 +52,11 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
   return <section className="content-page auth-container">
     <span className="eyebrow">First-run setup · Nihon</span>
     <h1>Khởi tạo hệ thống</h1>
-    <p className="page-intro">Chỉ cần thực hiện một lần. Nihon tự tạo secret bảo mật và kho cấu hình khởi tạo. Chọn SQLite hoặc kết nối MySQL để lưu dữ liệu ứng dụng; không cần sửa source hay .env.</p>
+    <p className="page-intro">Chỉ cần thực hiện một lần. Nihon tự tạo secret bảo mật và kho cấu hình khởi tạo. Kết nối MySQL để lưu toàn bộ dữ liệu ứng dụng; không cần sửa source hay .env.</p>
     <div className="admin-panel">
-      <h2>1. Chọn cơ sở dữ liệu</h2>
+      <h2>1. Kết nối MySQL</h2>
       <div className="form-vertical">
-        <label><input type="radio" checked={database==="sqlite"} onChange={()=>setDatabase("sqlite")}/> SQLite + Drizzle — đã hỗ trợ, chạy tự động không cần mật khẩu DB</label>
-        <label><input type="radio" checked={database==="mysql"} onChange={()=>setDatabase("mysql")}/> MySQL 8.4 — cài đặt và sử dụng qua Drizzle</label>
-        {database==="mysql"?<div className="admin-panel" role="group" aria-label="MySQL connection">
+        <div className="admin-panel" role="group" aria-label="MySQL connection">
           <h3>Kết nối MySQL</h3>
           <p className="muted">Kết nối tới database MySQL trống, kiểm tra quyền và tự chạy migrations trước khi tạo Admin. Không thay thế dữ liệu cũ.</p>
           <label>MySQL host<input className="input-text" value={mysqlHost} onChange={e=>setMysqlHost(e.target.value)} autoComplete="off"/></label>
@@ -77,7 +74,7 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
             onClick={()=>void checkMysqlConnection()}>Kiểm tra kết nối MySQL</button>
           {mysqlMessage?<p role="status" className="notice">{mysqlMessage}</p>:null}
           <p className="muted">Nhập mã khởi tạo ở phần dưới trước khi nhấn kiểm tra kết nối.</p>
-        </div>:null}
+        </div>
       </div>
     </div>
     <div className="admin-panel">

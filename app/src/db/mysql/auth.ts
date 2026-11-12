@@ -6,7 +6,7 @@ import { authSessions } from "./schema";
 import { mysqlSettings } from "./settings";
 import { mysqlAccounts } from "./accounts";
 import { GUEST_COOKIE_NAME,GUEST_COOKIE_MAX_AGE,makeGuestToken,parseGuestToken } from "@/modules/learning/guest-session";
-import { verifyBearer } from "@/server/auth";
+import { verifyBearer } from "@/lib/bearer";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 type Actor={id:string;name:string;role:"admin"|"learner"};

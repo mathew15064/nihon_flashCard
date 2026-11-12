@@ -1,5 +1,7 @@
 # OVERFLOW — Japanese Flashcard
 
+> **Lưu trữ lịch sử v1:** Tài liệu này mô tả ứng dụng Express cũ, không phải Fastify v2. Nihon v2 chỉ dùng MySQL 8.4; xem [hướng dẫn cài đặt mới](UI_FIRST_INSTALL.md) và [app/README.md](../app/README.md).
+
 CURRENT PROJECT STATE. Historical details live in `logs/YYYY-MM-DD.md`.
 
 ## 1. Project State

@@ -1,224 +1,127 @@
-import { randomBytes, timingSafeEqual } from "node:crypto";
-import type { FastifyInstance,FastifyRequest } from "fastify";
-import { z } from "zod";
-import { db } from "@/db/client";
-import { appSettings } from "@/db/schema";
-import { hashAdminPassword } from "@/lib/admin-password";
-import {
-  adminPasswordHash, adminRestToken, aiDailyLimit, aiModel,
-  mcpToken, openaiKey, publicOrigin, readSetting, saveSecret,
-  signupEnabledByConfig, writeSetting,
-} from "@/lib/runtime-config";
-import { ok, fail, requireAdmin } from "./http";
-import { activeMySQL, activateMySQL } from "@/db/mysql/runtime";
+import { randomBytes,timingSafeEqual } from "node:crypto";
+import type { FastifyInstance,FastifyRequest,FastifyReply } from "fastify";
+import { z,ZodError } from "zod";
+import { hashAdminPassword,verifyAdminPassword } from "@/lib/admin-password";
+import { activeMySQL,activateMySQL } from "@/db/mysql/runtime";
+import { mysqlConnectionSchema,migrateFreshMySQL,openMySQL,testMySQLConnection } from "@/db/mysql/connector";
+import { mysqlSettings } from "@/db/mysql/settings";
 
-// A one-boot, out-of-band installer challenge, never returned by an HTTP endpoint.
-const setupCode=randomBytes(18).toString("base64url");
-export function showSetupInstructions():void {
-  if(!adminPasswordHash()&&!activeMySQL()){
-    console.log("\nNihon first-run installer: open /setup");
+let setupCode=randomBytes(24).toString("base64url");
+let initializing=false;
+export function showSetupInstructions():void{
+  if(!activeMySQL()){
+    console.log("\nNihon MySQL installer: open /setup");
     console.log("One-time setup code (server console only): "+setupCode);
     console.log("The code expires when this process restarts or setup completes.\n");
   }
 }
-export function installationCodeForIsolatedTests():string { return setupCode; }
+export function installationCodeForIsolatedTests():string{return setupCode;}
 function setupCodeValid(code:string):boolean {
   const a=Buffer.from(code),b=Buffer.from(setupCode);
-  return a.length===b.length && timingSafeEqual(a,b);
+  return a.length===b.length&&timingSafeEqual(a,b);
 }
-function validateOrigin(value:string):string {
-  let url:URL;
-  try{url=new URL(value);}catch{throw new Error("ORIGIN_INVALID");}
-  if(!["http:","https:"].includes(url.protocol) ||
-     url.username || url.password || url.pathname!=="/" ||
-     url.search || url.hash || url.origin!==value)
-    throw new Error("ORIGIN_INVALID");
-  const local=["localhost","127.0.0.1","[::1]"].includes(url.hostname);
-  if(process.env.NODE_ENV==="production" && url.protocol!=="https:" && !local)
-    throw new Error("HTTPS_ORIGIN_REQUIRED");
-  return value;
+function originValid(value:string):boolean{
+  try{
+    const url=new URL(value);
+    if(!["http:","https:"].includes(url.protocol)||url.username||url.password||
+      url.pathname!=="/"||url.search||url.hash||url.origin!==value)return false;
+    return process.env.NODE_ENV!=="production"||url.protocol==="https:"||
+      ["localhost","127.0.0.1","[::1]"].includes(url.hostname);
+  }catch{return false;}
 }
-function initialRequestAllowed(request:FastifyRequest,origin:string):boolean {
-  return request.headers.origin===origin &&
-    request.headers["sec-fetch-site"]!=="cross-site";
+function sameOrigin(request:FastifyRequest,value:string):boolean{
+  return request.headers.origin===value&&request.headers["sec-fetch-site"]!=="cross-site";
 }
-const installInput=z.object({
+function bad(reply:FastifyReply,error:unknown){
+  if(error instanceof ZodError)return reply.code(400).send({
+    success:false,error:{code:"VALIDATION_ERROR"},
+  });
+  const code=error instanceof Error&&/^[A-Z_]{4,80}$/.test(error.message)
+    ?error.message:"MYSQL_SETUP_FAILED";
+  // Never forward mysql2 driver details, hostnames, SQL or credentials.
+  const safe=/^(MYSQL_[A-Z_]+|ALREADY_INSTALLED|HTTPS_ORIGIN_REQUIRED)$/.test(code)
+    ?code:"MYSQL_SETUP_FAILED";
+  const status=safe.includes("ALREADY")||safe.includes("BUSY")?409:
+    safe.includes("NOT_EMPTY")?409:safe==="MYSQL_SETUP_FAILED"?422:400;
+  return reply.code(status).send({success:false,error:{code:safe}});
+}
+const setupInput=z.object({
   setupCode:z.string().min(1).max(100),
-  database:z.enum(["sqlite","mysql"]),
+  database:z.literal("mysql"),
+  mysql:mysqlConnectionSchema,
   adminPassword:z.string().min(12).max(256),
   repeatPassword:z.string().min(12).max(256),
   origin:z.string().min(1).max(250),
   enableSignup:z.boolean().default(false),
-  mysql:z.unknown().optional(),
-}).strict().refine(v=>v.adminPassword===v.repeatPassword,{path:["repeatPassword"],
-  message:"Mật khẩu xác nhận không khớp"});
-const settingsInput=z.object({
+}).strict().refine(v=>v.adminPassword===v.repeatPassword,{
+  path:["repeatPassword"],message:"Password confirmation mismatch",
+});
+const testInput=z.object({
+  setupCode:z.string().min(1).max(100),
   origin:z.string().min(1).max(250),
-  enableSignup:z.boolean(),
-  aiModel:z.string().trim().min(2).max(100).regex(/^[a-zA-Z0-9._-]+$/),
-  aiDailyLimit:z.number().int().min(1).max(100),
-  openaiApiKey:z.string().trim().min(10).max(4096).optional(),
+  connection:mysqlConnectionSchema,
 }).strict();
 
-export function registerInstallationRoutes(app:FastifyInstance):void {
-  app.get("/api/v1/setup/status",()=>ok({
-    installed:Boolean(adminPasswordHash()||activeMySQL()),
-    database:activeMySQL()?"mysql":"sqlite",
-    engines:[{id:"sqlite",available:true},{id:"mysql",available:true}],
-    needsSetupCode:!adminPasswordHash()&&!activeMySQL(),
+export function registerInstallationRoutes(app:FastifyInstance):void{
+  app.get("/api/v1/setup/status",()=>({
+    success:true,data:{
+      installed:Boolean(activeMySQL()),database:"mysql",
+      engines:[{id:"mysql",available:true}],
+      needsSetupCode:!activeMySQL(),
+    },
   }));
-  // The setup-code gate prevents exposing an arbitrary MySQL host probe to the public.
-  // Connection credentials are used once and are never logged, returned or persisted.
   app.post("/api/v1/setup/mysql/test",async(request,reply)=>{
-    if(adminPasswordHash()||activeMySQL())
-      return reply.code(409).send({success:false,error:{code:"ALREADY_INSTALLED"}});
+    if(activeMySQL())return reply.code(409).send({
+      success:false,error:{code:"ALREADY_INSTALLED"},
+    });
     try{
-      const input=z.object({
-        setupCode:z.string().min(1).max(100),
-        origin:z.string().min(1).max(250),
-        connection:z.unknown(),
-      }).strict().parse(request.body);
-      if(!initialRequestAllowed(request,input.origin) || validateOrigin(input.origin)!==input.origin)
+      const input=testInput.parse(request.body);
+      if(!sameOrigin(request,input.origin)||!originValid(input.origin))
         return reply.code(403).send({success:false,error:{code:"INVALID_ORIGIN"}});
       if(!setupCodeValid(input.setupCode))
         return reply.code(401).send({success:false,error:{code:"INVALID_SETUP_CODE"}});
-      const {testMySQLConnection}=await import("@/db/mysql/connector");
       const result=await testMySQLConnection(input.connection);
-      return ok(result);
-    }catch(error){
-      // Do not expose MySQL driver messages (hostnames, users, credentials, TLS details).
-      if(error instanceof z.ZodError)return fail(reply,error);
-      return reply.code(422).send({success:false,error:{code:"MYSQL_CONNECTION_FAILED"}});
-    }
+      return {success:true,data:result};
+    }catch(error){return bad(reply,error);}
   });
   app.post("/api/v1/setup/initialize",async(request,reply)=>{
-    if(adminPasswordHash()||activeMySQL())
-      return reply.code(409).send({success:false,error:{code:"ALREADY_INSTALLED"}});
-    try {
-      const input=installInput.parse(request.body);
-      if(!initialRequestAllowed(request,input.origin))
+    if(activeMySQL()||initializing)
+      return reply.code(409).send({success:false,error:{
+        code:activeMySQL()?"ALREADY_INSTALLED":"MYSQL_SETUP_BUSY",
+      }});
+    try{
+      const input=setupInput.parse(request.body);
+      if(!sameOrigin(request,input.origin)||!originValid(input.origin))
         return reply.code(403).send({success:false,error:{code:"INVALID_ORIGIN"}});
       if(!setupCodeValid(input.setupCode))
         return reply.code(401).send({success:false,error:{code:"INVALID_SETUP_CODE"}});
-      const origin=validateOrigin(input.origin);
-      const passwordHash=hashAdminPassword(input.adminPassword);
-      if(input.database==="mysql"){
-        const {mysqlConnectionSchema,testMySQLConnection,migrateFreshMySQL,openMySQL}=
-          await import("@/db/mysql/connector");
-        const {mysqlSettings}=await import("@/db/mysql/settings");
-        const connection=mysqlConnectionSchema.parse(input.mysql);
-        await testMySQLConnection(connection);
-        await migrateFreshMySQL(connection);
-        const opened=openMySQL(connection);
-        try{
-          const settings=mysqlSettings(opened.db);
-          if(await settings.adminHash())
-            return reply.code(409).send({success:false,error:{code:"MYSQL_ALREADY_INSTALLED"}});
+      initializing=true;
+      const connection=input.mysql;
+      await testMySQLConnection(connection);
+      await migrateFreshMySQL(connection);
+      const opened=openMySQL(connection);
+      try{
+        const settings=mysqlSettings(opened.db);
+        const prior=await settings.adminHash();
+        if(prior){
+          // Safe recovery if a completed MySQL install lost ONLY its local
+          // connection file. Never reset its existing Admin or user data.
+          if(!verifyAdminPassword(input.adminPassword,prior))
+            throw new Error("MYSQL_ALREADY_INSTALLED_ADMIN_PROOF_REQUIRED");
+        }else{
           await settings.batch({
-            admin_password_hash:passwordHash,
-            public_origin:origin,
+            admin_password_hash:hashAdminPassword(input.adminPassword),
+            public_origin:input.origin,
             enable_signup:input.enableSignup?"true":"false",
           });
-        }finally{await opened.pool.end();}
-        await activateMySQL(connection);
-        return reply.code(201).send(ok({installed:true,database:"mysql"}));
-      }
-      const now=new Date().toISOString();
-      // Install is atomic. It must never reset an existing Admin password.
-      db.transaction(tx=>{
-        const existing=tx.select({value:appSettings.value}).from(appSettings)
-          .where(zeroAdminKey).get();
-        if(existing || process.env.NIHON_ADMIN_PASSWORD_HASH)
-          throw new Error("ALREADY_INSTALLED");
-        for(const [key,value] of [
-          ["admin_password_hash",passwordHash],
-          ["public_origin",origin],
-          ["enable_signup",input.enableSignup?"true":"false"],
-        ]){
-          tx.insert(appSettings).values({key,value,updatedAt:now}).run();
         }
-      });
-      return reply.code(201).send(ok({installed:true,database:"sqlite"}));
-    }catch(error){return fail(reply,error);}
+      }finally{await opened.pool.end();}
+      await activateMySQL(connection);
+      setupCode=randomBytes(24).toString("base64url");
+      return reply.code(201).send({success:true,data:{
+        installed:true,database:"mysql",
+      }});
+    }catch(error){return bad(reply,error);}
+    finally{initializing=false;}
   });
-
-  // Native MySQL routes are intercepted by the MySQL pre-handler once installed.
-  // On SQLite deployments these endpoints fail explicitly rather than exposing
-  // an integration whose database engine is unavailable.
-  for(const route of ["/api/v1/admin/settings/mysql/health",
-    "/api/v1/admin/settings/mysql/connection"]){
-    app.get(route,async(request,reply)=>{
-      if(!requireAdmin(request,reply))return;
-      return reply.code(409).send({success:false,error:{code:"MYSQL_NOT_ACTIVE"}});
-    });
-  }
-  app.post("/api/v1/admin/settings/mysql/test",async(request,reply)=>{
-    if(!requireAdmin(request,reply))return;
-    return reply.code(409).send({success:false,error:{code:"MYSQL_NOT_ACTIVE"}});
-  });
-  app.patch("/api/v1/admin/settings/mysql/connection",async(request,reply)=>{
-    if(!requireAdmin(request,reply))return;
-    return reply.code(409).send({success:false,error:{code:"MYSQL_NOT_ACTIVE"}});
-  });
-  app.get("/api/v1/admin/settings",async(request,reply)=>{
-    if(!requireAdmin(request,reply))return;
-    return ok({
-      database:"sqlite",mysqlAvailable:false,
-      origin:publicOrigin()||"",
-      enableSignup:signupEnabledByConfig(),
-      aiModel:aiModel(),aiDailyLimit:aiDailyLimit(),
-      openaiConfigured:Boolean(openaiKey()),
-      mcpReadConfigured:Boolean(mcpToken("read")),
-      mcpWriteConfigured:Boolean(mcpToken("write")),
-      restConfigured:Boolean(adminRestToken()),
-      envFallback:{
-        openai:!readSetting("openai_api_key")&&Boolean(process.env.OPENAI_API_KEY),
-        mcpRead:!readSetting("mcp_read_token")&&Boolean(process.env.NIHON_MCP_READ_TOKEN),
-        mcpWrite:!readSetting("mcp_write_token")&&Boolean(process.env.NIHON_MCP_TOKEN),
-      },
-    });
-  });
-  app.patch("/api/v1/admin/settings",async(request,reply)=>{
-    if(!requireAdmin(request,reply))return;
-    try{
-      const input=settingsInput.parse(request.body);
-      const origin=validateOrigin(input.origin);
-      // Encrypt first: if encryption fails, do not partially save plain settings.
-      const encrypted=input.openaiApiKey?await import("@/lib/runtime-config")
-        .then(({encryptValue})=>encryptValue(input.openaiApiKey!)):undefined;
-      db.transaction(tx=>{
-        const now=new Date().toISOString();
-        for(const [key,value] of [
-          ["public_origin",origin],["enable_signup",String(input.enableSignup)],
-          ["ai_model",input.aiModel],["ai_daily_limit",String(input.aiDailyLimit)],
-          ...(encrypted?[["openai_api_key",encrypted]]:[]),
-        ]){
-          tx.insert(appSettings).values({key,value,updatedAt:now})
-            .onConflictDoUpdate({target:appSettings.key,set:{value,updatedAt:now}}).run();
-        }
-      });
-      return ok({saved:true,openaiConfigured:Boolean(openaiKey())});
-    }catch(error){return fail(reply,error);}
-  });
-  app.delete("/api/v1/admin/settings/openai",async(request,reply)=>{
-    if(!requireAdmin(request,reply))return;
-    writeSetting("openai_api_key","disabled");
-    return ok({deleted:true,stillConfigured:Boolean(openaiKey())});
-  });
-  for(const scope of ["read","write","rest"] as const){
-    app.post("/api/v1/admin/settings/tokens/"+scope,async(request,reply)=>{
-      if(!requireAdmin(request,reply))return;
-      const raw=randomBytes(36).toString("base64url");
-      saveSecret(scope==="read"?"mcp_read_token":scope==="write"?"mcp_write_token":"admin_rest_token",raw);
-      return ok({scope,token:raw,showOnce:true});
-    });
-    app.delete("/api/v1/admin/settings/tokens/"+scope,async(request,reply)=>{
-      if(!requireAdmin(request,reply))return;
-      writeSetting(scope==="read"?"mcp_read_token":scope==="write"?"mcp_write_token":"admin_rest_token","disabled");
-      return ok({scope,deleted:true});
-    });
-  }
 }
-// Avoid arbitrary query composition for the installation guard.
-import { eq } from "drizzle-orm";
-const zeroAdminKey=eq(appSettings.key,"admin_password_hash");

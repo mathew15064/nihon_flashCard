@@ -1,8 +1,5 @@
-import { config } from "dotenv";
-import { resolve } from "node:path";
-
-// Load secrets before importing the SQLite client or application modules.
-config({path:resolve(".env.local"),quiet:true});
+// MySQL-only boot: no database or .env file is created at startup.
+export {};
 const {prepareLocalStorage}=await import("../lib/bootstrap-storage.js");
 prepareLocalStorage();
 const {activateConfiguredMySQL}=await import("../db/mysql/runtime.js");

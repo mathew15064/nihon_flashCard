@@ -2,8 +2,6 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import fastifyStatic from "@fastify/static";
 import { resolve } from "node:path";
-import { registerRoutes } from "./routes";
-import { registerMcp } from "./mcp";
 import { registerAuthRateLimits } from "./rate-limit";
 import { registerInstallationRoutes } from "./installation";
 import { activeMySQL, shutdownMySQL } from "@/db/mysql/runtime";
@@ -23,9 +21,16 @@ export async function buildApp(options?:{staticAssets?:boolean}){
   let mcpHandler:ReturnType<typeof mysqlMcp>|null=null;
   app.addHook("preHandler",async(req,reply)=>{
     const connection=activeMySQL();
-    if(!connection)return;
     if(req.url.startsWith("/api/v1/setup/"))return;
+    if(!connection){
+      if(req.url.startsWith("/api/")||req.url.startsWith("/mcp")){
+        reply.code(503).send({success:false,error:{code:"MYSQL_SETUP_REQUIRED"}});
+        return reply;
+      }
+      return;
+    }
     if(connectedMySQL!==connection){
+      mcpHandler?.close();
       connectedMySQL=connection;
       apiHandler=mysqlApi(connection.db);
       mcpHandler=mysqlMcp(connection.db);
@@ -52,9 +57,7 @@ export async function buildApp(options?:{staticAssets?:boolean}){
     }
     return payload;
   });
-  registerRoutes(app);
   registerInstallationRoutes(app);
-  registerMcp(app);
 
   const assets=options?.staticAssets ?? true;
   if(assets){
