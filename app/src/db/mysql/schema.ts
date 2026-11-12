@@ -24,13 +24,24 @@ export const vocabularySenses = mysqlTable("vocabulary_senses", {
   sortOrder: int("sort_order").notNull().default(0),
 }, (t) => [index("idx_senses_entry").on(t.entryId)]);
 
+export const topics = mysqlTable("topics", {
+  id: varchar("id", {length:64}).primaryKey(),
+  slug: varchar("slug", {length:191}).notNull(),
+  name: varchar("name", {length:100}).notNull(),
+  description: text("description"),
+  createdAt: varchar("created_at", {length:32}).notNull(),
+}, t => [uniqueIndex("uq_topics_slug").on(t.slug)]);
+
 export const decks = mysqlTable("decks", {
   id: varchar("id", {length:64}).primaryKey(),
   name: varchar("name", {length:100}).notNull(),
   description: text("description"),
+  topicId: varchar("topic_id", {length:64}).references(() => topics.id, { onDelete: "restrict" }),
+  // Legacy decks retain NULL; new lessons have a scoped, normalized identity.
+  lessonKey: varchar("lesson_key", {length:64}),
   visibility: varchar("visibility", {length:16, enum: ["private", "public"] }).notNull().default("private"),
   createdAt: varchar("created_at", {length:32}).notNull(),
-});
+}, t => [uniqueIndex("uq_decks_lesson_key").on(t.lessonKey), index("idx_decks_topic").on(t.topicId)]);
 
 export const deckItems = mysqlTable("deck_items", {
   deckId: varchar("deck_id", {length:64}).notNull().references(() => decks.id, { onDelete: "cascade" }),
