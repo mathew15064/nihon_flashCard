@@ -81,6 +81,12 @@ claim, current-password change (other sessions revoked), AI vocabulary
 generation, and authenticated scoped MCP integration.
 
 The API remains at `/api/v1`, MCP at `/mcp`.
+Published vocabulary and Admin vocabulary lists support `page` (from 1),
+`limit` (1–100), `search`, `jlpt`, and `order=oldest|newest`.
+Every response returns `items`, `page`, `limit`, `total`, and
+`hasMore`. Public lists never expose drafts; the browser can load further
+pages without dropping previous items. Admin lists default to newest-first
+in the UI so new drafts remain discoverable.
 Read/write MCP credentials remain suitable for *trusted integration clients*,
 not arbitrary public OAuth connections.
 
@@ -117,6 +123,8 @@ the MySQL integration suites skip; no production database is touched.
 A workflow under `.github/workflows/nihon-fastify.yml` provides a fresh
 MySQL container and executes those tests on each PR/push.
 
-No live deployment, legacy v1 account import, legacy identity inference,
-unattended offsite backup scheduling, public MCP OAuth, or automatic
-production database cutover is included. This branch remains a **Draft PR**.
+A separate owner-authorized **test-only** HTTPS deployment exists at
+`https://broke.locallhost.shop`; this is **not a final production release**.
+No legacy v1 account import, identity inference, unattended offsite backup
+scheduling, public MCP OAuth, or production database cutover is included.
+The existing v1 website/port is preserved. This branch remains a **Draft PR**.

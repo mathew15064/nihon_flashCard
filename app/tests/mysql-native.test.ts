@@ -18,6 +18,8 @@ test("native MySQL 8.4 schema, Drizzle queries, FK and atomic SRS on real MySQL"
   skip:!process.env.NIHON_MYSQL_TEST_URL,
 },async()=>{
   const url=new URL(process.env.NIHON_MYSQL_TEST_URL!);
+  if(url.protocol!=="mysql:"||!url.pathname.startsWith("/nihon_qa"))
+    throw new Error("MYSQL_INTEGRATION_REQUIRES_DISPOSABLE_QA_TARGET");
   const connection={
     host:url.hostname,port:Number(url.port||3306),user:decodeURIComponent(url.username),
     password:decodeURIComponent(url.password),database:url.pathname.slice(1),tls:"off" as const,

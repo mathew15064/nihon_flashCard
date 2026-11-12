@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import type { openMySQL } from "./connector";
 import { vocabularyEntries, vocabularySenses } from "./schema";
 import { type VocabularyInput } from "@/modules/vocabulary/schema";
@@ -7,14 +7,23 @@ import { normalizedKey } from "@/modules/vocabulary/normalize";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 export function mysqlVocabulary(db:Db){
-  const attachSenses=async(rows:(typeof vocabularyEntries.$inferSelect)[])=>Promise.all(
-    rows.map(async row=>({
-      ...row,senses:await db.select().from(vocabularySenses)
-        .where(eq(vocabularySenses.entryId,row.id)).orderBy(vocabularySenses.sortOrder),
-    })),
-  );
+  const attachSenses=async(rows:(typeof vocabularyEntries.$inferSelect)[])=>{
+    if(!rows.length)return [];
+    // Fetch meanings in one query rather than one query per vocabulary tile.
+    const senses=await db.select().from(vocabularySenses)
+      .where(inArray(vocabularySenses.entryId,rows.map(row=>row.id)))
+      .orderBy(vocabularySenses.entryId,vocabularySenses.sortOrder);
+    const byEntry=new Map<string,typeof senses>();
+    for(const sense of senses){
+      const group=byEntry.get(sense.entryId)??[];
+      group.push(sense);
+      byEntry.set(sense.entryId,group);
+    }
+    return rows.map(row=>({...row,senses:byEntry.get(row.id)??[]}));
+  };
   const list=async(options:{
-    search?:string;jlpt?:string;page?:number;limit?:number;includeDrafts?:boolean
+    search?:string;jlpt?:string;page?:number;limit?:number;includeDrafts?:boolean;
+    order?:"oldest"|"newest"
   }={})=>{
     const page=options.page||1,limit=options.limit||30,search=options.search?.trim()||"";
     const conditions=[
@@ -23,11 +32,19 @@ export function mysqlVocabulary(db:Db){
       ...(search?[or(like(vocabularyEntries.word,"%"+search+"%"),
         like(vocabularyEntries.reading,"%"+search+"%"))!]:[]),
     ];
-    const rows=await db.select().from(vocabularyEntries)
-      .where(conditions.length?and(...conditions):undefined)
-      .orderBy(vocabularyEntries.createdAt)
-      .limit(limit).offset((page-1)*limit);
-    return {items:await attachSenses(rows),page,limit};
+    const where=conditions.length?and(...conditions):undefined;
+    const [rows,counts]=await Promise.all([
+      db.select().from(vocabularyEntries).where(where)
+        // The ID tie-breaker prevents entries created at the same instant from
+        // appearing twice or disappearing across consecutive pages.
+        .orderBy(...(options.order==="newest"
+          ?[desc(vocabularyEntries.createdAt),desc(vocabularyEntries.id)]
+          :[vocabularyEntries.createdAt,vocabularyEntries.id]))
+        .limit(limit).offset((page-1)*limit),
+      db.select({total:sql<number>`count(*)`}).from(vocabularyEntries).where(where),
+    ]);
+    const total=Number(counts[0]?.total??0);
+    return {items:await attachSenses(rows),page,limit,total,hasMore:page*limit<total};
   };
   const get=async(id:string,includeDrafts=false)=>{
     const rows=await db.select().from(vocabularyEntries).where(and(

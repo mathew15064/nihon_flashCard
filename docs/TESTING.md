@@ -24,6 +24,12 @@ saved-model verification with injected fake OpenAI responses, rate limits,
 real MCP Read/Write tool discovery, writer-only tool calls, and full mocked
 Responses generation → AI candidate approval → published vocabulary.
 There is **no real OpenAI request or billing** in automated tests.
+All MySQL integration test runners reject `NIHON_MYSQL_TEST_URL` values
+whose database name does not start with `nihon_qa`. Never point any test
+at a live or legacy database. The new pagination regression uses a
+uniquely named disposable `nihon_page_*` schema and verifies 105 entries,
+stable page order, aggregate totals, no duplicate IDs, no draft leakage
+into public listings, and Admin access beyond the first 100 results.
 
 ## Browser E2E: complete product journey
 
@@ -38,7 +44,10 @@ It verifies the entire UI journey:
 - Public vocabulary search/deck navigation, enroll guest, flip flashcard,
   submit correct SRS review.
 - Learner registration/login, claim guest progress, change password.
-- Mobile layouts at 320, 390 and 768 pixels (no horizontal overflow).
+- Public vocabulary pagination in a real browser (35 QA-only published
+  fixtures, load more, exact totals, no duplicate pagination button).
+- Mobile layouts at 320, 390 and 768 pixels (no horizontal overflow,
+  including long Latin/Japanese vocabulary terms).
 - **axe-core automated WCAG A/AA rule scans** across the install, Admin,
   AI Studio, vocabulary/decks, flashcards, registration, security and mobile
   views; violations fail the E2E run.

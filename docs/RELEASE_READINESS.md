@@ -27,6 +27,9 @@ product is ready.
 - [x] OpenAI model-metadata verification with sanitized errors and rate
       limit; safe *mocked* AI generation integration test
 - [x] Real MCP HTTP `tools/list` and `tools/call` scope tests
+- [x] Vocabulary pagination beyond 100 entries: stable ordering,
+      no duplicate IDs/draft exposure, batched meanings, Admin load-more;
+      Chromium mobile/keyboard/axe regression
 
 ## Still open before approving a public release
 
@@ -45,8 +48,12 @@ product is ready.
 - [ ] Independent offsite MySQL + key/config backup recovery exercise,
       retention policy, monitoring, restore time objective and approved
       disaster-recovery runbook
-- [ ] Real staging with HTTPS/TLS/domain, monitoring and smoke tests
-      (staging is **not production**; only when explicitly approved)
+- [x] Owner-authorized **test-only** HTTPS deployment at
+      `broke.locallhost.shop`; Nginx and Fastify health smoke verified,
+      old v1 rollback port preserved
+- [ ] Operational monitoring/alerting, certificate renewal verification,
+      staging recovery drills and full regression sign-off
+      (staging is **not production**)
 - [ ] Verified legacy v1 snapshot, identity ownership mapping and
       non-destructive import plan **if old learner data needs cutover**
 - [ ] Release acceptance from owner, tested rollback, final QA

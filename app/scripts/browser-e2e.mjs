@@ -172,6 +172,27 @@ try{
   await page.getByText("Đã xuất bản bộ "+deck).waitFor();
   console.log("BROWSER_ADMIN_VOCABULARY_DECK_PUBLISH_PASS");
 
+  // Public pagination smoke uses only the disposable browser QA database.
+  const pageSearch="E2EPages"+randomBytes(3).toString("hex");
+  const adminCookie=(await context.cookies()).filter(cookie=>cookie.name==="nihon_auth")
+    .map(cookie=>cookie.name+"="+cookie.value).join("; ");
+  assert.ok(adminCookie,"QA Admin cookie required for fixture creation");
+  for(let i=0;i<35;i++){
+    const create=await fetch(origin+"/api/v1/admin/vocabulary",{
+      method:"POST",headers:{cookie:adminCookie,origin,
+        "content-type":"application/json"},
+      body:JSON.stringify({word:pageSearch+"-"+String(i).padStart(2,"0"),
+        reading:"ぺーじ",meaningVi:"Trang thử nghiệm",jlptLevel:"N5"}),
+    });
+    assert.equal(create.status,201,"E2E pagination fixture create");
+    const id=(await create.json()).data.id;
+    const publish=await fetch(origin+"/api/v1/admin/vocabulary/"+id+"/publish",{
+      method:"POST",headers:{cookie:adminCookie,origin,
+        "content-type":"application/json"},body:"{}",
+    });
+    assert.equal(publish.status,200,"E2E pagination fixture publish");
+  }
+
   await page.getByRole("link",{name:"Settings",exact:true}).click();
   await page.getByRole("heading",{name:"Cài đặt hệ thống"}).waitFor();
   const integrations=page.getByRole("region",{name:"Trạng thái tích hợp"});
@@ -218,6 +239,13 @@ try{
   await page.getByLabel("Tìm từ").fill(word);
   await page.getByText(word,{exact:true}).waitFor();
   await auditAccessibility(page,"vocabulary-search");
+  await page.getByLabel("Tìm từ").fill(pageSearch);
+  await page.getByText("Đang hiển thị 30 / 35 từ phù hợp.").waitFor();
+  await page.getByRole("button",{name:"Tải thêm từ"}).click();
+  await page.getByText("Đang hiển thị 35 / 35 từ phù hợp.").waitFor();
+  assert.equal(await page.getByRole("button",{name:"Tải thêm từ"}).count(),0);
+  await auditAccessibility(page,"vocabulary-pagination");
+  console.log("BROWSER_PUBLIC_VOCABULARY_PAGINATION_PASS");
   await page.goto("/decks");
   await page.getByRole("link",{name:new RegExp(deck)}).waitFor();
   await auditAccessibility(page,"decks-public");

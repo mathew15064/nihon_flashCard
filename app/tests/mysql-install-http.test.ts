@@ -11,6 +11,8 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
   skip:!process.env.NIHON_MYSQL_TEST_URL,
 },async()=>{
   const source=new URL(process.env.NIHON_MYSQL_TEST_URL!);
+  if(source.protocol!=="mysql:"||!source.pathname.startsWith("/nihon_qa"))
+    throw new Error("MYSQL_INTEGRATION_REQUIRES_DISPOSABLE_QA_TARGET");
   const server={host:source.hostname,port:Number(source.port||3306),
     user:decodeURIComponent(source.username),password:decodeURIComponent(source.password),
     charset:"utf8mb4"};

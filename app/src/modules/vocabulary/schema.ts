@@ -20,4 +20,5 @@ export const listQuery = z.object({
   jlpt: z.enum(["N5","N4","N3","N2","N1"]).optional(),
   page: z.coerce.number().int().min(1).max(10000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(30),
+  order: z.enum(["oldest","newest"]).default("oldest"),
 }).strict();

@@ -11,20 +11,39 @@ export default function Admin(){
   const [items,setItems]=useState<Entry[]>([]),[decks,setDecks]=useState<Detail[]>([]);
   const [error,setError]=useState(""),[message,setMessage]=useState("");
   const [busy,setBusy]=useState(false);
+  const [vocabPage,setVocabPage]=useState(1),[vocabTotal,setVocabTotal]=useState(0);
+  const [hasMoreVocab,setHasMoreVocab]=useState(false);
   const [word,setWord]=useState(""),[reading,setReading]=useState(""),[meaningVi,setMeaningVi]=useState(""),[jlpt,setJlpt]=useState("");
   const [deckName,setDeckName]=useState(""),[deckDesc,setDeckDesc]=useState("");
   const refresh=useCallback(async()=>{
     try{
       const [vocab,decksResponse]=await Promise.all([
-        api<{items:Entry[]}>("/api/v1/admin/vocabulary?limit=100"),
+        api<{items:Entry[];total:number;hasMore:boolean}>("/api/v1/admin/vocabulary?limit=100&order=newest"),
         api<{items:Deck[]}>("/api/v1/admin/decks"),
       ]);
-      setItems(vocab.items);
+      setItems(vocab.items);setVocabPage(1);
+      setVocabTotal(vocab.total);setHasMoreVocab(vocab.hasMore);
       const details=await Promise.all(decksResponse.items.map(d=>api<Detail>("/api/v1/admin/decks/"+d.id)));
       setDecks(details);setError("");
     }catch(e){setError(e instanceof Error?e.message:"ADMIN_LOAD_FAILED");}
   },[]);
   useEffect(()=>{void refresh();},[refresh]);
+  async function loadMoreVocabulary(){
+    if(busy||!hasMoreVocab)return;
+    setBusy(true);setError("");
+    try{
+      const next=vocabPage+1;
+      const data=await api<{items:Entry[];total:number;hasMore:boolean}>(
+        "/api/v1/admin/vocabulary?limit=100&order=newest&page="+next
+      );
+      setItems(previous=>{
+        const ids=new Set(previous.map(entry=>entry.id));
+        return [...previous,...data.items.filter(entry=>!ids.has(entry.id))];
+      });
+      setVocabPage(next);setVocabTotal(data.total);setHasMoreVocab(data.hasMore);
+    }catch(e){setError(e instanceof Error?e.message:"Không tải thêm được từ vựng");}
+    finally{setBusy(false);}
+  }
   async function action(call:()=>Promise<unknown>,messageText:string){
     setBusy(true);setError("");setMessage("");
     try{await call();setMessage(messageText);await refresh();}
@@ -54,8 +73,8 @@ export default function Admin(){
     <p className="page-intro">Duyệt từ vựng nháp và tổ chức bộ từ trước khi xuất bản.</p>
     <Nav/>
     <div className="study-stats">
-      <div><strong>{drafts.length}</strong><span>Từ chờ duyệt</span></div>
-      <div><strong>{published.length}</strong><span>Từ đã xuất bản</span></div>
+      <div><strong>{drafts.length}</strong><span>Từ chờ duyệt đang tải</span></div>
+      <div><strong>{published.length}</strong><span>Từ đã xuất bản đang tải</span></div>
       <div><strong>{decks.length}</strong><span>Tổng bộ từ</span></div>
       <div><strong>{decks.filter(d=>d.visibility==="public").length}</strong><span>Bộ đã xuất bản</span></div>
     </div>
@@ -75,7 +94,7 @@ export default function Admin(){
       </form>
     </div>
     <div className="admin-panel">
-      <h2>Từ chờ duyệt ({drafts.length})</h2>
+      <h2>Từ chờ duyệt đang hiển thị ({drafts.length})</h2>
       {drafts.length===0?<p className="muted">Không có từ đang chờ duyệt.</p>:
       <div className="review-list">{drafts.map(item=><article className="review-row" key={item.id}>
         <div className="review-description">
@@ -90,9 +109,13 @@ export default function Admin(){
       </article>)}</div>}
     </div>
     <div className="admin-panel">
-      <h2>Đã xuất bản ({published.length})</h2>
+      <h2>Đã xuất bản đang hiển thị ({published.length})</h2>
       <p className="muted">{published.slice(0,35).map(e=>e.word).join(" · ")||"Chưa có từ."}</p>
-      <p className="muted">Hiển thị tối đa 100 từ trên trang quản trị này.</p>
+      <p className="muted" role="status">Đã tải {items.length} / {vocabTotal} từ trong kho Admin.</p>
+      {hasMoreVocab&&<button className="button outline" type="button"
+        disabled={busy} onClick={()=>void loadMoreVocabulary()}>
+        Tải thêm từ để duyệt và thêm vào bộ
+      </button>}
     </div>
     <div className="admin-panel">
       <h2>Tạo bộ từ</h2>
