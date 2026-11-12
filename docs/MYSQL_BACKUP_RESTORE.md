@@ -96,3 +96,135 @@ second empty schema and compares SRS counts and every table's row contents.
 It confirms unauthenticated, cross-origin, live-target, repeat-restore and
 tampered archive operations fail; a corrupted archive cannot initialize a new
 staging schema. All QA schemas and encrypted test files are discarded.
+
+
+## T05 topic, lesson and SRS recovery contract — execution pending
+
+Current topic-aware archives require the exact **two** applied migrations:
+20261112021255_initial and 20261112180000_topics_lessons, with SHA-256
+checksums matching the packaged migration.sql files. The writer and reader
+now fail closed when the table manifest omits topics, decks.topic_id,
+decks.lesson_key, deck_items, vocabulary, senses, review cards/events,
+enrollments or the migration ledger. Archive authentication plus a
+matching manifest is not a substitute for restoring and comparing rows.
+
+Run only on an **isolated local disposable MySQL 8.4 service**, never VPS
+or production credentials, from the exact app commit being tested:
+
+    cd app
+    npm ci
+    NIHON_MYSQL_TEST_URL='mysql://QA_USER:QA_PASSWORD@127.0.0.1:3306/nihon_qa' \
+      node --import tsx scripts/topic-restore-qa.mjs
+
+This runner requires the URL and enforces loopback, the nihon_qa prefix and
+MySQL 8.4. Missing URL returns exit 2 (BLOCKED), never a skipped PASS.
+It creates fresh random nihon_qa_t05_* source, nihon_restore_t05_* target
+and tamper target schemas with CREATE (no IF NOT EXISTS); only databases
+actually created by this invocation are cleaned up. It uses synthetic
+Japanese/Vietnamese vocabulary and a temporary encryption secret, not an
+existing user database, archive or service credential. Keep a QA-only
+CREATE/DROP account on a physically separate test service.
+
+**Content evidence** is the runner's non-personal JSON output: row counts
+and SHA-256 of all rows in every table (including topic and lesson fields,
+deck links, vocabulary meanings, SRS schedule/counters/events), required
+migration ledger filenames/checksums/status, FK constraint count and zero
+orphan checks. It explicitly tests legacy decks with NULL topic/lesson key,
+tampered AES-GCM archive rejection before any staging DDL, archive
+ciphertext SHA-256, and matching source/target full-content fingerprints.
+Only a real MySQL run with status PASS and preserved output counts as
+executed restore QA. Retain the CI/run URL, commit, timestamp, sanitized
+result and MySQL 8.4 version. An exit 0 from a different unit test,
+a static check or a skipped suite is not this evidence.
+
+The runner **does not boot an app image, use an offsite backup, measure
+RTO, or restore a pre-topic archive**. Its result contains
+imageBootVerified:false and offsiteRecoveryVerified:false; these remain
+BLOCKED until independently witnessed.
+
+### Pre-topic archive and image compatibility
+
+A pre-topic archive (initial migration only) must be recovered using its
+**matching prior application image/digest**, migrations and original
+instance secret. Do not fake checksums, rewrite the ledger or inject SQL
+into the encrypted archive. Restore to a separate empty QA schema with
+the prior reader, compare old table content, IDs, SRS counters/events and
+FKs, then run the additive topic migration on that recovered *copy*.
+Only after ledger checks and regression verification may the new image
+be exercised there. Missing old image/key or a trusted old snapshot is a
+BLOCKED recovery path, not a recoverable PASS.
+
+Rehearse immutable image digest matching, Node/MySQL versions, restored
+key/config file permissions, boot and restart on a private test network,
+health, Admin/learner login, public topics/lessons and SRS review/reload.
+A green build alone does not prove recovered-image compatibility.
+
+## Offsite proposal — NOT configured or approved
+
+Use 3-2-1 recovery storage: encrypted local copy plus independently
+protected approved offsite storage with MFA, least privilege, immutable
+retention where available, access audits and verified encrypted transfer.
+Do not upload real learner data or keys to ChatGPT or an unapproved
+third-party service. Keep the matching instance-secret.key in a
+separately controlled recovery vault (0600 when mounted), with break-glass
+dual authorization and audited access. Retain mysql-connection.enc,
+image digest, migration manifests and recovery instructions in controlled
+storage. Archive ciphertext alone is unrecoverable without the key.
+
+**Proposed schedule/retention:** daily MySQL-native consistent backups,
+7 dailies + 4 weeklies + 3 monthlies, and tested binlog/PITR shipping
+covering every retained recovery interval with safety margin. Require
+privacy/legal retention and data-erasure review first. The app archive's
+100,000-row limit makes it an additional logical backup, not the sole
+production strategy. Never prune the final known-good point.
+
+Record UTC snapshot time, image digest, MySQL version, migration checksums,
+table and row totals, ciphertext SHA-256, plaintext-footer SHA-256,
+offsite object version, retention deadline and restore test ID, **never
+row values or access secrets**. Alert on failed/missing backup, invalid
+hash, stopped binlogs, storage limits and expired keys; verify a randomly
+selected retained backup by isolated restore at least monthly.
+
+**Proposed, not achieved, service objectives:** RPO <= 1 hour only
+*after* verified binlog shipping/PITR and recovery ordering; without that,
+RPO is at best the latest proven snapshot (up to 24h with daily copies).
+RTO <= 4 hours only after a timed full-loss restore from independently
+held copies, including key retrieval, verification, app boot and owner
+approval. **Current RTO unknown; current offsite RPO unverified.**
+
+## Manual recovery / rollback runbook (owner/DBA executed only)
+
+1. Stop new writes and record the incident, UTC recovery point, known
+   good immutable image digest, MySQL schema/ledger and latest checksums.
+   Preserve existing volumes and archives as evidence; seek explicit
+   change and data-owner approval before any traffic change.
+2. Provision a **different isolated** MySQL 8.4 host and empty recovery
+   database. Restore an approved native snapshot and, if tested, replay
+   binlogs to the chosen timestamp. Or boot the matching previous/current
+   Nihon image with the original instance key and **QA-only** connection
+   config to use the staging-only .nihonbak reader on an empty
+   nihon_restore_* schema. A .nihonbak is encrypted application data,
+   **not** a SQL dump. Never start a recovery app that still has a
+   connection string leading to live MySQL.
+3. Restore instance-secret.key (0600) and encrypted app config separately,
+   keep backup directory 0700, confirm network isolation, mount the exact
+   migration tree and avoid logging passwords, row payloads or secrets.
+4. Check archive hashes, exact migration status/checksums, all table
+   counts/content digests, FK orphan checks, Topic/Lesson/Deck Items,
+   Vocabulary/senses, legacy NULL-topic decks and SRS card/event IDs,
+   timestamps, counters and idempotency IDs. Keep a signed QA evidence
+   record without personal data. Re-run synthetic T05 runner separately;
+   synthetic verification does not prove a real disaster snapshot.
+5. Boot the **matching immutable image** privately, verify health,
+   session/Admin, topic list, public lesson, enrollment, review/reload
+   and restart persistence. Record timing from incident declaration to
+   validated service recovery; obtain explicit owner authorization for
+   DNS/traffic switch and monitor after switch.
+6. If schemas diverge, recover data to a **new isolated location** using
+   the correct image and tested migration path. Downgrading a binary
+   does not revert MySQL DDL or migration ledger. Never DROP/REPLACE
+   a live schema or automatically roll back production.
+
+**Gate:** actual offsite backup, independent key retrieval, pre-topic
+archive restore, recovered app-image boot, timed RPO/RTO, tested manual
+cutover and legal retention approval remain BLOCKED / without evidence.
