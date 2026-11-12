@@ -82,12 +82,20 @@ until an operator verifies/repairs the schema or restores a good backup.
 Do not delete the migration ledger to force a retry.
 
 SQLite's `db:backup`, `db:restore`, and `db:drill` tools only apply to SQLite.
-They do **not** back up the MySQL application database. Use protected
-MySQL snapshots or a reviewed `mysqldump --single-transaction` +
-restoration into a separate staging schema, then verify row counts, foreign
-keys, Admin/learner login, vocabulary, guest SRS, MCP, and AI. Always back
-up the bootstrap key and configuration securely. Production cutover and
-unattended MySQL backup scheduling are not implemented by this application.
+
+For MySQL installations, go to **Admin → Settings → Sao lưu MySQL**. The
+application can now generate an authenticated, consistent MySQL snapshot,
+compress and encrypt it, let the Admin download and verify it, and **restore
+it into a separate empty `nihon_restore_...` staging schema** with complete
+row-content reconciliation. It does not replace the live database, and the
+archive requires the original instance key to decrypt. Size and retention
+limits apply. See `docs/MYSQL_BACKUP_RESTORE.md` for usage and exclusions.
+
+For production, additionally configure the hosting provider's protected
+MySQL snapshots or reviewed `mysqldump --single-transaction` retention,
+and a separate backup of the local bootstrap secret/config. Production
+cutover, point-in-time recovery and unattended offsite backup scheduling
+are not automated by this beta workflow.
 
 ## Security boundaries
 

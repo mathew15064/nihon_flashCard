@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes,randomUUID } from "node:crypto";
-import { mkdtempSync,rmSync } from "node:fs";
+import { existsSync,mkdtempSync,readFileSync,rmSync,statSync,writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import mysql from "mysql2/promise";
@@ -15,6 +15,8 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     user:decodeURIComponent(source.username),password:decodeURIComponent(source.password),
     charset:"utf8mb4"};
   const name="nihon_it_"+randomBytes(7).toString("hex");
+  const stagingName="nihon_restore_"+randomBytes(7).toString("hex");
+  const corruptedStage="nihon_restore_"+randomBytes(7).toString("hex");
   const admin=await mysql.createConnection(server);
   const dir=mkdtempSync(join(tmpdir(),"nihon-full-mysql-it-"));
   const keys=["DB_PATH","AUTH_SECRET","NODE_ENV","PUBLIC_ORIGIN",
@@ -23,6 +25,8 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
   let app:Awaited<ReturnType<typeof import("../src/server/app").buildApp>>|undefined;
   try{
     await admin.query("CREATE DATABASE `"+name+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
+    await admin.query("CREATE DATABASE `"+stagingName+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
+    await admin.query("CREATE DATABASE `"+corruptedStage+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
     for(const key of keys)delete process.env[key];
     process.env.DB_PATH=join(dir,"bootstrap.sqlite");
     process.env.NODE_ENV="test";
@@ -153,6 +157,105 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
       body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list"}),
     });
     assert.equal(mcp.status,200,await mcp.text());
+
+    // MySQL backups must be private, encrypted, complete and Admin-only.
+    const blocked=await request("/api/v1/admin/backups/mysql","POST",{});
+    assert.equal(blocked.status,401);
+    const blockedByOrigin=await fetch(url+"/api/v1/admin/backups/mysql",{
+      method:"POST",headers:{
+        cookie,origin:"https://attacker.invalid","content-type":"application/json",
+      },body:"{}",
+    });
+    assert.equal(blockedByOrigin.status,403);
+    const backup=await request("/api/v1/admin/backups/mysql","POST",{},cookie);
+    assert.equal(backup.status,201,JSON.stringify(backup.data));
+    assert.equal(backup.data.data.verified,true);
+    assert.ok(backup.data.data.rows>=10);
+    assert.ok(backup.data.data.tables>=15);
+    const backupId=backup.data.data.id as string;
+    assert.match(backupId,/^mysql-\d{8}-[0-9a-f]{24}\.nihonbak$/);
+    const file=join(dir,"mysql-backups",backupId);
+    assert.equal(statSync(file).mode&0o777,0o600);
+    const archive=readFileSync(file);
+    assert.ok(archive.length>40);
+    assert.ok(archive.subarray(0,17).equals(Buffer.from("NIHONMYSQLBACKUP1")));
+    assert.ok(!archive.includes(Buffer.from(learnerUsername)));
+    assert.ok(!archive.includes(Buffer.from("MySQL curated")));
+    const listing=await request("/api/v1/admin/backups/mysql","GET",undefined,cookie);
+    assert.equal(listing.status,200);
+    assert.ok(listing.data.data.items.some((item:{id:string})=>item.id===backupId));
+    const verified=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/verify","POST",{},cookie);
+    assert.equal(verified.status,200,JSON.stringify(verified.data));
+    assert.equal(verified.data.data.rows,backup.data.data.rows);
+    const deniedStage=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/stage","POST",
+      {database:stagingName,confirmation:"RESTORE_TO_EMPTY_STAGING"});
+    assert.equal(deniedStage.status,401);
+    const deniedActive=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/stage","POST",
+      {database:name,confirmation:"RESTORE_TO_EMPTY_STAGING"},cookie);
+    assert.equal(deniedActive.status,400);
+    const stage=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/stage","POST",
+      {database:stagingName,confirmation:"RESTORE_TO_EMPTY_STAGING"},cookie);
+    assert.equal(stage.status,200,JSON.stringify(stage.data));
+    assert.equal(stage.data.data.restored,true);
+    assert.equal(stage.data.data.verified,true);
+    assert.equal(stage.data.data.rows,backup.data.data.rows);
+    const [sourceCounts]=await admin.query(
+      "SELECT COUNT(*) AS n FROM `"+name+"`.review_events"
+    );
+    const [stageCounts]=await admin.query(
+      "SELECT COUNT(*) AS n FROM `"+stagingName+"`.review_events"
+    );
+    assert.deepEqual(sourceCounts,stageCounts);
+    const repeatStage=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/stage","POST",
+      {database:stagingName,confirmation:"RESTORE_TO_EMPTY_STAGING"},cookie);
+    assert.equal(repeatStage.status,409);
+    const deniedDownload=await fetch(
+      url+"/api/v1/admin/backups/mysql/"+backupId+"/download");
+    assert.equal(deniedDownload.status,401);
+    const download=await fetch(
+      url+"/api/v1/admin/backups/mysql/"+backupId+"/download",{
+        headers:{cookie},
+      });
+    assert.equal(download.status,200);
+    assert.match(download.headers.get("content-disposition")||"",/attachment;/);
+    assert.deepEqual(Buffer.from(await download.arrayBuffer()),archive);
+    // A tampered ciphertext must never be reported as a valid backup.
+    const tampered=Buffer.from(archive);
+    tampered[30]^=0xff;
+    writeFileSync(file,tampered);
+    const tamperTest=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/verify","POST",{},cookie);
+    assert.notEqual(tamperTest.status,200);
+    assert.equal(tamperTest.data.success,false);
+    assert.ok(existsSync(file));
+    const badStage=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/stage","POST",
+      {database:corruptedStage,confirmation:"RESTORE_TO_EMPTY_STAGING"},cookie);
+    assert.notEqual(badStage.status,200);
+    const [unexpected]=await admin.query(
+      "SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema=?",
+      [corruptedStage],
+    );
+    assert.equal((unexpected as {n:number}[])[0]?.n,0);
+    const wrongDelete=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/delete","POST",
+      {confirmation:"INVALID"},cookie);
+    assert.equal(wrongDelete.status,400);
+    assert.ok(existsSync(file));
+    const deleted=await request(
+      "/api/v1/admin/backups/mysql/"+backupId+"/delete","POST",
+      {confirmation:"DELETE_LOCAL_BACKUP"},cookie);
+    assert.equal(deleted.status,200);
+    assert.equal(existsSync(file),false);
+    const fresh=await request("/api/v1/admin/backups/mysql","POST",{},cookie);
+    assert.equal(fresh.status,201,JSON.stringify(fresh.data));
+    assert.notEqual(fresh.data.data.id,backupId);
+
     await app.close();app=undefined;
     const {activateConfiguredMySQL}=await import("../src/db/mysql/runtime");
     assert.equal(await activateConfiguredMySQL(),true);
@@ -172,6 +275,8 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     }
     rmSync(dir,{recursive:true,force:true});
     await admin.query("DROP DATABASE IF EXISTS `"+name+"`");
+    await admin.query("DROP DATABASE IF EXISTS `"+stagingName+"`");
+    await admin.query("DROP DATABASE IF EXISTS `"+corruptedStage+"`");
     await admin.end();
   }
 });

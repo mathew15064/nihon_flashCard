@@ -13,6 +13,7 @@ import { generationRequestSchema,candidateSchema } from "@/modules/ai/schema";
 import { dueQuerySchema,reviewInputSchema } from "@/modules/learning/schema";
 import { registerInputSchema } from "@/modules/accounts/schema";
 import { verifyAdminPassword } from "@/lib/admin-password";
+import { FixedWindowLimiter } from "@/server/rate-limit";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 const uuid=z.string().uuid();
@@ -54,6 +55,7 @@ export function mysqlApi(db:Db){
   const auth=mysqlAuth(db),vocab=mysqlVocabulary(db),decks=mysqlDecks(db),
     learning=mysqlLearning(db),ai=mysqlAI(db);
   const settings=auth.settings;
+  const backupLimiter=new FixedWindowLimiter(256);
   return async function handle(request:FastifyRequest,reply:FastifyReply):Promise<void>{
     const method=request.method;
     const pathname=new URL(request.url,"http://localhost").pathname;
@@ -250,6 +252,65 @@ export function mysqlApi(db:Db){
         }
       }
 
+      if(pathname==="/api/v1/admin/backups/mysql" ||
+         pathname.startsWith("/api/v1/admin/backups/mysql/")){
+        if(!await protect())return;
+        if(method==="POST"){
+          const operation=pathname==="/api/v1/admin/backups/mysql"
+            ?"create":pathname.slice(pathname.lastIndexOf("/")+1);
+          const quotas:Record<string,number>={create:5,verify:15,stage:6,delete:15};
+          const limit=quotas[operation];
+          if(limit){
+            const decision=backupLimiter.consume(request.ip+"|"+operation,limit,60*60_000);
+            if(!decision.allowed){
+              reply.header("Retry-After",String(decision.retryAfterSeconds));
+              reply.code(429).send({success:false,error:{code:"RATE_LIMITED"}});return;
+            }
+          }
+        }
+        const {createMySQLBackup,listMySQLBackups,verifyMySQLBackup,
+          downloadableMySQLBackup,deleteLocalMySQLBackup}=await import("./backup");
+        if(method==="GET"&&pathname==="/api/v1/admin/backups/mysql"){
+          reply.send(ok({items:listMySQLBackups()}));return;
+        }
+        if(method==="POST"&&pathname==="/api/v1/admin/backups/mysql"){
+          const {currentMySQLConnection}=await import("./runtime");
+          const result=await createMySQLBackup(currentMySQLConnection());
+          reply.code(201).send(ok(result));return;
+        }
+        const backupRoute=/^\/api\/v1\/admin\/backups\/mysql\/(mysql-\d{8}-[a-f0-9]{24}\.nihonbak)\/(verify|download|stage|delete)$/.exec(pathname);
+        if(backupRoute){
+          const id=backupRoute[1]!;
+          if(method==="POST"&&backupRoute[2]==="verify"){
+            reply.send(ok(await verifyMySQLBackup(id)));return;
+          }
+          if(method==="POST"&&backupRoute[2]==="stage"){
+            const input=z.object({
+              database:z.string().min(1).max(64),
+              confirmation:z.literal("RESTORE_TO_EMPTY_STAGING"),
+            }).strict().parse(request.body);
+            const {currentMySQLConnection}=await import("./runtime");
+            const {rehearseMySQLRestore}=await import("./restore-drill");
+            reply.send(ok(await rehearseMySQLRestore(id,currentMySQLConnection(),
+              input.database)));return;
+          }
+          if(method==="POST"&&backupRoute[2]==="delete"){
+            z.object({confirmation:z.literal("DELETE_LOCAL_BACKUP")}).strict()
+              .parse(request.body);
+            await deleteLocalMySQLBackup(id);
+            reply.send(ok({deleted:true,id}));return;
+          }
+          if(method==="GET"&&backupRoute[2]==="download"){
+            const {path,size}=downloadableMySQLBackup(id);
+            const {createReadStream}=await import("node:fs");
+            reply.header("Cache-Control","no-store");
+            reply.header("Content-Disposition",'attachment; filename="'+id+'"');
+            reply.header("Content-Length",String(size));
+            reply.type("application/octet-stream");
+            reply.send(createReadStream(path));return;
+          }
+        }
+      }
       if(pathname.startsWith("/api/v1/admin/settings/mysql/")){
         if(!await protect())return;
         const {currentMySQLConnection,rotateMySQLConnection}=

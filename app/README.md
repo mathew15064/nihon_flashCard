@@ -233,6 +233,25 @@ restored copy and counts on an isolated instance, then explicitly choose a
 rollback/cutover procedure. Mount a separate protected backup location when
 running in Docker; do not keep the only backup inside the live SQLite volume.
 
+## MySQL backup and staging restore (UI-first)
+
+MySQL Admin → Settings includes a **Sao lưu MySQL** panel:
+create a consistent, compressed AES-256-GCM encrypted snapshot on a 0600
+server file, verify its authenticated contents, download it for protected
+offsite storage, or rehearse a full content-checked restore into a separate
+**existing, empty** `nihon_restore_...` MySQL database. No live database
+overwrite or automatic cutover is possible. The separate staging schema
+must be inspected/cleaned up through approved MySQL operations.
+
+Protect `data/instance-secret.key` and the small bootstrap SQLite database
+separately from the MySQL backup file. Losing the key makes an encrypted
+archive unreadable. A snapshot is limited to 100,000 rows/128 MiB raw and a
+staging restore to 25,000 rows/32 MiB; the application will never prune
+stored backups automatically. Download/export a retained offsite copy.
+See `docs/MYSQL_BACKUP_RESTORE.md` for security, recovery limitations and
+staging steps. This does not replace a cloud MySQL PITR or native snapshot
+and is not certification of production disaster recovery.
+
 ## Verification
 
     npm run typecheck
