@@ -113,11 +113,12 @@ or production credentials, from the exact app commit being tested:
 
     cd app
     npm ci
-    NIHON_MYSQL_TEST_URL='mysql://QA_USER:QA_PASSWORD@127.0.0.1:3306/nihon_qa' \
+    NIHON_T05_QA_ISOLATED=yes NIHON_MYSQL_TEST_URL='mysql://QA_USER:QA_PASSWORD@127.0.0.1:3306/nihon_qa' \
       node --import tsx scripts/topic-restore-qa.mjs
 
-This runner requires the URL and enforces loopback, the nihon_qa prefix and
-MySQL 8.4. Missing URL returns exit 2 (BLOCKED), never a skipped PASS.
+This runner requires the URL plus NIHON_T05_QA_ISOLATED=yes (operator
+acknowledgment, not automatic proof of isolation) and enforces loopback,
+the nihon_qa prefix and MySQL 8.4. Missing URL returns exit 2 (BLOCKED), never a skipped PASS.
 It creates fresh random nihon_qa_t05_* source, nihon_restore_t05_* target
 and tamper target schemas with CREATE (no IF NOT EXISTS); only databases
 actually created by this invocation are cleaned up. It uses synthetic
