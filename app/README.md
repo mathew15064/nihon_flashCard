@@ -177,6 +177,19 @@ Restore **only into a new file** for a verification drill:
 
     npm run db:restore -- --source /secure/backups/nihon-backup.sqlite --target ./data/nihon-restored.sqlite
 
+Run a fully disposable, end-to-end consistency drill in a protected scratch
+directory. It backs up into an isolated 0600 file, restores into another file,
+checks integrity, FK constraints, migration SHA-256 checksums and deterministic
+schema/row digests, then deletes both copies:
+
+    mkdir -m 700 -p /secure/qa-scratch
+    npm run db:drill -- --source ./data/nihon.sqlite --scratch-dir /secure/qa-scratch
+
+No user data or digests appear in the output; only table/row aggregates are
+printed. Use a staging snapshot as source when possible. The drill is **not**
+a retained backup, not an automatic cutover, and has not been validated with a
+real production/v1 SQLite source. See docs/SQLITE_RECOVERY_DRILL.md.
+
 Both commands refuse existing destination paths and require an existing parent
 directory. Copies use 0600 permissions and must pass SQLite integrity_check;
 failed copies are discarded. Restore never replaces the running DB, updates
