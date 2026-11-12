@@ -151,3 +151,100 @@ external ChatGPT client behavior and abuse limits. See
   `npx vite build --configLoader runner` and the package's esbuild server
   bundle command succeeded. This environment workaround is not a claim that
   the standard build command passed.
+
+
+## T05: topic-aware backup/restore on disposable MySQL 8.4
+
+A source-code or syntax check is **not** a restore PASS. Only run the new
+synthetic QA script on a physically isolated local MySQL 8.4 with a QA-only
+CREATE/DROP account; never paste credentials into a ticket or connect to the
+VPS/live MySQL. The URL's database component must begin nihon_qa, but the
+runner never writes to it: it creates unique fresh nihon_qa_t05_* source
+and nihon_restore_t05_* target schemas and cleans up only ones it created.
+
+    cd app
+    npm ci
+    node --check scripts/topic-restore-qa.mjs
+    # Set NIHON_MYSQL_TEST_URL privately through approved local QA env.
+    node --import tsx scripts/topic-restore-qa.mjs
+
+Expected: a JSON object with status PASS, per-table row counts and
+SHA-256 full-content digests, all required topic/lesson/vocabulary/SRS
+tables, the two applied migration checksums, zero FK orphans, archived
+ciphertext/plaintext checksums, exact SRS schedule/counters and an
+AES-GCM tamper case rejected before staging DDL. The script exits 2 and
+prints BLOCKED when the URL is absent, or nonzero on failed assertions.
+Capture the command exit code, UTC date, base/worker commit SHA, MySQL
+version and **sanitized** output in the release evidence folder. No
+personal data, instance keys or connection URLs in logs.
+
+Run the same image and schema pairing that is proposed for release;
+record the immutable Docker image digest, migration-file checksum and
+whether the recovered app boots/restarts against an isolated restored
+schema. An image build passing does not substitute for this run.
+Old pre-topic archives need a separate older-image reader and additive
+migration rehearsal (see MYSQL_BACKUP_RESTORE.md).
+
+### Nine MCP tools and external ChatGPT client
+
+The actual MCP code advertises **nine tools** to a writer and **five**
+to a reader. The exact tool names at this code revision are:
+
+| Tool name | Read token | Write token / explicit NoAuth test | Expected safe behavior |
+| --- | --- | --- | --- |
+| vocabulary_search | Yes | Yes | Published vocabulary only |
+| vocabulary_get | Yes | Yes | No private draft leakage |
+| topics_list | Yes | Yes | Public topics for anonymous access |
+| lessons_list | Yes | Yes | Optional topicId; hide private lessons from anonymous |
+| lesson_get | Yes | Yes | Public lesson only for anonymous |
+| topics_create | No | Yes | Create or reuse private topic; never publish |
+| lessons_create | No | Yes | Create or reuse private lesson; never publish |
+| lesson_add_vocabulary_batch | No | Yes | 1–100 draft items; dedup/replay; no publish |
+| vocabulary_create_draft | No | Yes | Single private draft |
+
+With an approved **non-personal QA-only** test connection, use
+Streamable HTTP POST /mcp and the server-advertised input schemas:
+
+1. Invoke tools/list separately with Read and Write credentials. Assert
+   exact sets (five and nine), schema fields (not guessed names), and
+   absence of any publish/Admin tool.
+2. Using Write, create/reuse a synthetic topic and lesson, submit 100
+   unique test items, retry once and confirm no new links/IDs; submit a
+   second batch when required. Verify private read isolation with Read
+   and anonymous access, and explicit Admin REST rejection (401). NoAuth
+   is test-only and must remain disabled for release.
+3. Exercise each of the nine tools at least once with expected success,
+   validation rejection and relevant permission failure. Record tool
+   list, sanitized results, client version, transport/HTTP status,
+   endpoint, time and test commit. No production data or bearer tokens
+   should appear in screenshots or client logs.
+4. In an actual connected ChatGPT client, confirm all nine tool names
+   are discoverable **from live tools/list**, not memory or diagnostics.
+   If the client still lists older tools after backend update, token
+   rotation or scope change, refresh the connection: disconnect the
+   old MCP app/connector, reconnect/reauthorize with the QA endpoint,
+   and re-run tools/list in a new chat/session. Tool caching and
+   authorization can delay schema refresh; a server passing its own
+   tests does not prove external client discovery.
+5. Finish with token revocation and a fresh tools/list denied with the
+   revoked token; document the restored safe configuration. Require
+   human validation of Japanese readings, Vietnamese meanings and
+   private/publish behavior.
+
+Mark external ChatGPT MCP as **BLOCKED** without a real client result.
+If the current client only exposes the older three-tool Nihon connector
+or requires reconnection, do not label the nine-tool acceptance PASS.
+
+### T01–T04 evidence to integrate before T05 release verdict
+
+Gather separate commit SHA, run URL, exact MySQL test target type,
+browser recordings/axe artifacts and PASS/FAIL/BLOCKED per worker:
+T01 topic migration/legacy identity; T02 lesson/deck/SRS; T03 batch and
+MCP scopes, abuse limits and retries; T04 UI, browser and accessibility.
+Re-run integrated typecheck, lint, npm tests **without skips**,
+Chromium E2E, and CI for the exact combined commit. Check security,
+rate limits, CSRF/Origin, secrets, performance/concurrency, human
+screen-reader/touch/zoom checks, image recovery and rollback.
+A skipped MySQL test, a past successful CI on a different SHA, a
+tool-configured state, and a test-only public deployment are **not
+release approval**. See RELEASE_READINESS.md for final gates.
