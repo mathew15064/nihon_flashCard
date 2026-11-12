@@ -142,6 +142,7 @@ export default function App(){
           <Route path="/decks/:id" element={<DeckDetails/>}/>
           <Route path="/topics" element={<TopicsPage/>}/>
           <Route path="/topics/:id" element={<TopicLessonsPage/>}/>
+          <Route path="/topics/:id/lessons" element={<TopicLessonsPage/>}/>
           <Route path="/practice" element={<Practice/>}/>
           <Route path="/account/login" element={<AccountLogin/>}/>
           <Route path="/account/register" element={<AccountRegister/>}/>

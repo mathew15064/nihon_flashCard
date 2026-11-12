@@ -190,7 +190,8 @@ try{
     word:"E2EBatch"+String(i).padStart(3,"0"),reading:"まとめ",
     romanization:"matome",meaningVi:"Từ trong bài "+i,jlptLevel:"N5",
   }));
-  await topicPage.goto("/admin");
+  await topicPage.goto("/admin/lessons");
+  await topicPage.getByRole("heading",{name:"Quản lý bài học"}).waitFor();
   await topicPage.getByLabel(/Tên chủ đề/).fill(topicName);
   const [topicCreated]=await Promise.all([
     topicPage.waitForResponse(res=>res.request().method()==="POST"&&
@@ -199,7 +200,7 @@ try{
   ]);
   assert.equal(topicCreated.status(),201);
   await topicPage.getByLabel(/Tên bài học/).fill(lessonName);
-  await topicPage.getByLabel("Chủ đề",{exact:true}).selectOption({label:topicName});
+  await topicPage.locator(".lesson-create-grid select").selectOption({label:topicName});
   const [lessonCreated]=await Promise.all([
     topicPage.waitForResponse(res=>res.request().method()==="POST"&&
       new URL(res.url()).pathname==="/api/v1/admin/lessons"),
@@ -209,10 +210,9 @@ try{
   const batchLesson=(await lessonCreated.json()).data;
   assert.equal(batchLesson.name,lessonName);
   const batchLessonId=batchLesson.id;
-  await topicPage.goto("/admin/lessons/"+batchLessonId);
   await topicPage.getByRole("heading",{name:lessonName,exact:true}).waitFor();
-  await topicPage.getByLabel(/JSON/).fill(JSON.stringify({items:batchWords},null,2));
-  await topicPage.getByRole("button",{name:/Nhập.*(lô|hàng loạt)|Thêm.*(lô|hàng loạt)/i}).click();
+  await topicPage.getByLabel(/JSON/).fill(JSON.stringify(batchWords,null,2));
+  await topicPage.getByRole("button",{name:"Nhập vào bài học"}).click();
   for(const item of batchWords)await topicPage.getByText(item.word,{exact:true}).waitFor();
   assert.equal(await topicPage.getByText(/^E2EBatch\d{3}$/).count(),100,
     "all 100 unique words must render in the lesson list");
@@ -285,11 +285,15 @@ try{
   await page.getByLabel(/OpenAI API key/).fill("sk-e2e-only-this-is-not-a-real-provider-key");
   await page.getByRole("button",{name:"Lưu cấu hình"}).click();
   await page.getByText("Đã lưu cấu hình trên server.").waitFor();
-  await integrations.getByRole("button",{name:"Kiểm tra API key & model OpenAI"})
-    .waitFor({state:"visible"});
-  assert.equal(await integrations.getByRole("button",{
+  const verifyModelButton=integrations.getByRole("button",{
     name:"Kiểm tra API key & model OpenAI",
-  }).isEnabled(),true,"saved provider key should enable safe metadata check");
+  });
+  await verifyModelButton.waitFor({state:"visible"});
+  // Diagnostics refreshes asynchronously after saving Admin Settings.
+  for(let attempt=0;attempt<50&&!await verifyModelButton.isEnabled();attempt++)
+    await pause(100);
+  assert.equal(await verifyModelButton.isEnabled(),true,
+    "saved provider key should enable safe metadata check");
   await page.getByRole("link",{name:"AI Studio"}).click();
   await page.getByRole("heading",{name:"AI Vocabulary Studio"}).waitFor();
   await auditAccessibility(page,"ai-studio");
@@ -336,7 +340,8 @@ try{
   await page.getByRole("link",{name:/Học bộ từ này/}).click();
   await page.getByRole("heading",{name:"Ôn tập từ vựng"}).waitFor();
   await auditAccessibility(page,"practice-guest");
-  await page.getByRole("button",{name:"Học bộ này"}).click();
+  await page.locator(".study-deck-grid .admin-panel").filter({hasText:deck})
+    .getByRole("button",{name:"Học bộ này"}).click();
   await page.getByText(word,{exact:true}).first().waitFor();
   const flashcard=page.locator(".practice-card");
   await flashcard.focus();

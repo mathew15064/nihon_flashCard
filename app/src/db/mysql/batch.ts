@@ -10,6 +10,7 @@ const safeCodes=new Set([
   "LESSON_NOT_FOUND","DECK_NOT_FOUND","VOCABULARY_NOT_FOUND",
   "CANNOT_ADD_DRAFT_TO_PUBLIC_DECK","VOCABULARY_NOT_DRAFT",
   "VOCABULARY_NEEDS_VI_MEANING","ENTRY_NOT_IN_LESSON",
+  "MCP_BATCH_RATE_LIMITED",
 ]);
 export function batchErrorCode(error:unknown):string{
   if(error instanceof z.ZodError)return "VALIDATION_ERROR";

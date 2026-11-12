@@ -1,17 +1,18 @@
 # Topics, lessons and batches of 100 words
 
-This is the Nihon v2 shared contract and operator workflow. W1–4 implement
-schema/services, REST, MCP and UI; W5 adds QA/docs. The base commit
-`565e42e74faf8392f534dcb5af7e1305ce816d21` does not contain those new
-implementations. These examples require their integration and a passing
-real-MySQL/browser run. They are not a deployment or release sign-off.
+This is the Nihon v2 shared contract and operator workflow. Five independent
+worker commits are integrated on the topic/lesson/batch feature branch.
+Real MySQL 8.4 tests and a Chromium browser journey cover the integrated
+feature. These checks are not a final production release sign-off.
 
 A topic groups lessons. A lesson is an existing deck with an optional
 `topicId`; existing `/decks` links and SRS enrollment keep the same IDs.
 New lessons are private and imported vocabulary is draft. Repeating a
 batch deduplicates vocabulary and lesson links instead of resetting study
 history. A batch accepts 1–100 items; a second request can add another
-batch to a private lesson. Vocabulary may be shared between lessons, so
+batch to a private lesson. The Fastify request-body ceiling is 256 KiB,
+which accommodates 100 complete entries while the 100-item limit remains
+enforced server-side. Vocabulary may be shared between lessons, so
 publishing an entry changes its global vocabulary status. Review shared
 entries before publishing.
 
@@ -20,8 +21,10 @@ entries before publishing.
 Connect the ChatGPT MCP client to the approved **test** instance's `/mcp`
 endpoint using Streamable HTTP. The test URL may have NoAuth enabled;
 use it only for non-sensitive test content. First enumerate tools with
-`tools/list` and use their advertised names and JSON schemas. Tool names
-are not specified by the shared REST/service contract.
+`tools/list` and use their advertised JSON schemas. The writer tools include
+`topics_create`, `lessons_create` and `lesson_add_vocabulary_batch`;
+the last accepts `lessonId` or `topicName` + `lessonName` plus
+`items` with 1–100 vocabulary objects. No MCP publish tool exists.
 
 Example request to ChatGPT:
 
@@ -44,8 +47,9 @@ Follow-up examples:
 
 Topic/lesson get-or-create must reuse the returned IDs. Do not infer
 privacy from a successful import: inspect results and have an Admin review
-content through the protected UI. NoAuth clients must never retrieve private
-vocabulary through public read tools.
+content through the protected UI. NoAuth clients can create private drafts but cannot retrieve them through
+`lesson_get`, `vocabulary_get`, `topics_list` or `lessons_list`.
+Admin can inspect and publish through authenticated REST/UI.
 
 ## Protected Admin REST workflow
 
@@ -111,8 +115,10 @@ personal information or production content. Host/Origin/rate controls
 still apply but do not establish user identity. NoAuth is disabled by
 default and does not disable Admin authentication or CSRF protection.
 MCP must expose no publishing tool, and anonymous callers must receive
-401 from protected Admin REST. Anonymous drafts still consume storage;
-review quotas and abuse handling before exposing a test instance.
+401 from protected Admin REST. Anonymous drafts still consume storage. The public tokenless batch tool is
+throttled to five requests per 60 seconds per application instance, in
+addition to general MCP rate limits. These limits do not establish user
+identity or prevent persistent abuse; review quotas before production.
 
 Disable NoAuth through the approved app-container configuration and restart
 that app when the test ends. Use scoped, revocable MCP credentials for
@@ -130,9 +136,10 @@ review cards/events and enrollment links; adding topics must not rebuild
 or truncate those tables. Verify migration repeatability and backup manifest
 support for the new topic table/columns before release.
 
-The new W5 test starts from an empty schema; it does **not** prove upgrading
-an existing v2 database or restoring a pre-topic archive. Those require a
-separate populated-snapshot migration and recovery drill. Legacy v1 remains
+The new W5 batch test starts from an empty schema. A separate W1 MySQL test
+upgrades an older populated v2 schema while preserving vocabulary/decks and
+migration ledger. A complete production-snapshot restore drill, backup
+manifest compatibility and owner-approved rollout are still required. Legacy v1 remains
 untouched; do not infer identity mappings or automatically import accounts.
 
 For rollback, stop writes, retain the failing database for investigation,

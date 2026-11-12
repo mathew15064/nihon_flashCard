@@ -27,10 +27,10 @@ test("native MySQL 8.4 schema, Drizzle queries, FK and atomic SRS on real MySQL"
   const ping=await testMySQLConnection(connection);
   assert.equal(ping.connected,true);
   const initial=await migrateFreshMySQL(connection);
-  assert.equal(initial.migrations,1);
+  assert.equal(initial.migrations,2);
   assert.ok(initial.tables>=19,JSON.stringify(initial));
   const repeated=await migrateFreshMySQL(connection);
-  assert.equal(repeated.migrations,1);
+  assert.equal(repeated.migrations,2);
   const {db,pool}=openMySQL(connection);
   const id=randomUUID();
   const now=new Date().toISOString();

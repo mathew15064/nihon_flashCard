@@ -69,6 +69,11 @@ test("MySQL 8.4 topics, 100-word batches, Admin publishing, NoAuth privacy and S
     const lesson=await ok("/api/v1/admin/lessons","POST",{
       name:"QA 100 words",description:"Một trăm từ",topicId:topic.id,
     },cookie);
+    const repeatedLesson=await request("/api/v1/admin/lessons","POST",{
+      name:"QA 100 words",description:"Một trăm từ",topicId:topic.id,
+    },cookie);
+    assert.equal(repeatedLesson.status,200,"Admin repeat create reuses the lesson");
+    assert.equal(repeatedLesson.json.data.id,lesson.id);
     const path="/api/v1/admin/lessons/"+lesson.id;
     const items=Array.from({length:100},(_,i)=>({
       word:"試験語"+String(i).padStart(3,"0"),reading:"しけんご",
@@ -226,6 +231,17 @@ test("MySQL 8.4 topics, 100-word batches, Admin publishing, NoAuth privacy and S
       const draft=await ok("/api/v1/admin/lessons/"+privateLesson.id,"GET",undefined,cookie);
       assert.equal(draft.entries.length,100);
       assert.ok(draft.entries.every((e:Entry)=>e.status==="draft"));
+      const privateViaMcp=await rpc("tools/call",{
+        name:"lesson_get",arguments:{lessonId:privateLesson.id},
+      });
+      assert.ok(privateViaMcp.error||privateViaMcp.result?.isError,
+        "anonymous lesson_get must not reveal private lesson details");
+      assert.ok(!JSON.stringify(privateViaMcp).includes(mcpItems[0].word));
+      const anonymousLessons=await rpc("tools/call",{
+        name:"lessons_list",arguments:{topicId:topic.id},
+      });
+      assert.ok(!JSON.stringify(anonymousLessons).includes(privateLesson.name),
+        "anonymous lessons_list must not reveal private lesson metadata");
       const retry=await rpc("tools/call",{name:batchTool.name,arguments:{lessonId:privateLesson.id,items:mcpItems}});
       assert.notEqual(retry.result?.isError,true);
       assert.equal((await ok("/api/v1/admin/lessons/"+privateLesson.id,"GET",undefined,cookie)).entries.length,100);

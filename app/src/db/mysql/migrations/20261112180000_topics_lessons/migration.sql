@@ -6,7 +6,7 @@ CREATE TABLE `topics` (
   `created_at` varchar(32) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_topics_slug` (`slug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB;
 --> statement-breakpoint
 ALTER TABLE `decks`
   ADD COLUMN `topic_id` varchar(64) NULL,

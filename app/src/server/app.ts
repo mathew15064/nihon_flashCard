@@ -11,7 +11,9 @@ import { mysqlMcp } from "@/db/mysql/mcp";
 export async function buildApp(options?:{staticAssets?:boolean}){
   const app=Fastify({
     logger:process.env.NODE_ENV!=="test",
-    bodyLimit:64*1024,
+    // A single authenticated or MCP draft import can contain 100 full entries.
+    // Every batch is still capped by strict Zod validation at 100 items.
+    bodyLimit:256*1024,
     trustProxy:false,
   });
   await app.register(cookie);

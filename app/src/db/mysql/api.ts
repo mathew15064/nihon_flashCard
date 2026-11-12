@@ -184,7 +184,8 @@ export function mysqlApi(db:Db){
         if(!await protect())return;
         if(method==="GET"){reply.send(ok({items:await decks.list(true)}));return;}
         if(method==="POST"){
-          reply.code(201).send(ok(await decks.create(lessonInput.parse(request.body))));return;
+          const result=await decks.getOrCreate(lessonInput.parse(request.body));
+          reply.code(result.created?201:200).send(ok(result.lesson));return;
         }
       }
       const lessonRoute=/^\/api\/v1\/admin\/lessons\/([^/]+)(?:\/(batch|publish-selected|publish-all|publish))?$/.exec(pathname);

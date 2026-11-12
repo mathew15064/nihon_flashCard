@@ -298,7 +298,7 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     assert.equal(afterToken.data.data.mcp.readConfigured,true);
     assert.equal(afterToken.data.data.mcp.writeConfigured,false);
     assert.deepEqual(afterToken.data.data.mcp.readTools,
-      ["vocabulary_search","vocabulary_get"]);
+      ["vocabulary_search","vocabulary_get","topics_list","lessons_list","lesson_get"]);
     assert.ok(!JSON.stringify(afterToken.data).includes(token.data.data.token));
     const mcp=await fetch(url+"/mcp",{
       method:"POST",headers:{
