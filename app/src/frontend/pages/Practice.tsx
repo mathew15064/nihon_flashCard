@@ -7,13 +7,14 @@ import {write} from "../api";
 export default function Practice(){
   const [query]=useSearchParams(),{actor}=useAuth();
   const [claimStatus,setClaimStatus]=useState("");
+  const [refreshVersion,setRefreshVersion]=useState(0);
   const deck=query.get("deck");
   const initialDeckId=deck&&/^[0-9a-f-]{36}$/i.test(deck)?deck:null;
   async function claimGuest(){
     try{
       const result=await write<{claimed:boolean;cardsMoved:number;mergedCards:number}>("/api/v1/me/claim-guest",{});
       setClaimStatus(result.claimed?"Đã chuyển "+result.cardsMoved+" thẻ và gộp "+result.mergedCards+" thẻ.":"Đã chuyển trước đó.");
-      window.location.reload();
+      setRefreshVersion(version=>version+1);
     }catch(e){setClaimStatus(e instanceof Error?e.message:"Không thể chuyển dữ liệu khách.");}
   }
   return <section className="content-page">
@@ -25,6 +26,6 @@ export default function Practice(){
       {claimStatus&&<p role="status">{claimStatus}</p>}
     </div>:!actor?<div className="notice">Bạn đang học ở chế độ khách bằng cookie trình duyệt.
       <Link to="/account/login"> Đăng nhập</Link> để đồng bộ tiến độ bằng tài khoản.</div>:null}
-    <PracticeDeck initialDeckId={initialDeckId}/>
+    <PracticeDeck key={refreshVersion} initialDeckId={initialDeckId}/>
   </section>;
 }

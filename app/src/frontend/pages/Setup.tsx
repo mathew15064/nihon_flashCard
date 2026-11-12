@@ -1,8 +1,10 @@
 import { FormEvent,useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { write } from "../api";
 
 type SetupResult={installed:boolean;database:string};
 export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
+  const navigate=useNavigate();
   const [setupCode,setSetupCode]=useState("");
   const [adminPassword,setAdminPassword]=useState("");
   const [repeatPassword,setRepeatPassword]=useState("");
@@ -46,6 +48,7 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
       if(!result.installed)throw new Error("INSTALL_FAILED");
       setSetupCode("");setAdminPassword("");setRepeatPassword("");
       await onComplete();
+      navigate("/",{replace:true});
     }catch(e){setError(e instanceof Error?e.message:"Không thể cài đặt.");}
     finally{setBusy(false);}
   }

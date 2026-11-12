@@ -51,20 +51,31 @@ export default function App(){
   const [signUpEnabled,setSignUpEnabled]=useState(false);
   const [ready,setReady]=useState(false);
   const [installed,setInstalled]=useState(true);
+  const [connectionError,setConnectionError]=useState(false);
+  const [logoutError,setLogoutError]=useState(false);
   const refresh=useCallback(async()=>{
     try{
       const status=await api<{installed:boolean}>("/api/v1/setup/status");
       setInstalled(status.installed);
-      if(!status.installed){setActor(null);return;}
+      if(!status.installed){
+        setActor(null);setSignUpEnabled(false);setConnectionError(false);return;
+      }
       const data=await api<Session>("/api/v1/auth/me");
       setActor(data.user);setSignUpEnabled(data.signUpEnabled);
-    }catch{setActor(null);}
+      setConnectionError(false);
+    }catch{setActor(null);setConnectionError(true);}
     finally{setReady(true);}
   },[]);
   useEffect(()=>{void refresh();},[refresh]);
   async function logout(){
-    try{await write("/api/v1/auth/logout",{});await refresh();}
-    catch{setActor(null);}
+    try{
+      await write("/api/v1/auth/logout",{});
+      setLogoutError(false);
+      await refresh();
+    }catch{
+      setLogoutError(true);
+      await refresh();
+    }
   }
   return <Context.Provider value={{actor,signUpEnabled,refresh}}>
     <header className="site-header">
@@ -81,7 +92,17 @@ export default function App(){
       </div>
     </header>
     <main className="site-main">
-      {!ready?<div className="notice">Đang kết nối hệ thống…</div>:
+      {logoutError&&!connectionError?<div className="notice form-error" role="alert">
+        Chưa thể xác nhận đăng xuất. Vui lòng thử lại.
+      </div>:null}
+      {!ready?<div className="notice" role="status">Đang kết nối hệ thống…</div>:
+        connectionError?<section className="content-page" role="alert">
+          <h1>Không thể kết nối Nihon</h1>
+          <p className="page-intro">Ứng dụng chưa thể liên hệ máy chủ. Hãy kiểm tra kết nối rồi thử lại.</p>
+          <button className="button primary" type="button" onClick={()=>void refresh()}>
+            Thử kết nối lại
+          </button>
+        </section>:
         !installed?<Setup onComplete={refresh}/>:
         <Routes>
           <Route path="/" element={<Home/>}/>

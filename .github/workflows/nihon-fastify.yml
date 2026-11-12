@@ -48,3 +48,9 @@ jobs:
           NIHON_MYSQL_TEST_URL: mysql://root:qa-only-ci-mysql-password@127.0.0.1:3306/nihon_qa
       - run: npm run lint
       - run: npm run build
+      - name: Install Chromium for browser E2E
+        run: npx playwright install --with-deps chromium
+      - name: Full browser user journey on MySQL 8.4
+        run: npm run test:e2e
+        env:
+          NIHON_MYSQL_TEST_URL: mysql://root:qa-only-ci-mysql-password@127.0.0.1:3306/nihon_qa
