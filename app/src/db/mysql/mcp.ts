@@ -96,8 +96,14 @@ export function mysqlMcp(db:Db){
           if(anonymous){
             const decision=publicBatchLimiter.consume("public-batch",5,60_000);
             if(!decision.allowed)throw new Error("MCP_BATCH_RATE_LIMITED");
-            if(input.lessonId!==undefined&&!anonymousLessons.has(input.lessonId))
-              throw new Error("MCP_LESSON_UNAVAILABLE");
+            if(input.lessonId!==undefined&&!anonymousLessons.has(input.lessonId)){
+              // Preserve the existing anonymous import workflow for an
+              // empty private lesson. Never claim a lesson with draft entries.
+              const target=await decks.get(input.lessonId,true);
+              if(!target||target.visibility!=="private"||target.entries.length>0||
+                 !anonymousLessons.allow(input.lessonId,true))
+                throw new Error("MCP_LESSON_UNAVAILABLE");
+            }
             if(input.lessonId===undefined&&!anonymousLessons.canCreate())
               throw new Error("MCP_LESSON_UNAVAILABLE");
           }
@@ -119,7 +125,7 @@ export function mysqlMcp(db:Db){
       },async(input)=>respond(async()=>{
         const result=await vocab.createDraft({...vocabularyInput.parse(input),source:"mcp"});
         // A public deduplication must not expose an existing private entry ID/status.
-        if(mcpNoAuthEnabled())return {accepted:true};
+        if(mcpNoAuthEnabled())return {accepted:true,operation:"draft_request"};
         return {id:result.item.id,created:result.created,status:result.item.status};
       }));
       return mcp;
