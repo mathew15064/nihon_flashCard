@@ -119,6 +119,8 @@ async function run(raw){
   if(url.protocol!=='mysql:'||!/^\/nihon_qa[a-zA-Z0-9_]*$/.test(url.pathname)||
     !['127.0.0.1','localhost','[::1]'].includes(url.hostname)||
     url.search||url.hash||!url.username)throw new Error('T05_LOCAL_QA_ONLY');
+  if(process.env.NIHON_T05_QA_ISOLATED!=='yes')
+    throw new Error('T05_ISOLATED_QA_ACK_REQUIRED');
   const id=randomBytes(6).toString('hex');
   const source='nihon_qa_t05_'+id,target='nihon_restore_t05_'+id;
   const tamper='nihon_restore_t05_bad_'+id;
@@ -153,6 +155,7 @@ async function run(raw){
       before=await fingerprint(db);
       ledgerBefore=await verifyLedger(db,migrations);
       foreignKeys=await checkFK(db);
+      assert.ok(foreignKeys>=10,'T05_EXPECTED_FK_CONSTRAINTS');
     }finally{await db.end();}
     const domain=['topics','decks','deck_items','vocabulary_entries',
       'vocabulary_senses','review_cards','review_events','user_deck_enrollments'];
