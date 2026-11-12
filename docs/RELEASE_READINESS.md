@@ -77,3 +77,35 @@ product is ready.
 Related: `docs/TESTING.md`, `docs/ACCESSIBILITY_QA.md`,
 `docs/INTEGRATION_DIAGNOSTICS.md`, `docs/MYSQL_BACKUP_RESTORE.md`,
 `docs/UI_FIRST_INSTALL.md`.
+
+## Topic/lesson/batch addition — W5 acceptance pending
+
+The checks above describe the existing v2 baseline. They do not certify the
+new W1–4 topic/lesson/batch implementation. W5 adds contract tests and docs
+against base `565e42e74faf8392f534dcb5af7e1305ce816d21`; none of the items
+below may be checked solely because static checks pass or MySQL tests skip.
+
+- [ ] Integrate W1–4 and resolve shared contract/type mismatches; preserve
+      existing MySQL, SRS and v1 records without changing their identities.
+- [ ] Run `tests/topics-batch-mysql.test.ts` on disposable real MySQL 8.4:
+      100-word lessons, second batch, dedup/replay, private content, Admin-only
+      partial/bulk/full-deck publishing and public lesson draft rejection.
+- [ ] Verify anonymous MCP batch creates drafts only, cannot publish, read
+      private content or access Admin REST; test external ChatGPT discovery
+      and topic/lesson get-or-create against the actual advertised schemas.
+- [ ] Reconcile W5 browser routes/labels with W4; run the complete preserved
+      E2E journey plus topic create, lesson create, JSON batch, all 100 words,
+      anonymous public discovery, responsive overflow and axe checks.
+- [ ] Confirm 100-card enrollment/re-enrollment and review replay preserve
+      every existing card schedule, counter, identity and review event.
+- [ ] Rehearse populated-v2 upgrade and migration repeatability, including
+      legacy decks without topics; verify topic-aware backup manifests and
+      content-checked restore, and recovery of a pre-topic snapshot.
+- [ ] Exercise concurrent imports, invalid-item errors/correction, shared
+      vocabulary publishing effects and public NoAuth abuse/resource limits.
+- [ ] Obtain human desktop/mobile acceptance and an explicit release decision.
+
+See [topic/lesson/batch operator guide](TOPIC_LESSON_BATCH.md) and
+[QA instructions and limitations](TESTING.md). This work authorizes only a
+local worker commit; it does not authorize push, deploy, main merge, v1
+migration, live database writes or rollback/cutover actions.

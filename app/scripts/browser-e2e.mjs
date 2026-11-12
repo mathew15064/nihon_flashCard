@@ -16,9 +16,9 @@ if(!source){
   process.exit(2);
 }
 const parsed=new URL(source);
-if(parsed.protocol!=="mysql:"||!parsed.pathname.startsWith("/nihon_qa"))
+if(parsed.protocol!=="mysql:"||!/^nihon_qa[a-zA-Z0-9_]*$/.test(parsed.pathname.slice(1)))
   throw new Error("E2E_REFUSES_NON_QA_MYSQL_TARGET");
-const database="nihon_e2e_"+randomBytes(7).toString("hex");
+const database="nihon_qa_e2e_"+randomBytes(7).toString("hex");
 const root={
   host:parsed.hostname,port:Number(parsed.port||3306),
   user:decodeURIComponent(parsed.username),password:decodeURIComponent(parsed.password),
@@ -87,6 +87,8 @@ async function auditAccessibility(page,stage){
   console.log("BROWSER_A11Y_PASS",stage);
 }
 try{
+  const [version]=await rootPool.query("SELECT VERSION() AS version");
+  assert.match(String(version[0]?.version),/^8\.4\./,"E2E requires MySQL 8.4");
   await rootPool.query("CREATE DATABASE `"+database+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
   child=spawn(process.execPath,["dist/server/index.mjs"],{
     cwd:process.cwd(),env:{
@@ -177,6 +179,85 @@ try{
   const adminCookie=(await context.cookies()).filter(cookie=>cookie.name==="nihon_auth")
     .map(cookie=>cookie.name+"="+cookie.value).join("; ");
   assert.ok(adminCookie,"QA Admin cookie required for fixture creation");
+  // W4 topic/lesson controls use accessible names; missing UI must fail.
+  // A separate page preserves the original settings and guest-SRS journey.
+  const topicPage=await context.newPage();
+  topicPage.on("pageerror",e=>failures.push(e.message));
+  topicPage.on("dialog",dialog=>dialog.accept());
+  const topicName="E2E Topic "+randomBytes(3).toString("hex");
+  const lessonName="E2E 100 words "+randomBytes(3).toString("hex");
+  const batchWords=Array.from({length:100},(_,i)=>({
+    word:"E2EBatch"+String(i).padStart(3,"0"),reading:"まとめ",
+    romanization:"matome",meaningVi:"Từ trong bài "+i,jlptLevel:"N5",
+  }));
+  await topicPage.goto("/admin");
+  await topicPage.getByLabel(/Tên chủ đề/).fill(topicName);
+  const [topicCreated]=await Promise.all([
+    topicPage.waitForResponse(res=>res.request().method()==="POST"&&
+      new URL(res.url()).pathname==="/api/v1/admin/topics"),
+    topicPage.getByRole("button",{name:/Tạo chủ đề/}).click(),
+  ]);
+  assert.equal(topicCreated.status(),201);
+  await topicPage.getByLabel(/Tên bài học/).fill(lessonName);
+  await topicPage.getByLabel("Chủ đề",{exact:true}).selectOption({label:topicName});
+  const [lessonCreated]=await Promise.all([
+    topicPage.waitForResponse(res=>res.request().method()==="POST"&&
+      new URL(res.url()).pathname==="/api/v1/admin/lessons"),
+    topicPage.getByRole("button",{name:/Tạo bài học/}).click(),
+  ]);
+  assert.equal(lessonCreated.status(),201);
+  const batchLesson=(await lessonCreated.json()).data;
+  assert.equal(batchLesson.name,lessonName);
+  const batchLessonId=batchLesson.id;
+  await topicPage.goto("/admin/lessons/"+batchLessonId);
+  await topicPage.getByRole("heading",{name:lessonName,exact:true}).waitFor();
+  await topicPage.getByLabel(/JSON/).fill(JSON.stringify({items:batchWords},null,2));
+  await topicPage.getByRole("button",{name:/Nhập.*(lô|hàng loạt)|Thêm.*(lô|hàng loạt)/i}).click();
+  for(const item of batchWords)await topicPage.getByText(item.word,{exact:true}).waitFor();
+  assert.equal(await topicPage.getByText(/^E2EBatch\d{3}$/).count(),100,
+    "all 100 unique words must render in the lesson list");
+  await auditAccessibility(topicPage,"admin-topic-100-word-lesson");
+  for(const width of [320,390,768]){
+    await topicPage.setViewportSize({width,height:844});
+    await assertNoOverflow(topicPage,"admin 100-word lesson "+width);
+  }
+  await topicPage.setViewportSize({width:1366,height:880});
+  const anonymous=await browser.newContext({baseURL:origin});
+  const beforePublish=await anonymous.request.get("/api/v1/decks/"+batchLessonId);
+  assert.equal(beforePublish.status(),404,"private lesson must remain hidden");
+  const [bulkPublished]=await Promise.all([
+    topicPage.waitForResponse(res=>res.request().method()==="POST"&&
+      res.url().endsWith("/publish-all")),
+    topicPage.getByRole("button",{name:/Xuất bản tất cả/}).click(),
+  ]);
+  assert.equal(bulkPublished.status(),200);
+  assert.equal((await bulkPublished.json()).data.published,100);
+  const publishLesson=topicPage.getByRole("button",{name:/Xuất bản bài học/});
+  await publishLesson.waitFor();
+  const [lessonPublished]=await Promise.all([
+    topicPage.waitForResponse(res=>res.request().method()==="POST"&&
+      res.url().endsWith("/lessons/"+batchLessonId+"/publish")),
+    publishLesson.click(),
+  ]);
+  assert.equal(lessonPublished.status(),200);
+  const publicPage=await anonymous.newPage();
+  publicPage.on("pageerror",e=>failures.push(e.message));
+  await publicPage.goto("/topics");
+  await publicPage.getByRole("link",{name:new RegExp(topicName)}).click();
+  await publicPage.getByRole("link",{name:new RegExp(lessonName)}).click();
+  await publicPage.getByRole("heading",{name:lessonName,exact:true}).waitFor();
+  for(const item of batchWords)await publicPage.getByText(item.word,{exact:true}).waitFor();
+  assert.equal(await publicPage.getByText(/^E2EBatch\d{3}$/).count(),100);
+  await auditAccessibility(publicPage,"public-topic-100-word-lesson");
+  for(const width of [320,390,768]){
+    await publicPage.setViewportSize({width,height:844});
+    await assertNoOverflow(publicPage,"public 100-word lesson "+width);
+    if(width===390)await auditAccessibility(publicPage,"mobile-100-word-lesson");
+  }
+  await anonymous.close();
+  await topicPage.close();
+  console.log("BROWSER_TOPIC_LESSON_BATCH_100_PUBLISH_PASS");
+
   for(let i=0;i<35;i++){
     const create=await fetch(origin+"/api/v1/admin/vocabulary",{
       method:"POST",headers:{cookie:adminCookie,origin,
