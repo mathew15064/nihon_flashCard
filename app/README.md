@@ -124,8 +124,21 @@ Explicitly apply only after reviewing the report:
 
     npm run import:legacy -- --source ../data/content/vocabulary.json --target ./data/nihon.sqlite --apply
 
-Production user accounts, history and review state from v1 have NOT yet been
-migrated or safely associated with new learner accounts.
+Read-only v1 SRS inventory (never imports accounts or history):
+
+    npm run db:audit-v1-srs -- --source /secure/legacy/app.db --target ./data/nihon.sqlite
+
+Run after build and only with a verified v1 SQLite source. The audit reports
+aggregate unmapped/orphaned/invalid SRS rows and duplicate-mapping conflicts;
+it does not print usernames or grant ownership. See
+`docs/V1_ACCOUNT_SRS_MIGRATION.md` for the migration gate and identity proof
+requirements. Production user accounts, history and review state from v1 have
+NOT yet been migrated or safely associated with new learner accounts.
+
+Security notice: the legacy public repository tracks `DockerFile/.env` with
+non-empty password settings. The operator must evaluate and rotate any active
+credentials; see `docs/SECURITY_CREDENTIAL_EXPOSURE.md`. This Fastify branch
+does not change v1 credentials, user data or history.
 
 ## Docker: one container
 

@@ -10,6 +10,27 @@ Status: **SPEC / BLOCKED**. Never infer legacy account ownership from username, 
 - The earlier vocabulary import reported 15 old entries mapped, with 13 new and 2 deduplicated, only on the isolated development database. Verify legacy_id_map in the actual migration destination before attempting progress imports.
 - On the 2026-11-11 development PC, a v1 users.json fixture was found, but data/app.db containing live v1 progress/history was **not** found in the inspected project worktrees. No live SRS row counts have been verified.
 
+## Implemented inspection-only CLI (2026-11-12)
+
+After building the Fastify app, obtain a *verified, isolated copy* of the v1
+SQLite database and run from `app/`:
+
+    npm run build
+    npm run db:audit-v1-srs -- --source /secure/legacy/app.db --target ./data/nihon.sqlite
+
+This tool deliberately has **no --apply flag**. Both databases are opened
+read-only with query_only and quick_check. It reports aggregate user counts,
+progress/history counts, missing vocabulary ID mappings, conflicting cards
+introduced by deduplicated vocabulary, orphan references, non-vocabulary
+content types, invalid dates/results/counters, discrepancies between review
+counters and actual history event counts, and draft/archived destination
+entries. It never prints legacy usernames, user IDs or individual events.
+
+The report always sets `ownershipVerified: false` and `canApply: false`.
+Resolve all blockers and independently verify ownership before designing any
+write-capable migration. The inspection is not a migration or account claim.
+Neither this tool nor its tests access the production v1 database.
+
 ## Phase A — read-only inventory and reconciliation
 
 1. Obtain the *correct* v1 app.db or a verified immutable snapshot. Open SQLite as read-only; never run v2 migrations against it.

@@ -20,11 +20,12 @@ test("Fastify protects Admin routes, rejects CSRF and isolates drafts",async()=>
     DB_PATH:process.env.DB_PATH,AUTH_SECRET:process.env.AUTH_SECRET,
     NIHON_ADMIN_PASSWORD_HASH:process.env.NIHON_ADMIN_PASSWORD_HASH,
     NODE_ENV:process.env.NODE_ENV,OPENAI_API_KEY:process.env.OPENAI_API_KEY,
-    PUBLIC_ORIGIN:process.env.PUBLIC_ORIGIN,
+    PUBLIC_ORIGIN:process.env.PUBLIC_ORIGIN,NIHON_ADMIN_TOKEN:process.env.NIHON_ADMIN_TOKEN,
   };
   process.env.DB_PATH=filename;
   process.env.AUTH_SECRET="test-fastify-auth-secret-1234567890123456789";
   process.env.NIHON_ADMIN_PASSWORD_HASH=hashAdminPassword("long-fastify-admin-test-password");
+  process.env.NIHON_ADMIN_TOKEN="test-admin-rest-token-12345678901234567890";
   process.env.NODE_ENV="test";
   delete process.env.OPENAI_API_KEY;
   try{
@@ -64,6 +65,11 @@ test("Fastify protects Admin routes, rejects CSRF and isolates drafts",async()=>
         headers:{cookie,origin:"https://evil.invalid"},
         payload:{},
       })).statusCode,403);
+      assert.equal((await app.inject({
+        method:"POST",url:"/api/v1/admin/vocabulary/"+id+"/publish",
+        headers:{cookie,origin:"https://evil.invalid",authorization:"Bearer NOT_A_VALID_TOKEN"},
+        payload:{},
+      })).statusCode,403);
       const approved=await app.inject({
         method:"POST",url:"/api/v1/admin/vocabulary/"+id+"/publish",
         headers:{cookie,origin:"http://localhost:80"},
@@ -72,6 +78,12 @@ test("Fastify protects Admin routes, rejects CSRF and isolates drafts",async()=>
       assert.equal(approved.statusCode,200);
       const visible=await app.inject({method:"GET",url:"/api/v1/vocabulary?search="+encodeURIComponent(word)});
       assert.equal(visible.json().data.items.length,1);
+      const validApiToken=await app.inject({
+        method:"POST",url:"/api/v1/admin/vocabulary",
+        headers:{origin:"https://evil.invalid",authorization:`Bearer ${process.env.NIHON_ADMIN_TOKEN}`},
+        payload:{word:"試験"+randomUUID().slice(0,4),reading:"しけん",meaningVi:"kiểm thử"},
+      });
+      assert.equal(validApiToken.statusCode,201);
       const forgedCookie=cookie.replace(/.$/,"X");
       assert.equal((await app.inject({method:"GET",url:"/api/v1/admin/vocabulary",
         headers:{cookie:forgedCookie}})).statusCode,401);

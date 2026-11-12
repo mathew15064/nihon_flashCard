@@ -1,6 +1,6 @@
 import type { FastifyReply,FastifyRequest } from "fastify";
 import { ZodError } from "zod";
-import { getActor,getLearningId,needsAdmin,safeOrigin } from "./auth";
+import { getActor,getLearningId,safeOrigin,verifyBearer } from "./auth";
 
 export function fail(reply:FastifyReply,error:unknown){
   if(error instanceof ZodError){
@@ -15,8 +15,13 @@ export function fail(reply:FastifyReply,error:unknown){
   return reply.code(code==="INTERNAL_ERROR"?500:status).send({success:false,error:{code}});
 }
 export function requireAdmin(request:FastifyRequest,reply:FastifyReply):boolean {
-  if(!needsAdmin(request)) { reply.code(401).send({success:false,error:{code:"ADMIN_REQUIRED"}});return false;}
-  if(getActor(request)?.role==="admin" && !request.headers.authorization && !safeOrigin(request)
+  const bearerAuthorized=verifyBearer(request.headers.authorization,process.env.NIHON_ADMIN_TOKEN);
+  const cookieAuthorized=getActor(request)?.role==="admin";
+  if(!bearerAuthorized && !cookieAuthorized) {
+    reply.code(401).send({success:false,error:{code:"ADMIN_REQUIRED"}});return false;
+  }
+  // A forged/invalid Authorization header must never bypass cookie CSRF checks.
+  if(!bearerAuthorized && !safeOrigin(request)
     && !["GET","HEAD","OPTIONS"].includes(request.method)){
     reply.code(403).send({success:false,error:{code:"INVALID_ORIGIN"}});return false;
   }
