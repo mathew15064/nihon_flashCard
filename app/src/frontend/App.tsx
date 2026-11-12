@@ -10,6 +10,8 @@ import Setup from "./pages/Setup";
 import AdminSettings from "./pages/AdminSettings";
 import Admin from "./pages/Admin";
 import AIStudio from "./pages/AIStudio";
+import AdminLessons from "./pages/AdminLessons";
+import {TopicsPage,TopicLessonsPage} from "./pages/Topics";
 
 export type Actor={id:string;name:string;role:"admin"|"learner"};
 type Session={user:Actor|null;signUpEnabled:boolean;guest:boolean};
@@ -74,6 +76,7 @@ export default function App(){
       "/":"Trang chủ",
       "/vocabulary":"Kho từ vựng",
       "/decks":"Bộ từ",
+      "/topics":"Chủ đề",
       "/practice":"Ôn tập",
       "/setup":"Cài đặt",
       "/account/login":"Đăng nhập",
@@ -81,11 +84,12 @@ export default function App(){
       "/account/security":"Bảo mật tài khoản",
       "/admin/login":"Đăng nhập quản trị",
       "/admin":"Quản trị nội dung",
+      "/admin/lessons":"Quản lý bài học",
       "/admin/settings":"Cài đặt hệ thống",
       "/admin/ai-studio":"AI Vocabulary Studio",
     };
     const name=location.pathname.startsWith("/decks/")
-      ?"Chi tiết bộ từ":pageNames[location.pathname]??"Nihon Vocabulary";
+      ?"Chi tiết bộ từ":location.pathname.startsWith("/topics/")?"Bài học theo chủ đề":pageNames[location.pathname]??"Nihon Vocabulary";
     document.title=name+" · Nihon Vocabulary";
     if(previousPath.current!==location.pathname){
       previousPath.current=location.pathname;
@@ -109,8 +113,9 @@ export default function App(){
       <nav className="site-nav" aria-label="Điều hướng">
         <NavLink to="/vocabulary">Từ vựng</NavLink>
         <NavLink to="/decks">Bộ từ</NavLink>
+        <NavLink to="/topics">Chủ đề</NavLink>
         <NavLink to="/practice">Ôn tập</NavLink>
-        {actor?.role==="admin"?<><NavLink to="/admin">Admin</NavLink><NavLink to="/admin/settings">Settings</NavLink></>:null}
+        {actor?.role==="admin"?<><NavLink to="/admin" end>Admin</NavLink><NavLink to="/admin/lessons">Bài học</NavLink><NavLink to="/admin/settings">Settings</NavLink></>:null}
       </nav>
       <div className="header-account">
         {actor?<><span className="muted">{actor.name}</span>{actor.role==="learner"?<Link to="/account/security">Bảo mật</Link>:null}<button type="button" className="quiet-button" onClick={logout}>Đăng xuất</button></>:
@@ -135,12 +140,15 @@ export default function App(){
           <Route path="/vocabulary" element={<Vocabulary/>}/>
           <Route path="/decks" element={<Decks/>}/>
           <Route path="/decks/:id" element={<DeckDetails/>}/>
+          <Route path="/topics" element={<TopicsPage/>}/>
+          <Route path="/topics/:id" element={<TopicLessonsPage/>}/>
           <Route path="/practice" element={<Practice/>}/>
           <Route path="/account/login" element={<AccountLogin/>}/>
           <Route path="/account/register" element={<AccountRegister/>}/>
           <Route path="/account/security" element={actor?.role==="learner"?<AccountSecurity/>:<Navigate to="/account/login" replace/>}/>
           <Route path="/admin/login" element={<AdminLogin/>}/>
           <Route path="/admin" element={actor?.role==="admin"?<Admin/>:<Navigate to="/admin/login" replace/>}/>
+          <Route path="/admin/lessons" element={actor?.role==="admin"?<AdminLessons/>:<Navigate to="/admin/login" replace/>}/>
           <Route path="/admin/ai-studio" element={actor?.role==="admin"?<AIStudio/>:<Navigate to="/admin/login" replace/>}/>
           <Route path="/admin/settings" element={actor?.role==="admin"?<AdminSettings/>:<Navigate to="/admin/login" replace/>}/>
           <Route path="*" element={<div className="content-page"><h1>Không tìm thấy trang</h1><Link to="/">Về trang chủ</Link></div>}/>
