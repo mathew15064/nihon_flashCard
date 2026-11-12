@@ -105,7 +105,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
-npm run test:e2e   # isolated MySQL 8.4 + Chromium required
+npm run test:e2e   # isolated MySQL 8.4 + Chromium and axe-core WCAG scans
 npm audit --omit=dev --audit-level=high
 ```
 

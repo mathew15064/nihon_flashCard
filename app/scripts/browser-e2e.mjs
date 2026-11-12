@@ -8,6 +8,7 @@ import { createServer } from "node:net";
 import { setTimeout as pause } from "node:timers/promises";
 import mysql from "mysql2/promise";
 import { chromium } from "playwright";
+import AxeBuilder from "@axe-core/playwright";
 
 const source=process.env.NIHON_MYSQL_TEST_URL;
 if(!source){
@@ -71,6 +72,20 @@ async function assertNoOverflow(page,stage){
 async function checkNoPageErrors(page,stage){
   assert.deepEqual(failures,[],stage+" browser JS errors");
 }
+async function auditAccessibility(page,stage){
+  const results=await new AxeBuilder({page}).withTags([
+    "wcag2a","wcag2aa","wcag21a","wcag21aa","wcag22aa",
+  ]).analyze();
+  const errors=results.violations.map(violation=>({
+    id:violation.id,impact:violation.impact,
+    nodes:violation.nodes.slice(0,6).map(node=>({
+      target:node.target,summary:node.failureSummary?.slice(0,240),
+    })),
+  }));
+  if(errors.length)console.error("A11Y_VIOLATIONS",stage,JSON.stringify(errors));
+  assert.equal(errors.length,0,stage+" WCAG accessibility violations");
+  console.log("BROWSER_A11Y_PASS",stage);
+}
 try{
   await rootPool.query("CREATE DATABASE `"+database+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
   child=spawn(process.execPath,["dist/server/index.mjs"],{
@@ -102,6 +117,7 @@ try{
   await setup().waitFor({state:"visible"});
   assert.equal(await page.getByRole("radio").count(),0,"MySQL-only wizard");
   await assertNoOverflow(page,"desktop setup");
+  await auditAccessibility(page,"setup");
   const labels={
     host:page.getByLabel("MySQL host"),
     port:page.getByLabel("Port",{exact:true}),
@@ -132,9 +148,11 @@ try{
 
   await page.goto("/admin/login");
   await page.getByRole("heading",{name:"Đăng nhập quản trị"}).waitFor();
+  await auditAccessibility(page,"admin-login");
   await page.getByLabel("Mật khẩu Admin").fill("browser-e2e-admin-password-2026");
   await page.getByRole("button",{name:"Đăng nhập Admin"}).click();
   await page.getByRole("heading",{name:"Quản trị nội dung"}).waitFor();
+  await auditAccessibility(page,"admin");
   const word="海辺"+randomBytes(3).toString("hex");
   await page.getByLabel("Tiếng Nhật").fill(word);
   await page.getByLabel("Kana").fill("うみべ");
@@ -156,11 +174,13 @@ try{
 
   await page.getByRole("link",{name:"Settings",exact:true}).click();
   await page.getByRole("heading",{name:"Cài đặt hệ thống"}).waitFor();
+  await auditAccessibility(page,"admin-settings");
   await page.getByLabel(/OpenAI API key/).fill("sk-e2e-only-this-is-not-a-real-provider-key");
   await page.getByRole("button",{name:"Lưu cấu hình"}).click();
   await page.getByText("Đã lưu cấu hình trên server.").waitFor();
   await page.getByRole("link",{name:"AI Studio"}).click();
   await page.getByRole("heading",{name:"AI Vocabulary Studio"}).waitFor();
+  await auditAccessibility(page,"ai-studio");
   await page.getByText("Đã cấu hình key phía server").waitFor();
   await page.getByRole("link",{name:"Settings",exact:true}).click();
   await page.getByRole("heading",{name:"Cài đặt hệ thống"}).waitFor();
@@ -184,15 +204,24 @@ try{
   await page.goto("/vocabulary");
   await page.getByLabel("Tìm từ").fill(word);
   await page.getByText(word,{exact:true}).waitFor();
+  await auditAccessibility(page,"vocabulary-search");
   await page.goto("/decks");
+  await page.getByRole("link",{name:new RegExp(deck)}).waitFor();
+  await auditAccessibility(page,"decks-public");
   await page.getByRole("link",{name:new RegExp(deck)}).click();
   await page.getByRole("heading",{name:deck}).waitFor();
+  await auditAccessibility(page,"deck-details");
   await page.getByRole("link",{name:/Học bộ từ này/}).click();
   await page.getByRole("heading",{name:"Ôn tập từ vựng"}).waitFor();
+  await auditAccessibility(page,"practice-guest");
   await page.getByRole("button",{name:"Học bộ này"}).click();
   await page.getByText(word,{exact:true}).first().waitFor();
-  await page.getByRole("button",{name:"Lật thẻ để xem đáp án"}).click();
+  const flashcard=page.locator(".practice-card");
+  await flashcard.focus();
+  await page.keyboard.press("Space");
   await page.getByText("bờ biển",{exact:true}).waitFor();
+  assert.equal(await flashcard.getAttribute("aria-pressed"),"true");
+  await auditAccessibility(page,"flashcard-revealed");
   await page.getByRole("button",{name:/Đã nhớ/}).click();
   await page.getByText(/Bạn đã ôn xong các thẻ đến hạn/).waitFor();
   console.log("BROWSER_PUBLIC_DISCOVERY_GUEST_FLASHCARD_SRS_PASS");
@@ -201,12 +230,14 @@ try{
   const learnerPassword="browser-e2e-learner-password-2026";
   await page.goto("/account/register");
   await page.getByRole("heading",{name:"Tạo tài khoản"}).waitFor();
+  await auditAccessibility(page,"register");
   await page.getByLabel("Tên đăng nhập").fill(username);
   await page.getByLabel("Tên hiển thị").fill("Người học E2E");
   await page.getByLabel("Mật khẩu",{exact:true}).fill(learnerPassword);
   await page.getByLabel("Xác nhận mật khẩu").fill(learnerPassword);
   await page.getByRole("button",{name:"Tạo tài khoản"}).click();
   await page.getByRole("heading",{name:"Đăng nhập",exact:true}).waitFor();
+  await auditAccessibility(page,"learner-login");
   await page.getByLabel("Tên đăng nhập").fill(username);
   await page.getByLabel("Mật khẩu").fill(learnerPassword);
   await page.getByRole("button",{name:"Đăng nhập",exact:true}).click();
@@ -226,6 +257,7 @@ try{
 
   await page.goto("/account/security");
   await page.getByRole("heading",{name:"Bảo mật tài khoản"}).waitFor();
+  await auditAccessibility(page,"account-security");
   await page.getByLabel("Mật khẩu hiện tại").fill(learnerPassword);
   await page.getByLabel("Mật khẩu mới",{exact:true}).fill("browser-e2e-learner-rotated-password-2026");
   await page.getByLabel("Xác nhận mật khẩu mới").fill("browser-e2e-learner-rotated-password-2026");
@@ -255,9 +287,28 @@ try{
       await mobilePage.locator("main").waitFor();
       await mobilePage.waitForLoadState("networkidle",{timeout:12000});
       await assertNoOverflow(mobilePage,"mobile "+width+"px "+url);
+      if(width===390)await auditAccessibility(mobilePage,"mobile "+url);
     }
   }
   console.log("BROWSER_MOBILE_LAYOUT_NO_OVERFLOW_PASS");
+
+  // Skip navigation and maintain meaningful focus when routes change.
+  const keyboard=await context.newPage();
+  await keyboard.goto("/");
+  await keyboard.getByRole("heading",{name:/Mỗi từ mới/}).waitFor();
+  await keyboard.keyboard.press("Tab");
+  assert.equal(await keyboard.evaluate(()=>document.activeElement?.textContent?.trim()),
+    "Bỏ qua điều hướng","skip link must be the first Tab stop");
+  await keyboard.keyboard.press("Enter");
+  assert.equal(await keyboard.evaluate(()=>document.activeElement?.id),
+    "main-content","skip link must reach the main landmark");
+  await keyboard.getByRole("link",{name:"Từ vựng",exact:true}).click();
+  await keyboard.getByRole("heading",{name:"Kho từ vựng"}).waitFor();
+  assert.equal(await keyboard.evaluate(()=>document.activeElement?.id),
+    "main-content","client-side navigation should move focus into content");
+  assert.equal(await keyboard.title(),"Kho từ vựng · Nihon Vocabulary");
+  await keyboard.close();
+  console.log("BROWSER_KEYBOARD_NAVIGATION_AND_FOCUS_PASS");
 
   // On backend loss, never pretend the installation is usable or show login.
   const offline=await browser.newContext({baseURL:origin});

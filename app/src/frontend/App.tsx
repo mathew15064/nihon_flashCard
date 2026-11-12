@@ -1,5 +1,5 @@
-import { useCallback,useEffect,useState,createContext,useContext } from "react";
-import { Link,NavLink,Route,Routes,Navigate } from "react-router-dom";
+import { useCallback,useEffect,useRef,useState,createContext,useContext } from "react";
+import { Link,NavLink,Route,Routes,Navigate,useLocation } from "react-router-dom";
 import {api,write} from "./api";
 import Vocabulary from "./pages/Vocabulary";
 import {Decks,DeckDetails} from "./pages/Decks";
@@ -47,6 +47,8 @@ function Home(){
 }
 
 export default function App(){
+  const location=useLocation();
+  const previousPath=useRef(location.pathname);
   const [actor,setActor]=useState<Actor|null>(null);
   const [signUpEnabled,setSignUpEnabled]=useState(false);
   const [ready,setReady]=useState(false);
@@ -67,6 +69,29 @@ export default function App(){
     finally{setReady(true);}
   },[]);
   useEffect(()=>{void refresh();},[refresh]);
+  useEffect(()=>{
+    const pageNames:Record<string,string>={
+      "/":"Trang chủ",
+      "/vocabulary":"Kho từ vựng",
+      "/decks":"Bộ từ",
+      "/practice":"Ôn tập",
+      "/setup":"Cài đặt",
+      "/account/login":"Đăng nhập",
+      "/account/register":"Đăng ký",
+      "/account/security":"Bảo mật tài khoản",
+      "/admin/login":"Đăng nhập quản trị",
+      "/admin":"Quản trị nội dung",
+      "/admin/settings":"Cài đặt hệ thống",
+      "/admin/ai-studio":"AI Vocabulary Studio",
+    };
+    const name=location.pathname.startsWith("/decks/")
+      ?"Chi tiết bộ từ":pageNames[location.pathname]??"Nihon Vocabulary";
+    document.title=name+" · Nihon Vocabulary";
+    if(previousPath.current!==location.pathname){
+      previousPath.current=location.pathname;
+      document.getElementById("main-content")?.focus();
+    }
+  },[location.pathname]);
   async function logout(){
     try{
       await write("/api/v1/auth/logout",{});
@@ -78,6 +103,7 @@ export default function App(){
     }
   }
   return <Context.Provider value={{actor,signUpEnabled,refresh}}>
+    <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     <header className="site-header">
       <Link className="brand" to="/"><span className="brand-mark">日</span><span>Nihon <span className="brand-sub">Vocabulary</span></span></Link>
       <nav className="site-nav" aria-label="Điều hướng">
@@ -91,7 +117,7 @@ export default function App(){
           <Link className="button outline" to="/account/login">Đăng nhập</Link>}
       </div>
     </header>
-    <main className="site-main">
+    <main className="site-main" id="main-content" tabIndex={-1}>
       {logoutError&&!connectionError?<div className="notice form-error" role="alert">
         Chưa thể xác nhận đăng xuất. Vui lòng thử lại.
       </div>:null}

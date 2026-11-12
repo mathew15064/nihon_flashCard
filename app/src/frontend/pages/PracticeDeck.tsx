@@ -121,7 +121,7 @@ export default function PracticeDeck({initialDeckId}: {initialDeckId: string | n
         <div className="practice-progress">Còn {progress?.dueNow??due.length} thẻ đến hạn · {card.jlptLevel??"Tiếng Nhật"}</div>
         <button className="practice-card" disabled={busy} type="button"
           onClick={()=>setRevealed(v=>!v)}
-          aria-label={revealed?"Ẩn đáp án":"Lật thẻ để xem đáp án"}>
+          aria-pressed={revealed}>
           <span className="eyebrow">{revealed?"Bạn đã nhớ đúng chưa?":"Hãy nhớ nghĩa và cách đọc"}</span>
           <strong>{card.word}</strong>
           {revealed ? <>

@@ -32,6 +32,11 @@ It verifies the entire UI journey:
   submit correct SRS review.
 - Learner registration/login, claim guest progress, change password.
 - Mobile layouts at 320, 390 and 768 pixels (no horizontal overflow).
+- **axe-core automated WCAG A/AA rule scans** across the install, Admin,
+  AI Studio, vocabulary/decks, flashcards, registration, security and mobile
+  views; violations fail the E2E run.
+- Keyboard-only skip-to-main navigation, route focus/title management
+  and Space-to-flip flashcard semantics.
 - API outage feedback and successful retry, and absence of browser JS errors.
 
 To run locally, create a **throwaway MySQL server** and then:
