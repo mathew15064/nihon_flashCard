@@ -145,7 +145,7 @@ test("MCP HTTP: 5 read/9 write tools, no anonymous Admin draft disclosure",{
       adminPassword:"qa-mcp-security-password-2026",
       repeatPassword:"qa-mcp-security-password-2026",enableSignup:false,
     });
-    assert.equal(setup.status,200,JSON.stringify(setup.json));
+    assert.equal(setup.status,201,JSON.stringify(setup.json));
     const login=await api("/api/v1/auth/admin/login","POST",{
       password:"qa-mcp-security-password-2026",
     });
