@@ -7,6 +7,7 @@ type Diagnostics={
   mcp:{
     endpoint:string|null;readConfigured:boolean;writeConfigured:boolean;
     readTools:string[];writeTools:string[];bearerRequired:boolean;
+    noAuthWriteEnabled:boolean;
     connectionVerified:false;
   };
   rest:{configured:boolean};
@@ -72,9 +73,14 @@ export default function IntegrationDiagnostics({refreshVersion=0}:{
       <p><strong>OpenAI:</strong> {status.ai.configured?"Đã cấu hình API key":"Chưa cấu hình"} · Model: <code>{status.ai.model}</code></p>
       <p><strong>MCP:</strong> {status.mcp.endpoint?
         <code>{status.mcp.endpoint}</code>:"Chưa cấu hình website Origin"}</p>
-      <p className="muted">Read: {status.mcp.readConfigured?"Có token":"Chưa cấp token"} ·
-        Draft writer: {status.mcp.writeConfigured?"Có token":"Chưa cấp token"} ·
-        Admin REST: {status.rest.configured?"Có token":"Chưa cấp token"}</p>
+      {status.mcp.noAuthWriteEnabled?
+        <p className="notice form-error" role="status">MCP đang ở chế độ công khai No Auth:
+          mọi client truy cập endpoint đều có toàn bộ MCP tools, kể cả tạo từ nháp.
+          Không cần Bearer token. Đây là cấu hình riêng của môi trường test.</p>:
+        <p className="muted">MCP yêu cầu Bearer token:
+          Read: {status.mcp.readConfigured?"Có token":"Chưa cấp token"} ·
+          Draft writer: {status.mcp.writeConfigured?"Có token":"Chưa cấp token"}</p>}
+      <p className="muted">Admin REST: {status.rest.configured?"Có token":"Chưa cấp token"} (không thay đổi)</p>
       <p className="muted">Công cụ MCP Read: <code>{status.mcp.readTools.join(", ")}</code></p>
       <p className="muted">Công cụ MCP Write: <code>{status.mcp.writeTools.join(", ")}</code></p>
       <p className="muted">Trạng thái MCP ở đây chỉ xác nhận cấu hình nội bộ;

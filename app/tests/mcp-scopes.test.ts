@@ -2,7 +2,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mcpHostAllowed } from "../src/lib/mcp-host";
 import { verifyBearer } from "../src/lib/bearer";
+import { mcpNoAuthEnabled } from "../src/lib/mcp-access";
 
+test("MCP no-auth requires explicit opt-in and is off by default",()=>{
+  const previous=process.env.NIHON_MCP_NO_AUTH;
+  try{
+    for(const value of [undefined,"","false","TRUE","1"]){
+      if(value===undefined)delete process.env.NIHON_MCP_NO_AUTH;
+      else process.env.NIHON_MCP_NO_AUTH=value;
+      assert.equal(mcpNoAuthEnabled(),false);
+    }
+    process.env.NIHON_MCP_NO_AUTH="true";
+    assert.equal(mcpNoAuthEnabled(),true);
+  }finally{
+    if(previous===undefined)delete process.env.NIHON_MCP_NO_AUTH;
+    else process.env.NIHON_MCP_NO_AUTH=previous;
+  }
+});
 test("MCP Host guard uses explicit Origin and rejects spoofed authority",()=>{
   assert.equal(mcpHostAllowed("localhost:3000",undefined,false),true);
   assert.equal(mcpHostAllowed("127.0.0.1:3000",undefined,false),true);

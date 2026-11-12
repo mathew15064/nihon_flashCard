@@ -22,7 +22,8 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
   const admin=await mysql.createConnection(server);
   const dir=mkdtempSync(join(tmpdir(),"nihon-full-mysql-it-"));
   const keys=["NIHON_DATA_DIR","DB_PATH","AUTH_SECRET","NODE_ENV","PUBLIC_ORIGIN",
-    "NIHON_ADMIN_PASSWORD_HASH","NIHON_MCP_TOKEN","NIHON_MCP_READ_TOKEN"] as const;
+    "NIHON_ADMIN_PASSWORD_HASH","NIHON_MCP_TOKEN","NIHON_MCP_READ_TOKEN",
+    "NIHON_MCP_NO_AUTH"] as const;
   const old=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
   let app:Awaited<ReturnType<typeof import("../src/server/app").buildApp>>|undefined;
   try{
@@ -283,6 +284,13 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     assert.equal(mysqlHealth.status,200,JSON.stringify(mysqlHealth.data));
     assert.equal(mysqlHealth.data.data.connected,true);
 
+    // Tokenless MCP requests are rejected while public access is off.
+    const anonymousDenied=await fetch(url+"/mcp",{
+      method:"POST",headers:{"content-type":"application/json",
+        accept:"application/json, text/event-stream"},
+      body:JSON.stringify({jsonrpc:"2.0",id:41,method:"tools/list"}),
+    });
+    assert.equal(anonymousDenied.status,401);
     const token=await request("/api/v1/admin/settings/tokens/read","POST",{},cookie);
     assert.equal(token.status,200,JSON.stringify(token.data));
     const afterToken=await request("/api/v1/admin/integrations/diagnostics",
@@ -339,6 +347,57 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
       "GET",undefined,cookie);
     assert.equal(currentStatus.data.data.mcp.writeConfigured,true);
     assert.equal(currentStatus.data.data.mcp.connectionVerified,false);
+
+    // Explicit no-auth mode gives everyone all current MCP tools (writer),
+    // while Admin REST/login remain protected. Re-disable before further tests.
+    process.env.NIHON_MCP_NO_AUTH="true";
+    const noAuthDiagnostics=await request("/api/v1/admin/integrations/diagnostics",
+      "GET",undefined,cookie);
+    assert.equal(noAuthDiagnostics.data.data.mcp.noAuthWriteEnabled,true);
+    assert.equal(noAuthDiagnostics.data.data.mcp.bearerRequired,false);
+    const anonymousMcp=async(body:unknown, extraHeaders:Record<string,string>={})=>{
+      const response=await fetch(url+"/mcp",{
+        method:"POST",headers:{"content-type":"application/json",
+          accept:"application/json, text/event-stream",...extraHeaders},
+        body:JSON.stringify(body),
+      });
+      return {status:response.status,body:await response.text()};
+    };
+    const publicTools=await anonymousMcp({
+      jsonrpc:"2.0",id:42,method:"tools/list",
+    });
+    assert.equal(publicTools.status,200,publicTools.body);
+    for(const name of ["vocabulary_search","vocabulary_get","vocabulary_create_draft"])
+      assert.ok(publicTools.body.includes(name));
+    const noAuthWord="公開"+randomBytes(5).toString("hex");
+    const publicDraft=await anonymousMcp({
+      jsonrpc:"2.0",id:43,method:"tools/call",params:{
+        name:"vocabulary_create_draft",arguments:{
+          word:noAuthWord,reading:"こうかい",meaningVi:"công khai thử nghiệm",
+        },
+      },
+    });
+    assert.equal(publicDraft.status,200,publicDraft.body);
+    assert.match(publicDraft.body,/draft/);
+    const hiddenPublic=await request("/api/v1/vocabulary?search="+noAuthWord);
+    assert.equal(hiddenPublic.data.data.total,0,
+      "public MCP writer must only create unpublished drafts");
+    const exposedAdmin=await request("/api/v1/admin/vocabulary");
+    assert.equal(exposedAdmin.status,401,"MCP no-auth must not bypass Admin REST");
+    const crossOrigin=await anonymousMcp({
+      jsonrpc:"2.0",id:45,method:"tools/list",
+    },{origin:"https://attacker.invalid"});
+    assert.equal(crossOrigin.status,403,"MCP Origin guard must remain active");
+    delete process.env.NIHON_MCP_NO_AUTH;
+    const stillDenied=await anonymousMcp({
+      jsonrpc:"2.0",id:46,method:"tools/list",
+    });
+    assert.equal(stillDenied.status,401,
+      "disabling no-auth must immediately restore Bearer-only mode");
+    const afterDisabled=await request("/api/v1/admin/integrations/diagnostics",
+      "GET",undefined,cookie);
+    assert.equal(afterDisabled.data.data.mcp.noAuthWriteEnabled,false);
+    assert.equal(afterDisabled.data.data.mcp.bearerRequired,true);
 
     // MySQL backups must be private, encrypted, complete and Admin-only.
     const blocked=await request("/api/v1/admin/backups/mysql","POST",{});

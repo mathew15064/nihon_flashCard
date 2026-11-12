@@ -85,3 +85,14 @@ suite continues to pass.
 **No production deployment, merge or external provider billing is part
 of this change.** Review `docs/RELEASE_READINESS.md` before any later
 production discussion.
+
+## Public test: token-free MCP Write mode
+
+An operator can explicitly set `NIHON_MCP_NO_AUTH=true` **only in the
+app container's environment** to let anonymous Streamable HTTP clients
+use the complete MCP toolset. The diagnostics endpoint then reports
+`mcp.noAuthWriteEnabled: true` and `mcp.bearerRequired: false`; the Admin
+UI displays a warning. When the variable is removed, token requirements
+resume without changing MySQL settings. The Admin REST API, browser login
+and MySQL remain protected. This setting is intentionally independent of
+token generation/revocation and is **unsafe for a final public release**.

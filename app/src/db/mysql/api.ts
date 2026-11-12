@@ -15,6 +15,7 @@ import { registerInputSchema } from "@/modules/accounts/schema";
 import { verifyAdminPassword } from "@/lib/admin-password";
 import { FixedWindowLimiter } from "@/server/rate-limit";
 import { verifyOpenAIModelAccess } from "@/lib/integration-diagnostics";
+import { mcpNoAuthEnabled } from "@/lib/mcp-access";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 const uuid=z.string().uuid();
@@ -392,7 +393,8 @@ export function mysqlApi(db:Db){
             writeConfigured:Boolean(writeToken),
             readTools:["vocabulary_search","vocabulary_get"],
             writeTools:["vocabulary_search","vocabulary_get","vocabulary_create_draft"],
-            bearerRequired:true,
+            bearerRequired:!mcpNoAuthEnabled(),
+            noAuthWriteEnabled:mcpNoAuthEnabled(),
             connectionVerified:false,
           },
           rest:{configured:Boolean(restToken)},

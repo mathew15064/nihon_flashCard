@@ -8,6 +8,7 @@ import { mysqlVocabulary } from "./vocabulary";
 import { vocabularyInput } from "@/modules/vocabulary/schema";
 import { mcpHostAllowed } from "@/lib/mcp-host";
 import { FixedWindowLimiter } from "@/server/rate-limit";
+import { mcpNoAuthEnabled } from "@/lib/mcp-access";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 export function mysqlMcp(db:Db){
@@ -48,7 +49,10 @@ export function mysqlMcp(db:Db){
   };
   const readers=create(false),writers=create(true);
   const handler=async(req:FastifyRequest,reply:FastifyReply)=>{
-    const scope=await auth.scope(req);
+    // Explicit, isolated no-auth mode: every client gets the full MCP
+    // writer toolset. Default behavior remains scoped Bearer authorization.
+    // Host, Origin and rate-limit guards still apply to public requests.
+    const scope=mcpNoAuthEnabled()?"write":await auth.scope(req);
     if(!scope){reply.code(401).send({error:"MCP_AUTH_REQUIRED"});return;}
     if(req.method!=="POST"){
       reply.code(405).send({error:"MCP_METHOD_NOT_ALLOWED"});return;

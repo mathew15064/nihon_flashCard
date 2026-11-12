@@ -128,3 +128,18 @@ A separate owner-authorized **test-only** HTTPS deployment exists at
 No legacy v1 account import, identity inference, unattended offsite backup
 scheduling, public MCP OAuth, or production database cutover is included.
 The existing v1 website/port is preserved. This branch remains a **Draft PR**.
+
+## MCP No Auth (explicit testing opt-in)
+
+To connect to `/mcp` using Streamable HTTP **without any token**, set
+`NIHON_MCP_NO_AUTH=true` in the **app container environment** and restart
+only that container. It is disabled by default. In this mode all three
+existing MCP tools (search/get/create vocabulary draft) are available
+without authentication, including writes. Admin REST, account login and
+MySQL database access do not become public. The endpoint handles MCP
+JSON-RPC via POST; browsing to the URL with GET is not a connection test.
+
+**Never enable publicly on a production release:** anonymous visitors can
+add unpublished drafts and exhaust resources. See
+`docs/MCP_SECURITY.md` for guarded rollback and the rate-limit/Origin
+boundaries.
