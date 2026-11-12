@@ -43,15 +43,21 @@ the second flag. Do not silently add that flag.
 
 No Auth can create drafts and grow MySQL. Anonymous deduplication replies
 do not reveal existing private vocabulary IDs/status or full topic/lesson
-records. It cannot list/get unpublished entries. Anonymous batch writes can
-only target lessons created by anonymous MCP in the **same app process**.
-Trying to append to an Admin/private existing lesson (by guessed ID or
-colliding lesson title) returns `MCP_LESSON_UNAVAILABLE`. The temporary grant
-registry is bounded and lost on app restart: old anonymous lessons are no
-longer writable anonymously after restart; use an authorized writer token or
-create a new lesson. Because there is no identity, *all anonymous clients*
-may still target one another's anonymously created lessons if they know IDs
-or names. No Auth offers **no private per-user ownership**.
+records. It cannot list/get unpublished entries. Anonymous batch writes are restricted to lessons created by anonymous
+MCP in the **same app process**, with one compatibility exception: a caller
+who already knows the ID of an **empty** private lesson can start an anonymous
+import into it. Once granted, the lesson is writable anonymously for this
+process's lifetime. Lessons containing existing entries are not claimable,
+even with a known ID; name collisions with Admin lessons are denied by
+`lessons_create`. The temporary grant registry is bounded and lost on
+app restart; pre-existing anonymous lessons are no longer writable through
+No Auth after restart. Use a scoped writer token for persistent ownership.
+**Residual risk:** a leaked ID of an empty Admin lesson can still permit an
+anonymous claim/write. This exception preserves the pre-existing MCP batch
+workflow and its integration tests, but is *not* safe multi-tenant ownership.
+Distinct anonymous clients are indistinguishable and may modify one another's
+anonymous lessons if they know their IDs or names. Disable No Auth for any
+environment requiring private lesson integrity.
 
 ## Request validation and rate budgets
 
