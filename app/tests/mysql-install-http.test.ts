@@ -89,6 +89,28 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     assert.equal(login.status,200,JSON.stringify(login.data));
     assert.ok(login.cookie);
     const cookie=login.cookie!;
+    const anonymousDiagnostics=await request("/api/v1/admin/integrations/diagnostics");
+    assert.equal(anonymousDiagnostics.status,401);
+    const anonymousVerify=await request("/api/v1/admin/ai/verify","POST",{});
+    assert.equal(anonymousVerify.status,401);
+    const diagnostics=await request(
+      "/api/v1/admin/integrations/diagnostics","GET",undefined,cookie);
+    assert.equal(diagnostics.status,200,JSON.stringify(diagnostics.data));
+    assert.equal(diagnostics.data.data.database.engine,"mysql");
+    assert.equal(diagnostics.data.data.database.connected,true);
+    assert.equal(diagnostics.data.data.ai.configured,false);
+    assert.equal(diagnostics.data.data.mcp.endpoint,url+"/mcp");
+    assert.ok(!JSON.stringify(diagnostics.data).includes(server.password));
+    const notConfigured=await request("/api/v1/admin/ai/verify","POST",{},cookie);
+    assert.equal(notConfigured.status,200);
+    assert.equal(notConfigured.data.data.code,"AI_NOT_CONFIGURED");
+    const csrfDenied=await fetch(url+"/api/v1/admin/ai/verify",{
+      method:"POST",
+      headers:{origin:"https://invalid.example",cookie,
+        "content-type":"application/json"},
+      body:"{}",
+    });
+    assert.equal(csrfDenied.status,403);
     const draft=await request("/api/v1/admin/vocabulary","POST",{
       word:"桜",reading:"さくら",meaningVi:"hoa anh đào",
     },cookie);
@@ -142,6 +164,102 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
     const mysqlSettings=await request("/api/v1/admin/settings","GET",undefined,cookie);
     assert.equal(mysqlSettings.status,200,JSON.stringify(mysqlSettings.data));
     assert.equal(mysqlSettings.data.data.database,"mysql");
+    // Local provider stub prevents any real external call or key exposure
+    // in MySQL HTTP integration tests.
+    const savedProvider=await request("/api/v1/admin/settings","PATCH",{
+      origin:url,enableSignup:true,aiModel:"gpt-4.1-mini",aiDailyLimit:10,
+      openaiApiKey:"sk-qa-model-check-no-real-provider",
+    },cookie);
+    assert.equal(savedProvider.status,200,JSON.stringify(savedProvider.data));
+    const fetchBefore=globalThis.fetch;
+    const attempts:{url:string;method?:string;auth?:string}[]=[];
+    globalThis.fetch=(async(input:RequestInfo|URL,init?:RequestInit)=>{
+      if(String(input).startsWith("https://api.openai.com/v1/models/")){
+        const headers=init?.headers as Record<string,string>|undefined;
+        attempts.push({url:String(input),method:init?.method,auth:headers?.authorization});
+        return new Response(JSON.stringify({
+          object:"model",id:"gpt-4.1-mini",
+        }),{status:200,headers:{"content-type":"application/json"}});
+      }
+      return fetchBefore(input,init);
+    }) as typeof fetch;
+    try{
+      const verified=await request("/api/v1/admin/ai/verify","POST",{},cookie);
+      assert.equal(verified.status,200,JSON.stringify(verified.data));
+      assert.equal(verified.data.data.code,"OK");
+      assert.equal(verified.data.data.verified,true);
+      assert.equal(attempts.length,1);
+      assert.equal(attempts[0]?.url,"https://api.openai.com/v1/models/gpt-4.1-mini");
+      assert.equal(attempts[0]?.method,"GET");
+      assert.ok(!JSON.stringify(verified.data).includes("sk-qa-model-check"));
+      // 5 attempts / 15m, including the initial not-configured check.
+      for(let i=0;i<3;i++){
+        const extra=await request("/api/v1/admin/ai/verify","POST",{},cookie);
+        assert.equal(extra.status,200);
+      }
+      const denied=await request("/api/v1/admin/ai/verify","POST",{},cookie);
+      assert.equal(denied.status,429);
+      assert.equal(denied.data.error.code,"RATE_LIMITED");
+      assert.equal(attempts.length,4,"rate-limited requests must never contact provider");
+    }finally{globalThis.fetch=fetchBefore;}
+    const afterProvider=await request("/api/v1/admin/integrations/diagnostics",
+      "GET",undefined,cookie);
+    assert.equal(afterProvider.data.data.ai.configured,true);
+    assert.ok(!JSON.stringify(afterProvider.data).includes("sk-qa-model-check"));
+    // Full AI HTTP workflow against a fake Responses API: no external billing,
+    // but the real Fastify -> provider -> candidate -> publish path is covered.
+    const aiWord="提案"+randomBytes(4).toString("hex");
+    const aiFetchBefore=globalThis.fetch;
+    let generationRequests=0;
+    globalThis.fetch=(async(input:RequestInfo|URL,init?:RequestInit)=>{
+      if(String(input)==="https://api.openai.com/v1/responses"){
+        generationRequests++;
+        assert.equal(init?.method,"POST");
+        const body=JSON.parse(String(init?.body)) as Record<string,unknown>;
+        assert.equal(body.model,"gpt-4.1-mini");
+        assert.equal(body.store,false);
+        assert.equal((init?.headers as Record<string,string>)?.authorization,
+          "Bearer sk-qa-model-check-no-real-provider");
+        return Response.json({
+          status:"completed",
+          output:[{type:"message",content:[{
+            type:"output_text",
+            text:JSON.stringify({items:[{
+              word:aiWord,reading:"ていあん",romanization:"teian",
+              partOfSpeech:"noun",jlptLevel:"N5",
+              meaningVi:"đề nghị",meaningEn:"proposal",
+              exampleJa:"提案します。",exampleVi:"Tôi đề nghị.",
+            }]}),
+          }]}],
+          usage:{input_tokens:21,output_tokens:38},
+        });
+      }
+      return aiFetchBefore(input,init);
+    }) as typeof fetch;
+    try{
+      const generation=await request("/api/v1/admin/ai/jobs","POST",{
+        topic:"Học từ vựng tích hợp",jlptLevel:"N5",count:1,notes:"",
+      },cookie);
+      assert.equal(generation.status,201,JSON.stringify(generation.data));
+      const job=await request("/api/v1/admin/ai/jobs/"+generation.data.data.id,
+        "GET",undefined,cookie);
+      assert.equal(job.status,200,JSON.stringify(job.data));
+      assert.equal(job.data.data.status,"ready_for_review");
+      assert.equal(job.data.data.candidates.length,1);
+      assert.equal(job.data.data.candidates[0].data.word,aiWord);
+      const candidateId=job.data.data.candidates[0].id as string;
+      const accepted=await request(
+        "/api/v1/admin/ai/candidates/"+candidateId+"/accept","POST",{},cookie);
+      assert.equal(accepted.status,200,JSON.stringify(accepted.data));
+      const aiEntryId=accepted.data.data.entryId as string;
+      const publishAI=await request(
+        "/api/v1/admin/vocabulary/"+aiEntryId+"/publish","POST",{},cookie);
+      assert.equal(publishAI.status,200,JSON.stringify(publishAI.data));
+      const publicResult=await request(
+        "/api/v1/vocabulary?search="+encodeURIComponent(aiWord));
+      assert.equal(publicResult.data.data.items[0]?.word,aiWord);
+      assert.equal(generationRequests,1,"no unexpected duplicate AI requests");
+    }finally{globalThis.fetch=aiFetchBefore;}
     const mysqlMeta=await request("/api/v1/admin/settings/mysql/connection","GET",
       undefined,cookie);
     assert.equal(mysqlMeta.status,200,JSON.stringify(mysqlMeta.data));
@@ -165,6 +283,13 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
 
     const token=await request("/api/v1/admin/settings/tokens/read","POST",{},cookie);
     assert.equal(token.status,200,JSON.stringify(token.data));
+    const afterToken=await request("/api/v1/admin/integrations/diagnostics",
+      "GET",undefined,cookie);
+    assert.equal(afterToken.data.data.mcp.readConfigured,true);
+    assert.equal(afterToken.data.data.mcp.writeConfigured,false);
+    assert.deepEqual(afterToken.data.data.mcp.readTools,
+      ["vocabulary_search","vocabulary_get"]);
+    assert.ok(!JSON.stringify(afterToken.data).includes(token.data.data.token));
     const mcp=await fetch(url+"/mcp",{
       method:"POST",headers:{
         authorization:"Bearer "+token.data.data.token,
@@ -173,7 +298,45 @@ test("MySQL wizard activates full HTTP engine: admin, vocabulary, deck, learner 
       },
       body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list"}),
     });
-    assert.equal(mcp.status,200,await mcp.text());
+    const readTools=await mcp.text();
+    assert.equal(mcp.status,200,readTools);
+    assert.match(readTools,/vocabulary_search/);
+    assert.match(readTools,/vocabulary_get/);
+    assert.ok(!readTools.includes("vocabulary_create_draft"),
+      "read MCP token must never expose draft-writing tool");
+    const writer=await request("/api/v1/admin/settings/tokens/write","POST",{},cookie);
+    assert.equal(writer.status,200);
+    async function mcpCall(accessToken:string,body:unknown){
+      const result=await fetch(url+"/mcp",{
+        method:"POST",headers:{
+          authorization:"Bearer "+accessToken,
+          "content-type":"application/json",
+          accept:"application/json, text/event-stream",
+        },
+        body:JSON.stringify(body),
+      });
+      return {status:result.status,body:await result.text()};
+    }
+    const writeTools=await mcpCall(writer.data.data.token,{
+      jsonrpc:"2.0",id:2,method:"tools/list",
+    });
+    assert.equal(writeTools.status,200,writeTools.body);
+    assert.match(writeTools.body,/vocabulary_create_draft/);
+    const mcpDraft=await mcpCall(writer.data.data.token,{
+      jsonrpc:"2.0",id:3,method:"tools/call",params:{
+        name:"vocabulary_create_draft",arguments:{
+          word:"学習"+randomBytes(4).toString("hex"),
+          reading:"がくしゅう",meaningVi:"học tập",
+        },
+      },
+    });
+    assert.equal(mcpDraft.status,200,mcpDraft.body);
+    assert.match(mcpDraft.body,/created/);
+    assert.match(mcpDraft.body,/draft/);
+    const currentStatus=await request("/api/v1/admin/integrations/diagnostics",
+      "GET",undefined,cookie);
+    assert.equal(currentStatus.data.data.mcp.writeConfigured,true);
+    assert.equal(currentStatus.data.data.mcp.connectionVerified,false);
 
     // MySQL backups must be private, encrypted, complete and Admin-only.
     const blocked=await request("/api/v1/admin/backups/mysql","POST",{});

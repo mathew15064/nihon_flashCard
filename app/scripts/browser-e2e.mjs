@@ -174,10 +174,20 @@ try{
 
   await page.getByRole("link",{name:"Settings",exact:true}).click();
   await page.getByRole("heading",{name:"Cài đặt hệ thống"}).waitFor();
+  const integrations=page.getByRole("region",{name:"Trạng thái tích hợp"});
+  await integrations.getByRole("button",{name:"Làm mới trạng thái"}).waitFor();
+  assert.equal(await integrations.getByRole("button",{
+    name:"Kiểm tra API key & model OpenAI",
+  }).isDisabled(),true,"cannot verify OpenAI without saved credentials");
   await auditAccessibility(page,"admin-settings");
   await page.getByLabel(/OpenAI API key/).fill("sk-e2e-only-this-is-not-a-real-provider-key");
   await page.getByRole("button",{name:"Lưu cấu hình"}).click();
   await page.getByText("Đã lưu cấu hình trên server.").waitFor();
+  await integrations.getByRole("button",{name:"Kiểm tra API key & model OpenAI"})
+    .waitFor({state:"visible"});
+  assert.equal(await integrations.getByRole("button",{
+    name:"Kiểm tra API key & model OpenAI",
+  }).isEnabled(),true,"saved provider key should enable safe metadata check");
   await page.getByRole("link",{name:"AI Studio"}).click();
   await page.getByRole("heading",{name:"AI Vocabulary Studio"}).waitFor();
   await auditAccessibility(page,"ai-studio");
@@ -195,6 +205,9 @@ try{
     "MCP token must only be displayed on initial issue");
   const status=await page.locator(".review-row").filter({hasText:"MCP Read"}).innerText();
   assert.match(status,/Đã cấp token/);
+  await integrations.getByText(/Read: Có token/).waitFor();
+  await integrations.getByRole("button",{name:"Làm mới trạng thái"}).click();
+  await integrations.getByText(/MySQL: Đã kết nối/).waitFor();
   console.log("BROWSER_ADMIN_SETTINGS_AI_MCP_TOKEN_PASS");
 
   await page.getByRole("button",{name:"Đăng xuất"}).click();

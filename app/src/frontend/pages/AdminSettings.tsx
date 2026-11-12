@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api,write } from "../api";
 import MySQLConnection from "./MySQLConnection";
 import MySQLBackups from "./MySQLBackups";
+import IntegrationDiagnostics from "./IntegrationDiagnostics";
 
 type Settings={
   database:string;mysqlAvailable:boolean;origin:string;enableSignup:boolean;
@@ -19,6 +20,7 @@ export default function AdminSettings(){
   const [aiDailyLimit,setAiDailyLimit]=useState(10);
   const [openaiApiKey,setOpenaiApiKey]=useState("");
   const [issued,setIssued]=useState<{scope:Scope;token:string}|null>(null);
+  const [diagnosticsVersion,setDiagnosticsVersion]=useState(0);
   const [message,setMessage]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false);
   const load=useCallback(async()=>{
     const data=await api<Settings>("/api/v1/admin/settings");
@@ -33,7 +35,9 @@ export default function AdminSettings(){
         origin,enableSignup,aiModel,aiDailyLimit,
         ...(openaiApiKey?{openaiApiKey}:{}),
       },"PATCH");
-      setOpenaiApiKey("");await load();setMessage("Đã lưu cấu hình trên server.");
+      setOpenaiApiKey("");await load();
+      setDiagnosticsVersion(version=>version+1);
+      setMessage("Đã lưu cấu hình trên server.");
     }catch(e){setError(e instanceof Error?e.message:"Không lưu được cấu hình.");}
     finally{setBusy(false);}
   }
@@ -43,6 +47,7 @@ export default function AdminSettings(){
     try{
       const result=await write<{token:string}>("/api/v1/admin/settings/tokens/"+scope,{});
       setIssued({scope,token:result.token});await load();
+      setDiagnosticsVersion(version=>version+1);
     }catch(e){setError(e instanceof Error?e.message:"Không tạo được token");}
     finally{setBusy(false);}
   }
@@ -51,7 +56,8 @@ export default function AdminSettings(){
     setBusy(true);setError("");setIssued(null);
     try{
       await api("/api/v1/admin/settings/tokens/"+scope,{method:"DELETE"});
-      await load();setMessage("Đã thu hồi token "+scope+".");
+      await load();setDiagnosticsVersion(version=>version+1);
+      setMessage("Đã thu hồi token "+scope+".");
     }catch(e){setError(e instanceof Error?e.message:"Không thu hồi được token.");}
     finally{setBusy(false);}
   }
@@ -59,7 +65,8 @@ export default function AdminSettings(){
     if(!window.confirm("Xóa API key đã lưu trong Nihon?"))return;
     setBusy(true);setError("");
     try{await api("/api/v1/admin/settings/openai",{method:"DELETE"});
-      await load();setMessage("Đã xóa API key lưu trong Nihon.");}
+      await load();setDiagnosticsVersion(version=>version+1);
+      setMessage("Đã xóa API key lưu trong Nihon.");}
     catch(e){setError(e instanceof Error?e.message:"Không thể xóa.");}
     finally{setBusy(false);}
   }
@@ -76,6 +83,7 @@ export default function AdminSettings(){
         <p className="muted">Nihon chỉ sử dụng MySQL. Không chuyển database đang hoạt động bằng cách nhập tên database khác; dùng backup, kiểm tra và cutover riêng nếu cần.</p>
       </div>
       {settings.database==="mysql"?<><MySQLConnection/><MySQLBackups/></>:null}
+      <IntegrationDiagnostics refreshVersion={diagnosticsVersion}/>
       <div className="admin-panel">
         <h2>Website & AI Provider</h2>
         <form className="form-vertical" onSubmit={save}>

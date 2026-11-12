@@ -11,12 +11,19 @@ Run from app/:
 
 The unit tests cover schemas, password hashing, scheduling, provider
 request validation, security controls, encrypted connection files, no
-SQLite creation, and a fail-closed guard for older database volumes.
+SQLite creation, a fail-closed guard for older database volumes and
+OpenAI metadata verification (fixed host, no redirects/prompt, error mapping
+and no leaked credentials).
 
 Real MySQL 8.4 integration tests execute only when NIHON_MYSQL_TEST_URL
 points at a disposable MySQL instance. Each HTTP test creates distinct
 fresh databases, exercises /setup, Admin, vocabulary, learner, decks,
 SRS, AI/MCP and encrypted backup/staging restore, then discards them.
+The HTTP suite additionally verifies protected Admin integrations diagnostics,
+saved-model verification with injected fake OpenAI responses, rate limits,
+real MCP Read/Write tool discovery, writer-only tool calls, and full mocked
+Responses generation → AI candidate approval → published vocabulary.
+There is **no real OpenAI request or billing** in automated tests.
 
 ## Browser E2E: complete product journey
 

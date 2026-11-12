@@ -26,6 +26,8 @@ After logging in, **Admin → Settings** controls:
 - MySQL connection health and safe credential rotation (same database and
   Admin identity only; no accidental database switch)
 - OpenAI API key, model and request quotas (encrypted in MySQL)
+- Admin diagnostics: test saved OpenAI key/model access without a generation call,
+  inspect MCP tool scopes, token status and MySQL connection state
 - Learner signup
 - MCP read-only and draft-writer tokens plus REST Admin token
 - MySQL backup/verify/download and staging-only restore drill

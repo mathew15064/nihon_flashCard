@@ -14,6 +14,7 @@ import { dueQuerySchema,reviewInputSchema } from "@/modules/learning/schema";
 import { registerInputSchema } from "@/modules/accounts/schema";
 import { verifyAdminPassword } from "@/lib/admin-password";
 import { FixedWindowLimiter } from "@/server/rate-limit";
+import { verifyOpenAIModelAccess } from "@/lib/integration-diagnostics";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 const uuid=z.string().uuid();
@@ -56,6 +57,7 @@ export function mysqlApi(db:Db){
     learning=mysqlLearning(db),ai=mysqlAI(db);
   const settings=auth.settings;
   const backupLimiter=new FixedWindowLimiter(256);
+  const providerLimiter=new FixedWindowLimiter(256);
   return async function handle(request:FastifyRequest,reply:FastifyReply):Promise<void>{
     const method=request.method;
     const pathname=new URL(request.url,"http://localhost").pathname;
@@ -185,6 +187,24 @@ export function mysqlApi(db:Db){
       }
       if(pathname.startsWith("/api/v1/admin/ai/")){
         if(!await protect())return;
+        if(method==="POST"&&pathname==="/api/v1/admin/ai/verify"){
+          // Never send an untrusted destination or user-supplied URL to the
+          // provider. Only verify the saved key and saved model. Rate limiting
+          // happens AFTER Admin authorization.
+          const limit=providerLimiter.consume(
+            request.ip+"|openai-verify",5,15*60_000,
+          );
+          if(!limit.allowed){
+            reply.header("Retry-After",String(limit.retryAfterSeconds));
+            reply.code(429).send({success:false,error:{code:"RATE_LIMITED"}});
+            return;
+          }
+          const result=await verifyOpenAIModelAccess(
+            await settings.key("openai_api_key"),await settings.model(),
+          );
+          reply.header("Cache-Control","no-store");
+          reply.send(ok(result));return;
+        }
         if(method==="GET"&&pathname==="/api/v1/admin/ai/config"){
           reply.send(ok({
             configured:Boolean(await settings.key("openai_api_key")),
@@ -350,6 +370,34 @@ export function mysqlApi(db:Db){
           reply.send(ok({connected:true,database:merged.database,reconfigured:true}));
           return;
         }
+      }
+      if(method==="GET"&&pathname==="/api/v1/admin/integrations/diagnostics"){
+        if(!await protect())return;
+        const origin=await settings.origin();
+        const [apiKey,model,readToken,writeToken,restToken]=await Promise.all([
+          settings.key("openai_api_key"),
+          settings.model(),
+          settings.key("mcp_read_token"),
+          settings.key("mcp_write_token"),
+          settings.key("admin_rest_token"),
+        ]);
+        reply.header("Cache-Control","no-store");
+        reply.send(ok({
+          database:{engine:"mysql",connected:true},
+          ai:{provider:"openai",configured:Boolean(apiKey),model,
+            verification:"not_checked"},
+          mcp:{
+            endpoint:origin?origin+"/mcp":null,
+            readConfigured:Boolean(readToken),
+            writeConfigured:Boolean(writeToken),
+            readTools:["vocabulary_search","vocabulary_get"],
+            writeTools:["vocabulary_search","vocabulary_get","vocabulary_create_draft"],
+            bearerRequired:true,
+            connectionVerified:false,
+          },
+          rest:{configured:Boolean(restToken)},
+        }));
+        return;
       }
       if(pathname==="/api/v1/admin/settings"){
         if(!await protect())return;
