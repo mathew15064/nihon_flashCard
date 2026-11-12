@@ -22,6 +22,46 @@ const TAG_SIZE=16;
 type TableSpec={name:string;columns:string[];primary:string[]};
 type Header={kind:"nihon-mysql-backup";version:1;createdAt:string;
   tables:TableSpec[];migrations:{filename:string;checksum:string}[]};
+
+/** Fail closed when a snapshot omits topic/lesson or learning state columns.
+ * A pre-topic archive must be read with its matching older application image. */
+const REQUIRED_DOMAIN_COLUMNS:Record<string,string[]>={
+  topics:["id","slug","name","description","created_at"],
+  decks:["id","name","topic_id","lesson_key","visibility","created_at"],
+  deck_items:["deck_id","entry_id","sort_order"],
+  vocabulary_entries:["id","word","reading","normalized_key","status"],
+  vocabulary_senses:["id","entry_id","language","meaning"],
+  review_cards:["id","user_id","entry_id","status","next_review_at","streak",
+    "times_reviewed","correct_count","wrong_count","last_reviewed_at"],
+  review_events:["id","card_id","result","reviewed_at","request_id"],
+  user_deck_enrollments:["user_id","deck_id","enrolled_at"],
+  schema_migrations:["filename","checksum","status","applied_at"],
+};
+function assertTopicAwareManifest(header:Header):void{
+  const names=new Set<string>();
+  for(const spec of header.tables){
+    if(names.has(spec.name)||!Array.isArray(spec.columns)||
+      !Array.isArray(spec.primary)||!spec.primary.length||
+      new Set(spec.columns).size!==spec.columns.length||
+      spec.primary.some(col=>!spec.columns.includes(col)))
+      throw new Error("MYSQL_BACKUP_DOMAIN_MANIFEST_MISMATCH");
+    quote(spec.name);
+    for(const col of spec.columns)quote(col);
+    names.add(spec.name);
+  }
+  for(const [name,columns] of Object.entries(REQUIRED_DOMAIN_COLUMNS)){
+    const spec=header.tables.find(t=>t.name===name);
+    if(!spec||columns.some(col=>!spec.columns.includes(col)))
+      throw new Error("MYSQL_BACKUP_DOMAIN_MANIFEST_MISMATCH");
+  }
+  const expected=migrationFiles();
+  if(!Array.isArray(header.migrations)||
+    header.migrations.length!==expected.length||
+    header.migrations.some((m,i)=>m.filename!==expected[i]?.filename||
+      m.checksum!==expected[i]?.checksum))
+    throw new Error("MYSQL_BACKUP_MIGRATIONS_MISMATCH");
+}
+
 type BackupInfo={id:string;bytes:number;createdAt:string};
 type Report={verified:true;tables:number;rows:number;bytes:number;sha256:string};
 
@@ -168,6 +208,7 @@ export async function createMySQLBackup(raw:MysqlConnectionSettings):
       kind:"nihon-mysql-backup",version:1,
       createdAt:new Date().toISOString(),tables,migrations:expected,
     };
+    assertTopicAwareManifest(header);
     async function* lines():AsyncGenerator<Buffer>{
       function line(data:unknown){
         const line=Buffer.from(JSON.stringify(data)+"\n");
@@ -270,6 +311,7 @@ export async function verifyMySQLBackup(id:string):Promise<Report>{
       if(h.kind!=="nihon-mysql-backup"||h.version!==1||
          !Array.isArray(h.tables)||h.tables.length<15||
          !Array.isArray(h.migrations))throw new Error("MYSQL_BACKUP_HEADER_INVALID");
+      assertTopicAwareManifest(h);
       header=h;return;
     }
     if(!header||typeof record.table!=="string"||!Array.isArray(record.values))
@@ -353,6 +395,7 @@ export async function loadMySQLBackupForStaging(id:string){
         if(first.kind!=="nihon-mysql-backup"||first.version!==1||
           !Array.isArray(first.tables)||first.tables.length<15)
           throw new Error("MYSQL_BACKUP_HEADER_INVALID");
+        assertTopicAwareManifest(first);
         header=first;
         for(const table of header.tables){
           quote(table.name);
