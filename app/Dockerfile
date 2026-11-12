@@ -17,10 +17,15 @@ WORKDIR /opt/nihon
 COPY --from=build /opt/nihon/package.json /opt/nihon/package-lock.json ./
 COPY --from=build /opt/nihon/node_modules ./node_modules
 COPY --from=build /opt/nihon/dist ./dist
+# Git checkouts under umask 077 may make migration dirs root-only.
+# The non-root runtime must be able to read these SQL migration files.
 COPY --from=build /opt/nihon/src/db/mysql/migrations ./src/db/mysql/migrations
+RUN chmod -R a+rX /opt/nihon/src/db/mysql/migrations
 RUN addgroup -g 10001 -S nihon && adduser -S -D -H -u 10001 -G nihon nihon && \
     mkdir -p /opt/nihon/data && chown -R nihon:nihon /opt/nihon/data
 USER nihon
+# Build fails if the actual runtime user cannot read native MySQL migrations.
+RUN node -e "const fs=require('node:fs');const p='src/db/mysql/migrations';const dirs=fs.readdirSync(p,{withFileTypes:true}).filter(x=>x.isDirectory());if(!dirs.length)process.exit(1);for(const dir of dirs)fs.readFileSync(p+'/'+dir.name+'/migration.sql')"
 VOLUME ["/opt/nihon/data"]
 EXPOSE 3000
 CMD ["node","dist/server/index.mjs"]
