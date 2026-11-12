@@ -13,13 +13,21 @@ export class FixedWindowLimiter {
 
   constructor(private readonly maxKeys = 2048) {}
 
-  consume(key: string, maxRequests: number, windowMs: number, now = Date.now()): Decision {
+  consume(key: string, maxRequests: number, windowMs: number, now = Date.now(), cost = 1): Decision {
+    if (!Number.isSafeInteger(cost) || cost < 1 ||
+        !Number.isSafeInteger(maxRequests) || maxRequests < 1 ||
+        !Number.isSafeInteger(windowMs) || windowMs < 1) {
+      throw new RangeError("Invalid rate limit parameters");
+    }
+    if (cost > maxRequests) {
+      return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil(windowMs / 1000)) };
+    }
     const previous = this.windows.get(key);
     if (previous && previous.expiresAt > now) {
-      if (previous.count >= maxRequests) {
+      if (previous.count + cost > maxRequests) {
         return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((previous.expiresAt - now) / 1000)) };
       }
-      previous.count++;
+      previous.count += cost;
       return { allowed: true };
     }
     if (previous) this.windows.delete(key);
@@ -38,7 +46,7 @@ export class FixedWindowLimiter {
       return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((earliestExpiry - now) / 1000)) };
     }
 
-    this.windows.set(key, { count: 1, expiresAt: now + windowMs });
+    this.windows.set(key, { count: cost, expiresAt: now + windowMs });
     return { allowed: true };
   }
 
