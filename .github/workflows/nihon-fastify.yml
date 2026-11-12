@@ -1,0 +1,56 @@
+name: Nihon Fastify / Vite checks
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "docs/**"
+      - ".github/workflows/nihon-fastify.yml"
+  push:
+    branches:
+      - feat/fastify-vite-monolith
+    paths:
+      - "app/**"
+      - "docs/**"
+      - ".github/workflows/nihon-fastify.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: qa-only-ci-mysql-password
+          MYSQL_DATABASE: nihon_qa
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pqa-only-ci-mysql-password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - name: MySQL-only integration and security tests
+        run: npm test
+        env:
+          NIHON_MYSQL_TEST_URL: mysql://root:qa-only-ci-mysql-password@127.0.0.1:3306/nihon_qa
+      - run: npm run lint
+      - run: npm run build
+      - name: Install Chromium for browser E2E
+        run: npx playwright install --with-deps chromium
+      - name: Full browser user journey on MySQL 8.4
+        run: npm run test:e2e
+        env:
+          NIHON_MYSQL_TEST_URL: mysql://root:qa-only-ci-mysql-password@127.0.0.1:3306/nihon_qa
