@@ -164,7 +164,6 @@ export async function createMySQLBackup(raw:MysqlConnectionSettings):
     ...(config.tls==="required"?{ssl:{rejectUnauthorized:true,minVersion:"TLSv1.2"}}:{}),
   });
   // Never prune automatically: fail closed instead of deleting an operator backup.
-  if(listMySQLBackups().length>=20)throw new Error("MYSQL_BACKUP_RETENTION_LIMIT");
   const id="mysql-"+new Date().toISOString().slice(0,10).replaceAll("-","")+"-"+
     randomBytes(12).toString("hex")+".nihonbak";
   const path=join(privateDir(),id);
@@ -172,6 +171,8 @@ export async function createMySQLBackup(raw:MysqlConnectionSettings):
   let locked=false;
   let started=false;
   try{
+    // Enforce retention *inside* finally coverage so a refused snapshot closes the connection.
+    if(listMySQLBackups().length>=20)throw new Error("MYSQL_BACKUP_RETENTION_LIMIT");
     const [lock]=await connection.query<RowDataPacket[]>("SELECT GET_LOCK(?,8) AS acquired",
       ["nihon:initialize:"+config.database]);
     if(lock[0]?.acquired!==1)throw new Error("MYSQL_BACKUP_MIGRATION_LOCK_BUSY");
