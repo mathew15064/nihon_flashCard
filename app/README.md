@@ -105,10 +105,16 @@ Learning:
 - POST /api/v1/me/reviews
 - POST /api/v1/me/claim-guest
 
-MCP Streamable HTTP at POST /mcp, using a separate integration token:
-tools vocabulary_search, vocabulary_get, vocabulary_create_draft.
-Write tools only create drafts; publishing is Admin-only. Do not expose
-remote public MCP without OAuth/scopes and proxy/Host/Origin hardening.
+MCP Streamable HTTP at POST /mcp uses server-side integration tokens:
+- NIHON_MCP_READ_TOKEN: read-only search/get tools.
+- NIHON_MCP_TOKEN: search/get plus vocabulary_create_draft (draft only).
+
+Tokens must be different and at least 24 characters; equal values fail closed.
+Production MCP requires PUBLIC_ORIGIN, validates Host/Origin and refuses
+cross-site browser requests. Requests are bounded per process (120/min/IP/scope)
+and responses are not cached. See docs/MCP_SECURITY.md.
+OAuth for general remote client access is **not implemented**; do not expose
+public remote MCP until independent OAuth/permission review is complete.
 
 SRS uses the six v1-compatible review intervals, a due queue, separate
 per-user cards, retry idempotency and transactional history. A learner can

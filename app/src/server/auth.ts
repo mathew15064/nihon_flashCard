@@ -147,8 +147,16 @@ export function needsAdmin(request:FastifyRequest):boolean {
   return getActor(request)?.role==="admin" ||
     verifyBearer(request.headers.authorization,process.env.NIHON_ADMIN_TOKEN);
 }
-export function needsMcp(request:FastifyRequest):boolean {
-  return verifyBearer(request.headers.authorization,process.env.NIHON_MCP_TOKEN);
+export type McpScope = "read" | "write";
+/** Separate credentials for read-only search/get versus restricted draft creation. */
+export function mcpScope(request:FastifyRequest):McpScope|null {
+  const writeToken=process.env.NIHON_MCP_TOKEN;
+  const readToken=process.env.NIHON_MCP_READ_TOKEN;
+  // Misconfigured equal credentials cannot provide meaningful least privilege.
+  if(writeToken && readToken && writeToken===readToken)return null;
+  if(verifyBearer(request.headers.authorization,writeToken))return "write";
+  if(verifyBearer(request.headers.authorization,readToken))return "read";
+  return null;
 }
 /** Simple DB-backed per-account lockout; no shared Redis needed on one instance. */
 export function adminPasswordAllowed():boolean {
