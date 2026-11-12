@@ -5,6 +5,9 @@ import type { openMySQL } from "./connector";
 import { mysqlAuth } from "./auth";
 import { mysqlVocabulary } from "./vocabulary";
 import { mysqlDecks } from "./decks";
+import { mysqlTopics } from "./topics";
+import { mysqlBatch } from "./batch";
+import { topicInput,lessonInput,batchInput,publishSelectedInput,emptyInput } from "@/modules/vocabulary/batch-schema";
 import { mysqlLearning } from "./learning";
 import { mysqlAI } from "./ai";
 import { vocabularyInput,listQuery } from "@/modules/vocabulary/schema";
@@ -55,7 +58,7 @@ function fail(reply:FastifyReply,error:unknown){
 }
 export function mysqlApi(db:Db){
   const auth=mysqlAuth(db),vocab=mysqlVocabulary(db),decks=mysqlDecks(db),
-    learning=mysqlLearning(db),ai=mysqlAI(db);
+    learning=mysqlLearning(db),ai=mysqlAI(db),topics=mysqlTopics(db),batch=mysqlBatch(db);
   const settings=auth.settings;
   const backupLimiter=new FixedWindowLimiter(256);
   const providerLimiter=new FixedWindowLimiter(256);
@@ -135,7 +138,7 @@ export function mysqlApi(db:Db){
       if(method==="GET"&&pathname==="/api/v1/vocabulary"){
         reply.send(ok(await vocab.list(listQuery.parse(request.query))));return;
       }
-      if(method==="GET"&&pathname.startsWith("/api/v1/vocabulary/")){
+      if(method==="GET"&&/^\/api\/v1\/vocabulary\/[^/]+$/.test(pathname)){
         const item=await vocab.get(parameter());
         if(!item){reply.code(404).send({success:false,error:{code:"NOT_FOUND"}});return;}
         reply.send(ok(item));return;
@@ -150,16 +153,70 @@ export function mysqlApi(db:Db){
           reply.code(result.created?201:200).send(ok(result.item,{duplicate:!result.created}));return;
         }
       }
-      if(method==="POST"&&pathname.endsWith("/publish")&&
-        pathname.startsWith("/api/v1/admin/vocabulary/")){
+      if(method==="POST"&&/^\/api\/v1\/admin\/vocabulary\/[^/]+\/publish$/.test(pathname)){
         if(!await protect())return;
         reply.send(ok(await vocab.publish(parameter())));return;
+      }
+
+      if(method==="GET"&&pathname==="/api/v1/topics"){
+        reply.send(ok({items:await topics.list()}));return;
+      }
+      const topicLessonsRoute=/^\/api\/v1\/topics\/([^/]+)\/lessons$/.exec(pathname);
+      if(method==="GET"&&topicLessonsRoute){
+        const id=uuid.parse(topicLessonsRoute[1]);
+        // Filter the public list: private lessons and draft entries stay private.
+        const topic=await topics.get(id);
+        const items=(await decks.list()).filter(deck=>deck.topicId===id);
+        if(!topic||!items.length){
+          reply.send(ok({items:[]}));return;
+        }
+        reply.send(ok({items}));return;
+      }
+      if(pathname==="/api/v1/admin/topics"){
+        if(!await protect())return;
+        if(method==="GET"){reply.send(ok({items:await topics.list(true)}));return;}
+        if(method==="POST"){
+          const result=await topics.getOrCreate(topicInput.parse(request.body));
+          reply.code(result.created?201:200).send(ok(result.topic));return;
+        }
+      }
+      if(pathname==="/api/v1/admin/lessons"){
+        if(!await protect())return;
+        if(method==="GET"){reply.send(ok({items:await decks.list(true)}));return;}
+        if(method==="POST"){
+          reply.code(201).send(ok(await decks.create(lessonInput.parse(request.body))));return;
+        }
+      }
+      const lessonRoute=/^\/api\/v1\/admin\/lessons\/([^/]+)(?:\/(batch|publish-selected|publish-all|publish))?$/.exec(pathname);
+      if(lessonRoute){
+        if(!await protect())return;
+        const id=uuid.parse(lessonRoute[1]),action=lessonRoute[2];
+        if(method==="GET"&&!action){
+          const data=await decks.get(id,true);
+          if(!data){reply.code(404).send({success:false,error:{code:"LESSON_NOT_FOUND"}});return;}
+          reply.send(ok(data));return;
+        }
+        if(method==="POST"&&action==="batch"){
+          const {items}=batchInput.parse(request.body);
+          reply.send(ok(await batch.addToLesson(id,items)));return;
+        }
+        if(method==="POST"&&action==="publish-selected"){
+          const {entryIds}=publishSelectedInput.parse(request.body);
+          reply.send(ok(await batch.publishSelected(id,entryIds)));return;
+        }
+        if(method==="POST"&&(action==="publish-all"||action==="publish")){
+          emptyInput.parse(request.body);
+          const result=await batch.publishAll(id);
+          if(action==="publish-all"){reply.send(ok(result));return;}
+          if(result.errors.length)throw new Error("DECK_HAS_UNPUBLISHED_ITEMS");
+          reply.send(ok({id:await decks.publish(id)}));return;
+        }
       }
 
       if(method==="GET"&&pathname==="/api/v1/decks"){
         reply.send(ok({items:await decks.list()}));return;
       }
-      if(method==="GET"&&pathname.startsWith("/api/v1/decks/")){
+      if(method==="GET"&&/^\/api\/v1\/decks\/[^/]+$/.test(pathname)){
         const deck=await decks.get(parameter());
         if(!deck){reply.code(404).send({success:false,error:{code:"NOT_FOUND"}});return;}
         reply.send(ok(deck));return;
@@ -171,9 +228,9 @@ export function mysqlApi(db:Db){
           reply.code(201).send(ok(await decks.create(createDeckInput.parse(request.body))));return;
         }
       }
-      if(pathname.startsWith("/api/v1/admin/decks/")){
+      if(/^\/api\/v1\/admin\/decks\/[^/]+(?:\/(entries|publish))?$/.test(pathname)){
         if(!await protect())return;
-        if(method==="GET"){
+        if(method==="GET"&&/^\/api\/v1\/admin\/decks\/[^/]+$/.test(pathname)){
           const data=await decks.get(parameter(),true);
           if(!data){reply.code(404).send({success:false,error:{code:"NOT_FOUND"}});return;}
           reply.send(ok(data));return;
@@ -391,8 +448,10 @@ export function mysqlApi(db:Db){
             endpoint:origin?origin+"/mcp":null,
             readConfigured:Boolean(readToken),
             writeConfigured:Boolean(writeToken),
-            readTools:["vocabulary_search","vocabulary_get"],
-            writeTools:["vocabulary_search","vocabulary_get","vocabulary_create_draft"],
+            readTools:["vocabulary_search","vocabulary_get","topics_list","lessons_list","lesson_get"],
+            writeTools:["vocabulary_search","vocabulary_get","vocabulary_create_draft",
+              "topics_list","topics_create","lessons_list","lessons_create","lesson_get",
+              "lesson_add_vocabulary_batch"],
             bearerRequired:!mcpNoAuthEnabled(),
             noAuthWriteEnabled:mcpNoAuthEnabled(),
             connectionVerified:false,
