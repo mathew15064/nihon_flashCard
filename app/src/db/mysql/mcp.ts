@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createMcpHandler,McpServer } from "@modelcontextprotocol/server";
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import { z } from "zod";
@@ -12,7 +13,7 @@ import { topicInput,lessonInput,lessonBatchInput,emptyInput } from "@/modules/vo
 import { vocabularyInput } from "@/modules/vocabulary/schema";
 import { mcpHostAllowed } from "@/lib/mcp-host";
 import { FixedWindowLimiter } from "@/server/rate-limit";
-import { mcpNoAuthEnabled } from "@/lib/mcp-access";
+import { AnonymousMcpLessons,mcpNoAuthEnabled,mcpWriteCost } from "@/lib/mcp-access";
 
 type Db=ReturnType<typeof openMySQL>["db"];
 export function mysqlMcp(db:Db){
@@ -21,6 +22,8 @@ export function mysqlMcp(db:Db){
   const limiter=new FixedWindowLimiter(1024);
   // Public test-only batch imports are much costlier than read-only MCP calls.
   const publicBatchLimiter=new FixedWindowLimiter(64);
+  const writeLimiter=new FixedWindowLimiter(2048);
+  const anonymousLessons=new AnonymousMcpLessons();
   const create=(canWrite:boolean)=>{
     const server=createMcpHandler(()=>{
       const mcp=new McpServer({name:"nihon-vocabulary",version:"0.1.0"});
@@ -107,7 +110,8 @@ export function mysqlMcp(db:Db){
     // Explicit, isolated no-auth mode: every client gets the full MCP
     // writer toolset. Default behavior remains scoped Bearer authorization.
     // Host, Origin and rate-limit guards still apply to public requests.
-    const scope=mcpNoAuthEnabled()?"write":await auth.scope(req);
+    const anonymous=mcpNoAuthEnabled();
+    const scope=anonymous?"write":await auth.scope(req);
     if(!scope){reply.code(401).send({error:"MCP_AUTH_REQUIRED"});return;}
     if(req.method!=="POST"){
       reply.code(405).send({error:"MCP_METHOD_NOT_ALLOWED"});return;
@@ -125,10 +129,37 @@ export function mysqlMcp(db:Db){
       reply.header("Retry-After",String(decision.retryAfterSeconds));
       reply.code(429).send({error:"MCP_RATE_LIMITED"});return;
     }
+    if(scope==="write"){
+      const cost=mcpWriteCost(req.body);
+      if(cost>0){
+        // Limit aggregate DB writes from all anonymous IPs. With tokens,
+        // fingerprint the token; never retain credentials in limiter keys.
+        const fingerprint=anonymous?"anonymous":createHash("sha256")
+          .update(String(req.headers.authorization||"")).digest("hex");
+        const budgets=anonymous?[
+          ["anonymous|ip|"+req.ip,250,60_000],
+          ["anonymous|global|minute",250,60_000],
+          ["anonymous|global|hour",500,3_600_000],
+        ] as const:[
+          ["writer|ip|"+req.ip,250,60_000],
+          ["writer|token|"+fingerprint,1000,3_600_000],
+        ] as const;
+        for(const [key,max,window] of budgets){
+          const outcome=writeLimiter.consume(key,max,window,Date.now(),cost);
+          if(!outcome.allowed){
+            reply.header("Retry-After",String(outcome.retryAfterSeconds));
+            reply.code(429).send({error:"MCP_WRITE_RATE_LIMITED"});return;
+          }
+        }
+      }
+    }
     reply.raw.setHeader("Cache-Control","no-store");
     reply.raw.setHeader("X-Content-Type-Options","nosniff");
     reply.hijack();
     await (scope==="write"?writers:readers)(req.raw,reply.raw,req.body);
   };
-  return {handler,close:()=>{limiter.clear();publicBatchLimiter.clear();}};
+  return {handler,close:()=>{
+    limiter.clear();publicBatchLimiter.clear();writeLimiter.clear();
+    anonymousLessons.clear();
+  }};
 }
