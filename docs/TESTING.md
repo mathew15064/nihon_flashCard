@@ -158,7 +158,9 @@ external ChatGPT client behavior and abuse limits. See
 A source-code or syntax check is **not** a restore PASS. Only run the new
 synthetic QA script on a physically isolated local MySQL 8.4 with a QA-only
 CREATE/DROP account; never paste credentials into a ticket or connect to the
-VPS/live MySQL. The URL's database component must begin nihon_qa, but the
+VPS/live MySQL. The operator must set NIHON_T05_QA_ISOLATED=yes only after checking physical
+isolation; this declaration is not a network-security guarantee.
+The URL's database component must begin nihon_qa, but the
 runner never writes to it: it creates unique fresh nihon_qa_t05_* source
 and nihon_restore_t05_* target schemas and cleans up only ones it created.
 
@@ -166,7 +168,7 @@ and nihon_restore_t05_* target schemas and cleans up only ones it created.
     npm ci
     node --check scripts/topic-restore-qa.mjs
     # Set NIHON_MYSQL_TEST_URL privately through approved local QA env.
-    node --import tsx scripts/topic-restore-qa.mjs
+    NIHON_T05_QA_ISOLATED=yes node --import tsx scripts/topic-restore-qa.mjs
 
 Expected: a JSON object with status PASS, per-table row counts and
 SHA-256 full-content digests, all required topic/lesson/vocabulary/SRS
