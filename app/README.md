@@ -133,9 +133,10 @@ The existing v1 website/port is preserved. This branch remains a **Draft PR**.
 
 To connect to `/mcp` using Streamable HTTP **without any token**, set
 `NIHON_MCP_NO_AUTH=true` in the **app container environment** and restart
-only that container. It is disabled by default. In this mode all three
-existing MCP tools (search/get/create vocabulary draft) are available
-without authentication, including writes. Admin REST, account login and
+only that container. It is disabled by default. In this mode the MCP draft-writer
+toolset is available without authentication. Enumerate `tools/list` for the
+current schemas; imported words remain drafts and lessons remain private.
+No MCP tool may publish content. Admin REST, account login and
 MySQL database access do not become public. The endpoint handles MCP
 JSON-RPC via POST; browsing to the URL with GET is not a connection test.
 
@@ -143,3 +144,20 @@ JSON-RPC via POST; browsing to the URL with GET is not a connection test.
 add unpublished drafts and exhaust resources. See
 `docs/MCP_SECURITY.md` for guarded rollback and the rate-limit/Origin
 boundaries.
+
+## Topics, lessons and 100-word batches (integration pending)
+
+The W1–4 addition groups lessons (existing decks) under topics and accepts
+1–100 vocabulary items per draft batch, with deduplication and repeat-request
+counts. Publishing selected words, all words and the full lesson requires
+protected Admin REST or Admin UI. NoAuth MCP on the public test URL is
+**draft-only** and grants no access to Admin APIs or private vocabulary reads.
+Existing public `/api/v1/decks` endpoints and SRS enrollment IDs are retained.
+A public lesson must refuse insertion of new drafts.
+
+See [topic/lesson/batch guide](../docs/TOPIC_LESSON_BATCH.md) for ChatGPT
+100-word prompts, REST payloads, security, migration, backup and rollback.
+[Testing](../docs/TESTING.md) documents the isolated MySQL contract suite and
+extended Chromium journey. These additions await W1–4 integration and a
+real MySQL 8.4/browser run; skipped tests are not passing QA. Populated-v2
+migration and topic-aware backup/restore remain separate release gates.

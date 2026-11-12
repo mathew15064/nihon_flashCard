@@ -63,7 +63,7 @@ To run locally, create a **throwaway MySQL server** and then:
     NIHON_MYSQL_TEST_URL='mysql://USER:TEST_PASSWORD@127.0.0.1:3306/nihon_qa' npm run test:e2e
 
 The browser runner **refuses** a non-`nihon_qa*` source database name.
-It creates and drops only its own randomly named `nihon_e2e_*` database,
+It creates and drops only its own randomly named `nihon_qa_e2e_*` database,
 uses a temporary local secret/config directory, a free localhost TCP port
 and an ephemeral fake provider key. It does not contact the actual OpenAI
 API, production MySQL, or legacy user databases. Never pass production
@@ -78,3 +78,76 @@ only the private secret and encrypted connection file.
 This E2E suite covers the central journey and regression bugs it found;
 it does **not** yet certify real API-provider billing, accessibility audits,
 stress/performance, recovery under node failure or a public deployment.
+
+## Topic/lesson batch contract QA (W5; integration pending)
+
+`app/tests/topics-batch-mysql.test.ts` is a new real-MySQL HTTP contract
+suite for the W1–4 implementation. It creates only its own random
+`nihon_qa_topics_*` database, verifies the server reports MySQL 8.4, installs
+through the real setup endpoint and cleans up its server, database and local
+configuration. It uses only `NIHON_MYSQL_TEST_URL`, requires a database name
+matching `nihon_qa[a-zA-Z0-9_]*`, and never falls back to an application DB.
+Use a disposable server/account with CREATE/DROP privileges; do not supply
+production credentials. Errors never print the connection URL or DB password.
+
+```sh
+cd app
+node --import tsx --test tests/topics-batch-mysql.test.ts
+# Set NIHON_MYSQL_TEST_URL through your private test environment first.
+```
+
+Coverage added (these are assertions, not a claim they have passed):
+
+- 100 new draft items, exact request replay, repeated items within a request,
+  a sibling lesson sharing 50 words, and another 100-item batch appended to
+  that sibling (200 links total, without replacing its first batch).
+- All 100 entries returned in Admin detail, Vietnamese meanings, stable IDs
+  across lesson deduplication, and rejection of empty/101-item requests.
+- Private topics/lessons hidden from public lists and details; protected
+  Admin list/create/batch/publish endpoints return 401 even in NoAuth mode;
+  cross-origin Admin publishing returns 403.
+- Selected publish and replay, foreign-entry refusal, bulk publishing of the
+  remaining entries, then explicit full-lesson publishing and public discovery.
+- Enrollment of 100 published entries, review replay and re-enrollment with
+  SQL comparison of every card/event field to detect schedule/counter resets.
+- Public lesson rejects a new draft without an orphan vocabulary row.
+- Anonymous MCP discovery, a 100-word draft batch and replay, private-entry
+  read protection, absence of publishing/Admin tools, and failed publish call.
+  The batch tool is discovered by `items` and `lessonId` schema fields rather
+  than an invented tool name; reconcile this with W3 before sign-off.
+
+The browser runner retains the original installer, vocabulary/deck, settings,
+learner and SRS assertions and adds an independent Admin topic/lesson page,
+JSON batch submission, exact 100-word rendering, publication, anonymous topic
+navigation, 320/390/768px overflow checks and axe scans on the new views.
+It requires W4's accessible labels (`Tên chủ đề`, `Tên bài học`, `Chủ đề`,
+a JSON field and batch/publish buttons), `/admin/lessons/:id`, and `/topics`.
+These UI route/label assumptions must be reconciled with W4's final UI;
+missing features fail the run rather than being silently skipped. The new
+browser journey must not be reported passed until exercised on the integrated
+production build against MySQL 8.4 and Chromium.
+
+At the W5 base, topic/batch routes and UI are absent. Without the QA URL,
+the new MySQL suite is **skipped**, not passed. Static type/lint success
+does not prove the shared service contract. Pending W1–4 type failures must
+be recorded as integration blockers rather than fixed in other workers'
+files. Additional open checks include a populated-v2 upgrade, topic-aware
+backup/restore, concurrent batch requests, invalid-item partial recovery,
+external ChatGPT client behavior and abuse limits. See
+[topic/lesson usage and security](TOPIC_LESSON_BATCH.md).
+
+### W5 local verification record (2026-11-12)
+
+- `npm run typecheck`, `npm run lint`, `npm test`, browser script syntax and
+  `git diff --check` exited successfully on the worker base.
+- Direct execution of `node --import tsx tests/topics-batch-mysql.test.ts`
+  reported **one skipped test** because no QA URL was configured. An invented
+  non-QA URL was rejected with `TOPICS_BATCH_REQUIRES_DISPOSABLE_QA_MYSQL`
+  before any database connection. No real MySQL assertions ran.
+- `npm run test:e2e` refused to start without the QA URL; no browser assertions
+  or axe scans ran. W1–4 integration and UI selector reconciliation remain open.
+- Standard `npm run build` failed because the shared, read-only `node_modules`
+  symlink prevents Vite writing `.vite-temp`. Without modifying dependencies,
+  `npx vite build --configLoader runner` and the package's esbuild server
+  bundle command succeeded. This environment workaround is not a claim that
+  the standard build command passed.
