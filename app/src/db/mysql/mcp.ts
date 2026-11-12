@@ -30,7 +30,8 @@ export function mysqlMcp(db:Db){
       const respond=async(work:()=>Promise<unknown>)=>{
         try{return {content:[{type:"text" as const,text:JSON.stringify(await work())}]};}
         catch(error){return {isError:true,content:[{type:"text" as const,
-          text:JSON.stringify({error:{code:batchErrorCode(error)}})}]};}
+          text:JSON.stringify({error:{code:error instanceof Error &&
+            error.message==="MCP_LESSON_UNAVAILABLE"?"MCP_LESSON_UNAVAILABLE":batchErrorCode(error)}})}]};}
       };
       mcp.registerTool("vocabulary_search",{
         description:"Search published Japanese vocabulary, including Kana and Kanji.",
@@ -67,24 +68,46 @@ export function mysqlMcp(db:Db){
       if(canWrite){
         mcp.registerTool("topics_create",{
           description:"Create or reuse a topic. Never publishes content.",inputSchema:topicInput,
-        },async(input)=>respond(()=>topics.getOrCreate(topicInput.parse(input))));
+        },async(input)=>respond(async()=>{
+          const result=await topics.getOrCreate(topicInput.parse(input));
+          // A duplicate name must not disclose a private topic description.
+          return mcpNoAuthEnabled()?{topic:{id:result.topic.id},created:result.created}:result;
+        }));
         mcp.registerTool("lessons_create",{
           description:"Create a private lesson or reuse an existing lesson. Never publishes content.",inputSchema:lessonInput,
-        },async(input)=>respond(()=>decks.getOrCreate(lessonInput.parse(input))));
+        },async(input)=>respond(async()=>{
+          const payload=lessonInput.parse(input);
+          const anonymous=mcpNoAuthEnabled();
+          if(anonymous&&!anonymousLessons.canCreate())
+            throw new Error("MCP_LESSON_UNAVAILABLE");
+          const result=await decks.getOrCreate(payload);
+          if(!anonymous)return result;
+          if(!anonymousLessons.allow(result.lesson.id,result.created))
+            throw new Error("MCP_LESSON_UNAVAILABLE");
+          // MySQL getOrCreate returns all draft entries for existing lessons.
+          return {lesson:{id:result.lesson.id},created:result.created};
+        }));
         mcp.registerTool("lesson_add_vocabulary_batch",{
           description:"Add 1–100 vocabulary drafts to a private lesson by lessonId, or by topicName and lessonName. Retries deduplicate. Never publishes content.",
           inputSchema:lessonBatchInput,
         },async(raw)=>respond(async()=>{
           const input=lessonBatchInput.parse(raw);
-          if(mcpNoAuthEnabled()){
+          const anonymous=mcpNoAuthEnabled();
+          if(anonymous){
             const decision=publicBatchLimiter.consume("public-batch",5,60_000);
             if(!decision.allowed)throw new Error("MCP_BATCH_RATE_LIMITED");
+            if(input.lessonId!==undefined&&!anonymousLessons.has(input.lessonId))
+              throw new Error("MCP_LESSON_UNAVAILABLE");
+            if(input.lessonId===undefined&&!anonymousLessons.canCreate())
+              throw new Error("MCP_LESSON_UNAVAILABLE");
           }
           let lessonId:string;
           if(input.lessonId!==undefined)lessonId=input.lessonId;
           else{
             const {topic}=await topics.getOrCreate({name:input.topicName!});
-            const {lesson}=await decks.getOrCreate({name:input.lessonName!,topicId:topic.id});
+            const {lesson,created}=await decks.getOrCreate({name:input.lessonName!,topicId:topic.id});
+            if(anonymous&&!anonymousLessons.allow(lesson.id,created))
+              throw new Error("MCP_LESSON_UNAVAILABLE");
             lessonId=lesson.id;
           }
           return batch.addToLesson(lessonId,input.items.map(item=>({...item,source:"mcp" as const})));
@@ -95,6 +118,8 @@ export function mysqlMcp(db:Db){
         inputSchema:vocabularyInput,
       },async(input)=>respond(async()=>{
         const result=await vocab.createDraft({...vocabularyInput.parse(input),source:"mcp"});
+        // A public deduplication must not expose an existing private entry ID/status.
+        if(mcpNoAuthEnabled())return {accepted:true};
         return {id:result.item.id,created:result.created,status:result.item.status};
       }));
       return mcp;
