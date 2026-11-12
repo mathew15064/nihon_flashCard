@@ -11,7 +11,7 @@ test("Explicit guest-to-learner transfer is idempotent and keeps review events",
   const file=join(dir,"transfer.sqlite");
   const db=new DatabaseSync(file);
   for(const name of ["001_init.sql","002_legacy_import.sql","003_ai_studio.sql",
-    "004_srs_learning.sql","005_learner_accounts.sql"]){
+    "004_srs_learning.sql","005_learner_accounts.sql","006_auth_sessions.sql"]){
     db.exec(readFileSync(resolve("src/db/migrations",name),"utf8"));
   }
   const now="2026-11-11T10:00:00.000Z";

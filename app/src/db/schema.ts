@@ -107,6 +107,14 @@ export const learnerSignupEvents = sqliteTable("learner_signup_events",{
   createdAt:text("created_at").notNull(),
 },t=>[index("idx_signup_events_time").on(t.createdAt)]);
 
+/** Server-side revocable browser sessions: hashed cookie identifiers only. */
+export const authSessions = sqliteTable("auth_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  actorId: text("actor_id").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull(),
+}, t => [index("idx_auth_sessions_expiry").on(t.expiresAt)]);
+
 export const guestAccountMerges = sqliteTable("guest_account_merges",{
   guestUserId:text("guest_user_id").primaryKey(),
   learnerUserId:text("learner_user_id").notNull(),

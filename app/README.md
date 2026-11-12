@@ -51,7 +51,12 @@ Learner registration: /account/register, disabled until the server is
 explicitly configured with NIHON_ENABLE_SIGNUP=true.
 
 Signed HttpOnly cookies are used for Admin (8h), learner (30d) and guest
-learning (90d). POST/PATCH browser requests require a matching Origin.
+learning (90d). Admin/learner sessions additionally require a hashed SQLite
+session record: login rotates a browser session, logout revokes it server-side,
+and expired records are purged on subsequent logins. Migration 006 intentionally
+invalidates earlier stateless auth cookies (users log in again), without changing
+guest progress. See `docs/AUTH_SESSION_HARDENING.md`.
+POST/PATCH browser requests require a matching Origin.
 Login lockouts and local signup quota live in SQLite. A bounded per-process IP limit covers Admin/learner login and registration;
 account-level lockouts persist in SQLite. Because trustProxy is false, traffic
 from a reverse proxy shares the proxy's IP bucket; configure trusted edge IP

@@ -10,7 +10,7 @@ test("Learner auth uses salted passwords, normalized names, DB lockout, and acti
   const file=join(dir,"accounts.sqlite");
   const conn=new DatabaseSync(file);
   for(const name of ["001_init.sql","002_legacy_import.sql","003_ai_studio.sql",
-    "004_srs_learning.sql","005_learner_accounts.sql"]){
+    "004_srs_learning.sql","005_learner_accounts.sql","006_auth_sessions.sql"]){
     conn.exec(readFileSync(resolve("src/db/migrations",name),"utf8"));
   }
   conn.close();

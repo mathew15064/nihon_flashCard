@@ -8,7 +8,7 @@ import { auditV1Srs } from "../src/lib/legacy-srs-audit";
 
 const migrationNames = [
   "001_init.sql", "002_legacy_import.sql", "003_ai_studio.sql",
-  "004_srs_learning.sql", "005_learner_accounts.sql",
+  "004_srs_learning.sql", "005_learner_accounts.sql", "006_auth_sessions.sql",
 ];
 function legacyDb(path: string) {
   const db = new DatabaseSync(path);

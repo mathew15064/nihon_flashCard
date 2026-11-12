@@ -12,7 +12,7 @@ test("Fastify protects Admin routes, rejects CSRF and isolates drafts",async()=>
   const filename=join(dir,"api.sqlite");
   const sqlite=new DatabaseSync(filename);
   for(const file of ["001_init.sql","002_legacy_import.sql","003_ai_studio.sql",
-    "004_srs_learning.sql","005_learner_accounts.sql"]){
+    "004_srs_learning.sql","005_learner_accounts.sql","006_auth_sessions.sql"]){
     sqlite.exec(readFileSync(resolve("src/db/migrations",file),"utf8"));
   }
   sqlite.close();

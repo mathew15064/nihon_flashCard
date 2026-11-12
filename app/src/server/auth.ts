@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { eq, lt } from "drizzle-orm";
 import { db } from "@/db/client";
-import { learnerLoginLimits } from "@/db/schema";
+import { authSessions, learnerLoginLimits } from "@/db/schema";
 import { getLearnerById } from "@/modules/accounts/service";
 import { GUEST_COOKIE_NAME, guestSessionSecret, makeGuestToken, parseGuestToken,
   GUEST_COOKIE_MAX_AGE } from "@/modules/learning/guest-session";
@@ -15,7 +15,7 @@ function secret() {
   return value && value.length >= 32 ? value : null;
 }
 function sign(payload: string, key: string): Buffer {
-  return createHmac("sha256", key).update("nihon-session-v1:" + payload).digest();
+  return createHmac("sha256", key).update("nihon-session-v2:" + payload).digest();
 }
 function safeCompare(a: string, b: string): boolean {
   const x=Buffer.from(a),y=Buffer.from(b);
@@ -25,49 +25,88 @@ export function verifyBearer(actual: string|undefined, expected: string|undefine
   return !!actual?.startsWith("Bearer ") && !!expected && expected.length>=24
     && safeCompare(actual.slice(7),expected);
 }
-function sessionToken(id:string, duration:number, key:string):string {
-  const payload=Buffer.from(JSON.stringify({id, exp:Date.now()+duration*1000})).toString("base64url");
-  return "v1."+payload+"."+sign(payload,key).toString("base64url");
+function sessionToken(id:string, duration:number, key:string):{token:string;expiresAt:string} {
+  const exp=Date.now()+duration*1000;
+  // Prevent token reuse from two logins made in the same millisecond.
+  const payload=Buffer.from(JSON.stringify({
+    id,exp,nonce:randomBytes(24).toString("base64url"),
+  })).toString("base64url");
+  return {
+    token:"v2."+payload+"."+sign(payload,key).toString("base64url"),
+    expiresAt:new Date(exp).toISOString(),
+  };
 }
-function parseSession(value:string|undefined, key:string):string|null {
+function parseSession(value:string|undefined,key:string):{id:string;exp:number}|null {
   if(!value || value.length>500)return null;
   const segments=value.split(".");
-  if(segments.length!==3 || segments[0]!=="v1")return null;
+  if(segments.length!==3 || segments[0]!=="v2")return null;
   let digest:Buffer;
-  try{ digest=Buffer.from(segments[2],"base64url"); }catch{return null;}
+  try{digest=Buffer.from(segments[2],"base64url");}catch{return null;}
   const expected=sign(segments[1],key);
   if(digest.length!==expected.length || !timingSafeEqual(digest,expected))return null;
   try{
-    const payload=JSON.parse(Buffer.from(segments[1],"base64url").toString()) as {id:unknown;exp:unknown};
-    if(typeof payload.id!=="string" || typeof payload.exp!=="number" || payload.exp < Date.now()-MAX_CLOCK_SKEW)return null;
-    // Reject tokens whose expiry exceeds the maximum supported session duration.
+    const payload=JSON.parse(Buffer.from(segments[1],"base64url").toString()) as {
+      id:unknown;exp:unknown;nonce:unknown;
+    };
+    if(typeof payload.id!=="string" || typeof payload.exp!=="number" ||
+       !Number.isSafeInteger(payload.exp) || payload.exp < Date.now()-MAX_CLOCK_SKEW ||
+       typeof payload.nonce!=="string" || payload.nonce.length!==32)return null;
     if(payload.exp > Date.now()+30*24*3600*1000+60000)return null;
-    return payload.id;
+    return {id:payload.id,exp:payload.exp};
   }catch{return null;}
+}
+function digestToken(value:string):string {
+  return createHash("sha256").update("nihon-auth-session:"+value).digest("hex");
+}
+export function revokeAuthSession(request:FastifyRequest):void {
+  const token=request.cookies?.[COOKIE];
+  if(token && token.length<=500)
+    db.delete(authSessions).where(eq(authSessions.tokenHash,digestToken(token))).run();
 }
 export function getActor(request:FastifyRequest):Actor|null {
   const key=secret();
   if(!key)return null;
-  const id=parseSession(request.cookies?.[COOKIE],key);
+  const token=request.cookies?.[COOKIE];
+  const session=parseSession(token,key);
+  if(!session || !token)return null;
+  const record=db.select().from(authSessions)
+    .where(eq(authSessions.tokenHash,digestToken(token))).get();
+  if(!record || record.actorId!==session.id ||
+     record.expiresAt!==new Date(session.exp).toISOString() ||
+     record.expiresAt<=new Date().toISOString())return null;
+  const id=session.id;
   if(id==="nihon-local-admin" && process.env.NIHON_ADMIN_PASSWORD_HASH)return {id,role:"admin",name:"Nihon Admin"};
-  if(id?.startsWith("learner:")){
+  if(id.startsWith("learner:")){
     const user=getLearnerById(id);
     return user?{id,role:"learner",name:user.displayName}:null;
   }
   return null;
 }
-export function setAuthCookie(reply:FastifyReply, id:string):void {
+export function setAuthCookie(request:FastifyRequest,reply:FastifyReply,id:string):void {
   const key=secret();
   if(!key)throw new Error("AUTH_NOT_CONFIGURED");
   const admin=id==="nihon-local-admin";
   const age=admin?8*3600:30*24*3600;
-  reply.setCookie(COOKIE,sessionToken(id,age,key),{
+  const {token,expiresAt}=sessionToken(id,age,key);
+  const now=new Date().toISOString();
+  db.transaction(tx=>{
+    const previous=request.cookies?.[COOKIE];
+    if(previous && previous.length<=500)
+      tx.delete(authSessions).where(eq(authSessions.tokenHash,digestToken(previous))).run();
+    tx.delete(authSessions).where(lt(authSessions.expiresAt,now)).run();
+    tx.insert(authSessions).values({
+      tokenHash:digestToken(token),actorId:id,expiresAt,createdAt:now,
+    }).run();
+  });
+  reply.setCookie(COOKIE,token,{
     httpOnly:true,sameSite:"lax",path:"/",maxAge:age,
     secure:process.env.NODE_ENV==="production",
   });
 }
 export function clearAuthCookie(reply:FastifyReply):void {
-  reply.clearCookie(COOKIE,{path:"/",httpOnly:true,sameSite:"lax"});
+  reply.clearCookie(COOKIE,{
+    path:"/",httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",
+  });
 }
 export function getGuestId(request:FastifyRequest):string|null {
   const key=guestSessionSecret();

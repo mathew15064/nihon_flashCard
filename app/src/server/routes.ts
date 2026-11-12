@@ -14,7 +14,7 @@ import { generationRequestSchema, candidateSchema } from "@/modules/ai/schema";
 import { enrollDeckForGuest, enrollQuickStart, listDueCards, getReviewProgress, recordGuestReview } from "@/modules/learning/service";
 import { dueQuerySchema, reviewInputSchema } from "@/modules/learning/schema";
 import { getActor, getGuestId, ensureGuest, setAuthCookie,clearAuthCookie,
-  adminPasswordAllowed,recordAdminLogin } from "./auth";
+  adminPasswordAllowed,recordAdminLogin,revokeAuthSession } from "./auth";
 import { fail, ok, requireAdmin, requireLearnerOrGuest,requireSameOrigin } from "./http";
 import { transferGuestProgress } from "@/modules/learning/transfer";
 
@@ -41,7 +41,7 @@ export function registerRoutes(app:FastifyInstance):void {
       const valid=verifyAdminPassword(password,hash);
       recordAdminLogin(valid);
       if(!valid)return reply.code(401).send({success:false,error:{code:"INVALID_CREDENTIALS"}});
-      setAuthCookie(reply,"nihon-local-admin");
+      setAuthCookie(request,reply,"nihon-local-admin");
       return ok({role:"admin",name:"Nihon Admin"});
     }catch(err){return fail(reply,err);}
   });
@@ -59,12 +59,13 @@ export function registerRoutes(app:FastifyInstance):void {
       const {username,password}=loginCredentials.parse(request.body);
       const learner=authenticateLearner(username,password);
       if(!learner)return reply.code(401).send({success:false,error:{code:"INVALID_CREDENTIALS"}});
-      setAuthCookie(reply,learner.id);
+      setAuthCookie(request,reply,learner.id);
       return ok({id:learner.id,name:learner.name,role:"learner"});
     }catch(err){return fail(reply,err);}
   });
   app.post("/api/v1/auth/logout",async(request,reply)=>{
     if(!requireSameOrigin(request,reply))return;
+    revokeAuthSession(request);
     clearAuthCookie(reply);
     return ok({loggedOut:true});
   });
