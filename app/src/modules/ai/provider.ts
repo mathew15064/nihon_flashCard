@@ -1,4 +1,5 @@
 import { candidateListSchema, responseJsonSchema, type GeneratedCandidate, type GenerationRequest } from "./schema";
+import { aiModel, openaiKey } from "@/lib/runtime-config";
 
 export type ProviderResult = {
   items: GeneratedCandidate[];
@@ -12,18 +13,18 @@ export type AiProvider = {
 
 /** Keys never leave this process and are not accepted from forms or MCP arguments. */
 export function isProviderConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+  return Boolean(openaiKey());
 }
 
 export function configuredModel(): string {
-  return process.env.NIHON_AI_MODEL?.trim() || "gpt-4.1-mini";
+  return aiModel();
 }
 
 /** Requests OpenAI Responses structured JSON. No external request without configured key. */
 export function openAIProvider(fetcher: typeof fetch = fetch): AiProvider {
   return {
     async generate(input) {
-      const key = process.env.OPENAI_API_KEY?.trim();
+      const key = openaiKey();
       if (!key) throw new Error("AI_NOT_CONFIGURED");
       const model = configuredModel();
       const instruction = [

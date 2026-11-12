@@ -50,7 +50,7 @@ test("read-only backup drill restores Japanese vocab, SRS, sessions, migration c
       "SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
     ).get() as {n:number};
     assert.deepEqual(report,{
-      ok:true,tables:tableCount.n,rows:12,migrations:6,matching:true,
+      ok:true,tables:tableCount.n,rows:13,migrations:7,matching:true,
     });
     assert.ok(report.tables>=15);
     assert.deepEqual(readFileSync(source),before);
@@ -62,7 +62,7 @@ test("read-only backup drill restores Japanese vocab, SRS, sessions, migration c
     await verifiedSqliteCopy(source,snapshot);
     await verifiedSqliteCopy(snapshot,restored);
     const digests=verifyRestoredPair(snapshot,restored,migrations);
-    assert.equal(digests.migrations,6);
+    assert.equal(digests.migrations,7);
     const actual=new DatabaseSync(restored,{readOnly:true});
     assert.equal(actual.prepare("SELECT word FROM vocabulary_entries WHERE id='entry-1'").get()!.word,"日本語");
     assert.equal(actual.prepare("SELECT count(*) AS n FROM review_events").get()!.n,1);
@@ -83,7 +83,7 @@ test("backup drill rejects mismatched migration checksums, incomplete schema and
   try{
     const src=join(dir,"source.sqlite");
     const sql=createAppDatabase(src);
-    assert.equal(inspectNihonSqlite(src,migrations).migrations,6);
+    assert.equal(inspectNihonSqlite(src,migrations).migrations,7);
     sql.prepare("UPDATE schema_migrations SET checksum='bad' WHERE filename='006_auth_sessions.sql'").run();
     assert.throws(()=>inspectNihonSqlite(src,migrations),/DRILL_MIGRATION_CHECKSUM_MISMATCH/);
     sql.prepare("DELETE FROM schema_migrations WHERE filename='006_auth_sessions.sql'").run();

@@ -88,7 +88,7 @@ export default function AIStudio(){
       <span className="status-pill">{config?.configured?"Đã cấu hình key phía server":"Chưa có API key"}</span>
     </div>
     <p className="muted">Giới hạn 20 từ/lần · Còn {config?.remaining??"—"} / {config?.dailyLimit??"—"} lượt generate trong 24 giờ.</p>
-    {!config?.configured&&<div className="notice">Chưa cấu hình OPENAI_API_KEY tại server; chức năng gọi AI đang tắt.</div>}
+    {!config?.configured&&<div className="notice">Chưa có API key. Vào Admin → Settings để cấu hình; chức năng gọi AI đang tắt.</div>}
     {error&&<p role="alert" className="notice form-error">{error}</p>}
     {message&&<p role="status" className="notice">{message}</p>}
     <div className="admin-panel"><h2>Tạo danh sách từ</h2>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { registerLearner, authenticateLearner, changeLearnerPassword, signupEnabled } from "@/modules/accounts/service";
 import { registerInputSchema } from "@/modules/accounts/schema";
 import { verifyAdminPassword } from "@/lib/admin-password";
+import { adminPasswordHash } from "@/lib/runtime-config";
 import { listVocabulary, getVocabulary, createVocabularyDraft, publishVocabulary } from "@/modules/vocabulary/service";
 import { vocabularyInput, listQuery } from "@/modules/vocabulary/schema";
 import { createDeck, listDecks, getDeckWithEntries, addEntryToDeck, publishDeck } from "@/modules/decks/service";
@@ -34,7 +35,7 @@ export function registerRoutes(app:FastifyInstance):void {
     if(!requireSameOrigin(request,reply))return;
     try{
       const {password}=adminCredentials.parse(request.body);
-      const hash=process.env.NIHON_ADMIN_PASSWORD_HASH;
+      const hash=adminPasswordHash();
       if(!hash||!process.env.AUTH_SECRET||!adminPasswordAllowed()){
         return reply.code(401).send({success:false,error:{code:"INVALID_CREDENTIALS"}});
       }

@@ -36,7 +36,7 @@ new 0600 file, restores that backup to a second new file, and then checks
 The result contains **only aggregates**:
 
 ```json
-{"ok":true,"tables":18,"rows":120,"migrations":6,"matching":true}
+{"ok":true,"tables":18,"rows":120,"migrations":7,"matching":true}
 ```
 
 Numbers above are *illustrative only*. No username, token, password verifier,

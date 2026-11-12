@@ -6,11 +6,11 @@ import {
 } from "@/db/schema";
 import { normalizedKey } from "@/modules/vocabulary/normalize";
 import { candidateSchema, generationRequestSchema, type GeneratedCandidate, type GenerationRequest } from "./schema";
-import { configuredModel, openAIProvider, type AiProvider } from "./provider";
+import { configuredModel, isProviderConfigured, openAIProvider, type AiProvider } from "./provider";
+import { aiDailyLimit } from "@/lib/runtime-config";
 
 export function generationQuota(): number {
-  const configured = Number(process.env.NIHON_AI_DAILY_LIMIT ?? 10);
-  return Number.isInteger(configured) && configured >= 1 && configured <= 100 ? configured : 10;
+  return aiDailyLimit();
 }
 
 export function listGenerationJobs() {
@@ -74,7 +74,7 @@ function reserveJob(input: GenerationRequest): string {
 
 export async function generateJob(raw: unknown, provider: AiProvider = openAIProvider()): Promise<string> {
   const input = generationRequestSchema.parse(raw);
-  if (!process.env.OPENAI_API_KEY?.trim()) throw new Error("AI_NOT_CONFIGURED");
+  if (!isProviderConfigured()) throw new Error("AI_NOT_CONFIGURED");
   const id = reserveJob(input);
   try {
     const result = await provider.generate(input);

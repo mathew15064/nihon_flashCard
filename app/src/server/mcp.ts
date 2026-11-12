@@ -5,6 +5,7 @@ import { z } from "zod";
 import { listVocabulary, getVocabulary, createVocabularyDraft } from "@/modules/vocabulary/service";
 import { vocabularyInput } from "@/modules/vocabulary/schema";
 import { mcpScope, safeOrigin } from "./auth";
+import { publicOrigin } from "@/lib/runtime-config";
 import { FixedWindowLimiter } from "./rate-limit";
 
 /**
@@ -94,7 +95,7 @@ export function registerMcp(app:FastifyInstance):void {
     if(!scope)return reply.code(401).send({error:"MCP_AUTH_REQUIRED"});
     if(req.method!=="POST")
       return reply.code(405).send({error:"MCP_METHOD_NOT_ALLOWED"});
-    if(!mcpHostAllowed(req.headers.host,process.env.PUBLIC_ORIGIN,
+    if(!mcpHostAllowed(req.headers.host,publicOrigin(),
       process.env.NODE_ENV==="production"))
       return reply.code(403).send({error:"MCP_HOST_DENIED"});
     // Sec-Fetch-Site can also be cross-site when the Origin header is absent.

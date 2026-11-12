@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { registerRoutes } from "./routes";
 import { registerMcp } from "./mcp";
 import { registerAuthRateLimits } from "./rate-limit";
+import { registerInstallationRoutes } from "./installation";
 
 export async function buildApp(options?:{staticAssets?:boolean}){
   const app=Fastify({
@@ -24,6 +25,7 @@ export async function buildApp(options?:{staticAssets?:boolean}){
     return payload;
   });
   registerRoutes(app);
+  registerInstallationRoutes(app);
   registerMcp(app);
 
   const assets=options?.staticAssets ?? true;

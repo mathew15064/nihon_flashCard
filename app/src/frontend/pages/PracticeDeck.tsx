@@ -108,7 +108,7 @@ export default function PracticeDeck({initialDeckId}: {initialDeckId: string | n
   return <div className="learning-workspace">
     {loading ? <div className="notice" role="status">Đang khởi tạo phiên học và tải lịch ôn…</div> : <>
       {error && <div className="notice form-error" role="alert">{error==="GUEST_SESSION_NOT_CONFIGURED"
-        ? "Chưa cấu hình secret cho phiên học. Hãy thiết lập AUTH_SECRET hoặc NIHON_GUEST_SESSION_SECRET trong .env.local."
+        ? "Phiên học chưa sẵn sàng. Hãy khởi động lại server hoặc liên hệ quản trị viên."
         : "Có lỗi: "+error}</div>}
       {progress && <div className="study-stats" aria-label="Tiến độ học tập">
         <div><strong>{progress.totalTracked}</strong><span>Từ đang học</span></div>

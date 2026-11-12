@@ -9,7 +9,8 @@ Nihon supports two separately configured server-side MCP credentials:
 | `NIHON_MCP_READ_TOKEN` | Read-only | `vocabulary_search`, `vocabulary_get` |
 | `NIHON_MCP_TOKEN` | Draft writer (backward-compatible) | Read-only tools plus `vocabulary_create_draft` |
 
-Generate two different, cryptographically random tokens, each at least **24 characters**.
+Create/rotate tokens from **Admin → Settings** (preferred) or provide two different,
+cryptographically random server-side tokens, each at least **24 characters**.
 Tokens must not be identical. When both configuration values match, MCP authentication
 fails closed for both scopes. The write token never publishes vocabulary; publishing
 still requires the separate Admin role.

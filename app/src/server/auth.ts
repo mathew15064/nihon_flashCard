@@ -4,6 +4,7 @@ import { eq, lt } from "drizzle-orm";
 import { db } from "@/db/client";
 import { authSessions, learnerLoginLimits } from "@/db/schema";
 import { getLearnerById } from "@/modules/accounts/service";
+import { adminPasswordHash, adminRestToken, mcpToken, publicOrigin } from "@/lib/runtime-config";
 import { GUEST_COOKIE_NAME, guestSessionSecret, makeGuestToken, parseGuestToken,
   GUEST_COOKIE_MAX_AGE } from "@/modules/learning/guest-session";
 
@@ -75,7 +76,7 @@ export function getActor(request:FastifyRequest):Actor|null {
      record.expiresAt!==new Date(session.exp).toISOString() ||
      record.expiresAt<=new Date().toISOString())return null;
   const id=session.id;
-  if(id==="nihon-local-admin" && process.env.NIHON_ADMIN_PASSWORD_HASH)return {id,role:"admin",name:"Nihon Admin"};
+  if(id==="nihon-local-admin" && adminPasswordHash())return {id,role:"admin",name:"Nihon Admin"};
   if(id.startsWith("learner:")){
     const user=getLearnerById(id);
     return user?{id,role:"learner",name:user.displayName}:null;
@@ -134,7 +135,7 @@ export function ensureGuest(request:FastifyRequest,reply:FastifyReply):boolean {
 export function safeOrigin(request:FastifyRequest):boolean {
   const origin=request.headers.origin;
   if(typeof origin!=="string")return false;
-  const configured=process.env.PUBLIC_ORIGIN?.trim();
+  const configured=publicOrigin();
   // Never derive a production CSRF allowlist from the attacker-controlled Host header.
   if(process.env.NODE_ENV==="production" && !configured)return false;
   const expected=configured || request.protocol+"://"+request.headers.host;
@@ -145,13 +146,13 @@ export function safeOrigin(request:FastifyRequest):boolean {
 }
 export function needsAdmin(request:FastifyRequest):boolean {
   return getActor(request)?.role==="admin" ||
-    verifyBearer(request.headers.authorization,process.env.NIHON_ADMIN_TOKEN);
+    verifyBearer(request.headers.authorization,adminRestToken());
 }
 export type McpScope = "read" | "write";
 /** Separate credentials for read-only search/get versus restricted draft creation. */
 export function mcpScope(request:FastifyRequest):McpScope|null {
-  const writeToken=process.env.NIHON_MCP_TOKEN;
-  const readToken=process.env.NIHON_MCP_READ_TOKEN;
+  const writeToken=mcpToken("write");
+  const readToken=mcpToken("read");
   // Misconfigured equal credentials cannot provide meaningful least privilege.
   if(writeToken && readToken && writeToken===readToken)return null;
   if(verifyBearer(request.headers.authorization,writeToken))return "write";

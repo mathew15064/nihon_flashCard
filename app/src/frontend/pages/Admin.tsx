@@ -6,7 +6,7 @@ type Sense={id:string;language:string;meaning:string};
 type Entry={id:string;word:string;reading:string;jlptLevel:string|null;status:string;source:string;senses:Sense[]};
 type Deck={id:string;name:string;description:string|null;visibility:string};
 type Detail=Deck&{entries:{id:string;word:string;reading:string;status:string}[]};
-function Nav(){return <nav className="nav-sub"><Link to="/admin">Quản lý từ và bộ từ</Link><Link to="/admin/ai-studio">AI Vocabulary Studio</Link></nav>;}
+function Nav(){return <nav className="nav-sub"><Link to="/admin">Quản lý từ và bộ từ</Link><Link to="/admin/ai-studio">AI Vocabulary Studio</Link><Link to="/admin/settings">Cài đặt hệ thống</Link></nav>;}
 export default function Admin(){
   const [items,setItems]=useState<Entry[]>([]),[decks,setDecks]=useState<Detail[]>([]);
   const [error,setError]=useState(""),[message,setMessage]=useState("");

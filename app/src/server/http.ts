@@ -1,6 +1,7 @@
 import type { FastifyReply,FastifyRequest } from "fastify";
 import { ZodError } from "zod";
 import { getActor,getLearningId,safeOrigin,verifyBearer } from "./auth";
+import { adminRestToken } from "@/lib/runtime-config";
 
 export function fail(reply:FastifyReply,error:unknown){
   if(error instanceof ZodError){
@@ -15,7 +16,7 @@ export function fail(reply:FastifyReply,error:unknown){
   return reply.code(code==="INTERNAL_ERROR"?500:status).send({success:false,error:{code}});
 }
 export function requireAdmin(request:FastifyRequest,reply:FastifyReply):boolean {
-  const bearerAuthorized=verifyBearer(request.headers.authorization,process.env.NIHON_ADMIN_TOKEN);
+  const bearerAuthorized=verifyBearer(request.headers.authorization,adminRestToken());
   const cookieAuthorized=getActor(request)?.role==="admin";
   if(!bearerAuthorized && !cookieAuthorized) {
     reply.code(401).send({success:false,error:{code:"ADMIN_REQUIRED"}});return false;

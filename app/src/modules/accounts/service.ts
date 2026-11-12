@@ -3,6 +3,7 @@ import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { authSessions, learnerAccounts, learnerLoginLimits, learnerSignupEvents } from "@/db/schema";
 import { hashAdminPassword, verifyAdminPassword } from "@/lib/admin-password";
+import { signupEnabledByConfig } from "@/lib/runtime-config";
 import { changePasswordInputSchema, normalizeUsername, registerInputSchema, usernameSchema } from "./schema";
 
 const MAX_SIGNUPS_PER_HOUR = 10;
@@ -10,7 +11,7 @@ const MAX_LOGIN_FAILURES = 5;
 const LOCK_FOR_MINUTES = 15;
 
 export function signupEnabled() {
-  return process.env.NIHON_ENABLE_SIGNUP === "true" && Boolean(process.env.AUTH_SECRET);
+  return signupEnabledByConfig();
 }
 
 export function getLearnerById(id: string) {

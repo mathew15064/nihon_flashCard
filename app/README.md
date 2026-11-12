@@ -11,11 +11,18 @@ Requirements: Node.js >=22.12, npm.
 From the app directory:
 
     npm ci
-    npm run db:migrate
-    npm run db:seed:demo     # optional, DEV-ONLY samples
     npm run dev
 
-Open http://127.0.0.1:3000. Development also runs one Fastify port;
+Open http://127.0.0.1:3000. On first startup the server automatically
+creates the private SQLite DB, runs migrations and generates its auth secret.
+The browser shows /setup: enter the one-time code printed to the server
+console, choose SQLite and create Admin. MySQL is visible but **not yet
+supported** (no MySQL adapter or migrations). No .env editing is needed
+for a fresh local installation. See docs/UI_FIRST_INSTALL.md.
+
+Optional development-only sample data after setup: npm run db:seed:demo
+
+Development also runs one Fastify port;
 Vite is attached as middleware in that same process.
 
 Production build and checks:
@@ -28,16 +35,24 @@ Production build and checks:
 
 ## Secrets
 
-Copy .env.example to .env.local and keep it private.
-Fastify loads .env.local before DB and application modules.
+A fresh installation requires **no .env file**. Use the first-run wizard and
+Admin → Settings to configure the website, learner signup, OpenAI API key,
+AI model/quota and MCP/API integration tokens.
+
+For existing deployments, .env.local remains an optional compatibility /
+advanced-operations mechanism; do not commit it. UI-saved settings override
+matching environment fallbacks. Server encryption and cookie secrets are
+automatically generated and stored in data/instance-secret.key (0600);
+back up this key safely along with the DB. See docs/UI_FIRST_INSTALL.md.
 
 Generate a random secret:
 
     node -e 'console.log(require("node:crypto").randomBytes(48).toString("base64url"))'
 
-Use it as AUTH_SECRET (32+ characters). Generate another unique secret for
-NIHON_MCP_TOKEN if MCP is needed, and NIHON_ADMIN_TOKEN for trusted REST
-integrations. These are unrelated to the AI provider secret.
+For advanced/manual deployments only, AUTH_SECRET (32+ characters) can
+override automatic instance key generation. Prefer Admin → Settings to
+create/rotate NIHON_MCP and REST integration tokens. These are unrelated
+to the AI provider secret.
 
 Generate an Admin password hash with no plaintext in shell argv:
 
@@ -45,8 +60,10 @@ Generate an Admin password hash with no plaintext in shell argv:
     printf '%s' "$ADMIN_PW" | npm run admin:hash
     unset ADMIN_PW
 
-Set NIHON_ADMIN_PASSWORD_HASH to the output. There is no default password.
-Admin login: /admin/login. Learner login: /account/login.
+Existing deployments may set NIHON_ADMIN_PASSWORD_HASH to the output.
+For new installations, create the Admin password in the /setup wizard;
+there is no default password. Admin login: /admin/login.
+Learner login: /account/login.
 Learner registration: /account/register, disabled until the server is
 explicitly configured with NIHON_ENABLE_SIGNUP=true.
 Learner password change: /account/security, only for an authenticated learner
@@ -159,12 +176,16 @@ does not change v1 credentials, user data or history.
 ## Docker: one container
 
     docker build -t nihon-fastify .
-    docker run --rm -p 127.0.0.1:3000:3000 --env-file .env.production -v nihon-data:/opt/nihon/data nihon-fastify
+    docker run -d --name nihon -p 127.0.0.1:3000:3000 -v nihon-data:/opt/nihon/data nihon-fastify
+    docker logs nihon   # copy the one-time setup code (first run only)
 
-Keep the env file private and set PUBLIC_ORIGIN to your external HTTPS origin
-behind the reverse proxy. Without it, browser state-changing requests are
-denied in production. Image entrypoint runs SQLite migrations and starts
-one non-root Fastify process. Store the DB in a persistent volume.
+For a fresh install you can omit --env-file entirely; open /setup to set
+the external HTTPS Origin using the interface. The initial one-time setup code
+is printed to Docker logs. For existing deployments, --env-file remains
+optional and PRIVATE; an explicitly set origin or a UI-saved origin is required
+for production browser mutations after setup. Image entrypoint runs SQLite
+migrations and starts one non-root Fastify process. Mount a persistent private
+volume for both the DB and instance-secret.key. Do not recreate the key.
 
 ## SQLite backup and restore (no overwrite)
 
@@ -209,7 +230,7 @@ The HTTP smoke script only works on localhost and mutates an isolated test DB:
 
     SMOKE_ENABLE=yes node scripts/smoke-http.mjs
 
-Current limitations: production login abuse prevention, OAuth for remote MCP,
-v1 user/progress migration, approved rollback plan, real AI key E2E and
-production load test. The v1 Express runtime in the repository is reference
+Current limitations: MySQL driver/migration, production login abuse prevention,
+OAuth for remote MCP, v1 user/progress migration, approved rollback plan,
+real AI key E2E and production load test. The v1 Express runtime in the repository is reference
 code only; deploy only the Fastify application from this directory.

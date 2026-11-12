@@ -6,6 +6,8 @@ import {Decks,DeckDetails} from "./pages/Decks";
 import Practice from "./pages/Practice";
 import {AccountLogin,AccountRegister,AdminLogin} from "./pages/Login";
 import AccountSecurity from "./pages/AccountSecurity";
+import Setup from "./pages/Setup";
+import AdminSettings from "./pages/AdminSettings";
 import Admin from "./pages/Admin";
 import AIStudio from "./pages/AIStudio";
 
@@ -48,8 +50,12 @@ export default function App(){
   const [actor,setActor]=useState<Actor|null>(null);
   const [signUpEnabled,setSignUpEnabled]=useState(false);
   const [ready,setReady]=useState(false);
+  const [installed,setInstalled]=useState(true);
   const refresh=useCallback(async()=>{
     try{
+      const status=await api<{installed:boolean}>("/api/v1/setup/status");
+      setInstalled(status.installed);
+      if(!status.installed){setActor(null);return;}
       const data=await api<Session>("/api/v1/auth/me");
       setActor(data.user);setSignUpEnabled(data.signUpEnabled);
     }catch{setActor(null);}
@@ -67,7 +73,7 @@ export default function App(){
         <NavLink to="/vocabulary">Từ vựng</NavLink>
         <NavLink to="/decks">Bộ từ</NavLink>
         <NavLink to="/practice">Ôn tập</NavLink>
-        {actor?.role==="admin"?<NavLink to="/admin">Admin</NavLink>:null}
+        {actor?.role==="admin"?<><NavLink to="/admin">Admin</NavLink><NavLink to="/admin/settings">Settings</NavLink></>:null}
       </nav>
       <div className="header-account">
         {actor?<><span className="muted">{actor.name}</span>{actor.role==="learner"?<Link to="/account/security">Bảo mật</Link>:null}<button type="button" className="quiet-button" onClick={logout}>Đăng xuất</button></>:
@@ -76,6 +82,7 @@ export default function App(){
     </header>
     <main className="site-main">
       {!ready?<div className="notice">Đang kết nối hệ thống…</div>:
+        !installed?<Setup onComplete={refresh}/>:
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/vocabulary" element={<Vocabulary/>}/>
@@ -88,6 +95,7 @@ export default function App(){
           <Route path="/admin/login" element={<AdminLogin/>}/>
           <Route path="/admin" element={actor?.role==="admin"?<Admin/>:<Navigate to="/admin/login" replace/>}/>
           <Route path="/admin/ai-studio" element={actor?.role==="admin"?<AIStudio/>:<Navigate to="/admin/login" replace/>}/>
+          <Route path="/admin/settings" element={actor?.role==="admin"?<AdminSettings/>:<Navigate to="/admin/login" replace/>}/>
           <Route path="*" element={<div className="content-page"><h1>Không tìm thấy trang</h1><Link to="/">Về trang chủ</Link></div>}/>
         </Routes>}
     </main>

@@ -107,6 +107,13 @@ export const learnerSignupEvents = sqliteTable("learner_signup_events",{
   createdAt:text("created_at").notNull(),
 },t=>[index("idx_signup_events_time").on(t.createdAt)]);
 
+/** Private installation settings; secret values are encrypted in runtime-config.ts. */
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 /** Server-side revocable browser sessions: hashed cookie identifiers only. */
 export const authSessions = sqliteTable("auth_sessions", {
   tokenHash: text("token_hash").primaryKey(),
