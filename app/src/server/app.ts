@@ -6,6 +6,9 @@ import { registerRoutes } from "./routes";
 import { registerMcp } from "./mcp";
 import { registerAuthRateLimits } from "./rate-limit";
 import { registerInstallationRoutes } from "./installation";
+import { activeMySQL, shutdownMySQL } from "@/db/mysql/runtime";
+import { mysqlApi } from "@/db/mysql/api";
+import { mysqlMcp } from "@/db/mysql/mcp";
 
 export async function buildApp(options?:{staticAssets?:boolean}){
   const app=Fastify({
@@ -15,6 +18,31 @@ export async function buildApp(options?:{staticAssets?:boolean}){
   });
   await app.register(cookie);
   registerAuthRateLimits(app);
+  let connectedMySQL:ReturnType<typeof activeMySQL>=null;
+  let apiHandler:ReturnType<typeof mysqlApi>|null=null;
+  let mcpHandler:ReturnType<typeof mysqlMcp>|null=null;
+  app.addHook("preHandler",async(req,reply)=>{
+    const connection=activeMySQL();
+    if(!connection)return;
+    if(req.url.startsWith("/api/v1/setup/"))return;
+    if(connectedMySQL!==connection){
+      connectedMySQL=connection;
+      apiHandler=mysqlApi(connection.db);
+      mcpHandler=mysqlMcp(connection.db);
+    }
+    if(req.url.startsWith("/api/")){
+      await apiHandler!(req,reply);
+      return reply;
+    }
+    if(req.url.startsWith("/mcp")){
+      await mcpHandler!.handler(req,reply);
+      return reply;
+    }
+  });
+  app.addHook("onClose",async()=>{
+    mcpHandler?.close();
+    await shutdownMySQL();
+  });
   app.addHook("onSend",async(req,reply,payload)=>{
     reply.header("X-Content-Type-Options","nosniff");
     reply.header("Referrer-Policy","strict-origin-when-cross-origin");

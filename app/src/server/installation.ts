@@ -10,11 +10,12 @@ import {
   signupEnabledByConfig, writeSetting,
 } from "@/lib/runtime-config";
 import { ok, fail, requireAdmin } from "./http";
+import { activeMySQL, activateMySQL } from "@/db/mysql/runtime";
 
 // A one-boot, out-of-band installer challenge, never returned by an HTTP endpoint.
 const setupCode=randomBytes(18).toString("base64url");
 export function showSetupInstructions():void {
-  if(!adminPasswordHash()){
+  if(!adminPasswordHash()&&!activeMySQL()){
     console.log("\nNihon first-run installer: open /setup");
     console.log("One-time setup code (server console only): "+setupCode);
     console.log("The code expires when this process restarts or setup completes.\n");
@@ -48,6 +49,7 @@ const installInput=z.object({
   repeatPassword:z.string().min(12).max(256),
   origin:z.string().min(1).max(250),
   enableSignup:z.boolean().default(false),
+  mysql:z.unknown().optional(),
 }).strict().refine(v=>v.adminPassword===v.repeatPassword,{path:["repeatPassword"],
   message:"Mật khẩu xác nhận không khớp"});
 const settingsInput=z.object({
@@ -60,13 +62,37 @@ const settingsInput=z.object({
 
 export function registerInstallationRoutes(app:FastifyInstance):void {
   app.get("/api/v1/setup/status",()=>ok({
-    installed:Boolean(adminPasswordHash()),
-    database:"sqlite",
-    engines:[{id:"sqlite",available:true},{id:"mysql",available:false}],
-    needsSetupCode:!adminPasswordHash(),
+    installed:Boolean(adminPasswordHash()||activeMySQL()),
+    database:activeMySQL()?"mysql":"sqlite",
+    engines:[{id:"sqlite",available:true},{id:"mysql",available:true}],
+    needsSetupCode:!adminPasswordHash()&&!activeMySQL(),
   }));
+  // The setup-code gate prevents exposing an arbitrary MySQL host probe to the public.
+  // Connection credentials are used once and are never logged, returned or persisted.
+  app.post("/api/v1/setup/mysql/test",async(request,reply)=>{
+    if(adminPasswordHash()||activeMySQL())
+      return reply.code(409).send({success:false,error:{code:"ALREADY_INSTALLED"}});
+    try{
+      const input=z.object({
+        setupCode:z.string().min(1).max(100),
+        origin:z.string().min(1).max(250),
+        connection:z.unknown(),
+      }).strict().parse(request.body);
+      if(!initialRequestAllowed(request,input.origin) || validateOrigin(input.origin)!==input.origin)
+        return reply.code(403).send({success:false,error:{code:"INVALID_ORIGIN"}});
+      if(!setupCodeValid(input.setupCode))
+        return reply.code(401).send({success:false,error:{code:"INVALID_SETUP_CODE"}});
+      const {testMySQLConnection}=await import("@/db/mysql/connector");
+      const result=await testMySQLConnection(input.connection);
+      return ok(result);
+    }catch(error){
+      // Do not expose MySQL driver messages (hostnames, users, credentials, TLS details).
+      if(error instanceof z.ZodError)return fail(reply,error);
+      return reply.code(422).send({success:false,error:{code:"MYSQL_CONNECTION_FAILED"}});
+    }
+  });
   app.post("/api/v1/setup/initialize",async(request,reply)=>{
-    if(adminPasswordHash())
+    if(adminPasswordHash()||activeMySQL())
       return reply.code(409).send({success:false,error:{code:"ALREADY_INSTALLED"}});
     try {
       const input=installInput.parse(request.body);
@@ -74,10 +100,29 @@ export function registerInstallationRoutes(app:FastifyInstance):void {
         return reply.code(403).send({success:false,error:{code:"INVALID_ORIGIN"}});
       if(!setupCodeValid(input.setupCode))
         return reply.code(401).send({success:false,error:{code:"INVALID_SETUP_CODE"}});
-      if(input.database!=="sqlite")
-        return reply.code(422).send({success:false,error:{code:"MYSQL_ADAPTER_NOT_READY"}});
       const origin=validateOrigin(input.origin);
       const passwordHash=hashAdminPassword(input.adminPassword);
+      if(input.database==="mysql"){
+        const {mysqlConnectionSchema,testMySQLConnection,migrateFreshMySQL,openMySQL}=
+          await import("@/db/mysql/connector");
+        const {mysqlSettings}=await import("@/db/mysql/settings");
+        const connection=mysqlConnectionSchema.parse(input.mysql);
+        await testMySQLConnection(connection);
+        await migrateFreshMySQL(connection);
+        const opened=openMySQL(connection);
+        try{
+          const settings=mysqlSettings(opened.db);
+          if(await settings.adminHash())
+            return reply.code(409).send({success:false,error:{code:"MYSQL_ALREADY_INSTALLED"}});
+          await settings.batch({
+            admin_password_hash:passwordHash,
+            public_origin:origin,
+            enable_signup:input.enableSignup?"true":"false",
+          });
+        }finally{await opened.pool.end();}
+        await activateMySQL(connection);
+        return reply.code(201).send(ok({installed:true,database:"mysql"}));
+      }
       const now=new Date().toISOString();
       // Install is atomic. It must never reset an existing Admin password.
       db.transaction(tx=>{
@@ -97,6 +142,24 @@ export function registerInstallationRoutes(app:FastifyInstance):void {
     }catch(error){return fail(reply,error);}
   });
 
+  // Native MySQL routes are intercepted by the MySQL pre-handler once installed.
+  // On SQLite deployments these endpoints fail explicitly rather than exposing
+  // an integration whose database engine is unavailable.
+  for(const route of ["/api/v1/admin/settings/mysql/health",
+    "/api/v1/admin/settings/mysql/connection"]){
+    app.get(route,async(request,reply)=>{
+      if(!requireAdmin(request,reply))return;
+      return reply.code(409).send({success:false,error:{code:"MYSQL_NOT_ACTIVE"}});
+    });
+  }
+  app.post("/api/v1/admin/settings/mysql/test",async(request,reply)=>{
+    if(!requireAdmin(request,reply))return;
+    return reply.code(409).send({success:false,error:{code:"MYSQL_NOT_ACTIVE"}});
+  });
+  app.patch("/api/v1/admin/settings/mysql/connection",async(request,reply)=>{
+    if(!requireAdmin(request,reply))return;
+    return reply.code(409).send({success:false,error:{code:"MYSQL_NOT_ACTIVE"}});
+  });
   app.get("/api/v1/admin/settings",async(request,reply)=>{
     if(!requireAdmin(request,reply))return;
     return ok({

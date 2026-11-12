@@ -11,12 +11,38 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
   const [origin,setOrigin]=useState(window.location.origin);
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
+  const [mysqlHost,setMysqlHost]=useState("localhost");
+  const [mysqlPort,setMysqlPort]=useState(3306);
+  const [mysqlDatabase,setMysqlDatabase]=useState("nihon");
+  const [mysqlUser,setMysqlUser]=useState("nihon");
+  const [mysqlPassword,setMysqlPassword]=useState("");
+  const [mysqlTls,setMysqlTls]=useState<"required"|"off">("required");
+  const [mysqlMessage,setMysqlMessage]=useState("");
+  async function checkMysqlConnection(){
+    setError("");setMysqlMessage("");setBusy(true);
+    try{
+      const result=await write<{connected:boolean;version:string;database:string}>(
+        "/api/v1/setup/mysql/test",{
+          setupCode,origin,
+          connection:{
+            host:mysqlHost,port:mysqlPort,database:mysqlDatabase,
+            user:mysqlUser,password:mysqlPassword,tls:mysqlTls,
+          },
+        });
+      if(!result.connected)throw new Error("MYSQL_CONNECTION_FAILED");
+      setMysqlMessage("Kết nối MySQL đã xác minh: "+result.version+
+        " · database "+result.database);
+    }catch(e){
+      setError(e instanceof Error?e.message:"MYSQL_CONNECTION_FAILED");
+    }finally{setBusy(false);}
+  }
   async function submit(e:FormEvent){
     e.preventDefault();setError("");setBusy(true);
     try{
-      if(database!=="sqlite")throw new Error("MYSQL_ADAPTER_NOT_READY");
       const result=await write<SetupResult>("/api/v1/setup/initialize",{
         setupCode,database,adminPassword,repeatPassword,origin,enableSignup,
+        ...(database==="mysql"?{mysql:{host:mysqlHost,port:mysqlPort,
+          database:mysqlDatabase,user:mysqlUser,password:mysqlPassword,tls:mysqlTls}}:{}),
       });
       if(!result.installed)throw new Error("INSTALL_FAILED");
       setSetupCode("");setAdminPassword("");setRepeatPassword("");
@@ -27,13 +53,31 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
   return <section className="content-page auth-container">
     <span className="eyebrow">First-run setup · Nihon</span>
     <h1>Khởi tạo hệ thống</h1>
-    <p className="page-intro">Chỉ cần thực hiện một lần. Nihon đã tự tạo secret và database SQLite trên ổ lưu trữ riêng; không cần sửa source hay .env.</p>
+    <p className="page-intro">Chỉ cần thực hiện một lần. Nihon tự tạo secret bảo mật và kho cấu hình khởi tạo. Chọn SQLite hoặc kết nối MySQL để lưu dữ liệu ứng dụng; không cần sửa source hay .env.</p>
     <div className="admin-panel">
       <h2>1. Chọn cơ sở dữ liệu</h2>
       <div className="form-vertical">
         <label><input type="radio" checked={database==="sqlite"} onChange={()=>setDatabase("sqlite")}/> SQLite + Drizzle — đã hỗ trợ, chạy tự động không cần mật khẩu DB</label>
-        <label><input type="radio" checked={database==="mysql"} onChange={()=>setDatabase("mysql")}/> MySQL — chưa hỗ trợ trong bản hiện tại</label>
-        {database==="mysql"?<div className="notice" role="status">MySQL cần adapter Drizzle và migration riêng. Không thể chọn để lưu dữ liệu trước khi phần này được kiểm thử. Hãy chọn SQLite để sử dụng ngay.</div>:null}
+        <label><input type="radio" checked={database==="mysql"} onChange={()=>setDatabase("mysql")}/> MySQL 8.4 — cài đặt và sử dụng qua Drizzle</label>
+        {database==="mysql"?<div className="admin-panel" role="group" aria-label="MySQL connection">
+          <h3>Kết nối MySQL</h3>
+          <p className="muted">Kết nối tới database MySQL trống, kiểm tra quyền và tự chạy migrations trước khi tạo Admin. Không thay thế dữ liệu cũ.</p>
+          <label>MySQL host<input className="input-text" value={mysqlHost} onChange={e=>setMysqlHost(e.target.value)} autoComplete="off"/></label>
+          <label>Port<input className="input-text" type="number" min={1} max={65535} value={mysqlPort} onChange={e=>setMysqlPort(Number(e.target.value))}/></label>
+          <label>Tên database<input className="input-text" value={mysqlDatabase} onChange={e=>setMysqlDatabase(e.target.value)}/></label>
+          <label>Username<input className="input-text" value={mysqlUser} onChange={e=>setMysqlUser(e.target.value)} autoComplete="username"/></label>
+          <label>Password<input className="input-text" type="password" value={mysqlPassword} onChange={e=>setMysqlPassword(e.target.value)} autoComplete="off"/></label>
+          <label>Kết nối TLS
+            <select className="select-input" value={mysqlTls} onChange={e=>setMysqlTls(e.target.value as "required"|"off")}>
+              <option value="required">Bắt buộc TLS, kiểm tra chứng chỉ (khuyến nghị)</option>
+              <option value="off">Không TLS — chỉ dùng MySQL trong mạng QA tin cậy</option>
+            </select>
+          </label>
+          <button type="button" className="button outline" disabled={busy||!setupCode}
+            onClick={()=>void checkMysqlConnection()}>Kiểm tra kết nối MySQL</button>
+          {mysqlMessage?<p role="status" className="notice">{mysqlMessage}</p>:null}
+          <p className="muted">Nhập mã khởi tạo ở phần dưới trước khi nhấn kiểm tra kết nối.</p>
+        </div>:null}
       </div>
     </div>
     <div className="admin-panel">
@@ -62,7 +106,7 @@ export default function Setup({onComplete}:{onComplete:()=>Promise<void>}) {
           Cho phép người học tự đăng ký
         </label>
         {error?<p className="form-error" role="alert">{error}</p>:null}
-        <button className="button primary" type="submit" disabled={busy||database!=="sqlite"}>
+        <button className="button primary" type="submit" disabled={busy}>
           {busy?"Đang khởi tạo…":"Hoàn tất cài đặt"}
         </button>
       </form>

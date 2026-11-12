@@ -17,6 +17,19 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: qa-only-ci-mysql-password
+          MYSQL_DATABASE: nihon_qa
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pqa-only-ci-mysql-password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
     defaults:
       run:
         working-directory: app
@@ -30,6 +43,9 @@ jobs:
       - run: npm ci
       - run: npm run db:migrate
       - run: npm run typecheck
-      - run: npm test
+      - name: SQLite and MySQL integration
+        run: npm test
+        env:
+          NIHON_MYSQL_TEST_URL: mysql://root:qa-only-ci-mysql-password@127.0.0.1:3306/nihon_qa
       - run: npm run lint
       - run: npm run build

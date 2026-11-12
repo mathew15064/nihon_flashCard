@@ -1,6 +1,7 @@
 import { FormEvent,useCallback,useEffect,useState } from "react";
 import { Link } from "react-router-dom";
 import { api,write } from "../api";
+import MySQLConnection from "./MySQLConnection";
 
 type Settings={
   database:string;mysqlAvailable:boolean;origin:string;enableSignup:boolean;
@@ -70,9 +71,10 @@ export default function AdminSettings(){
     {!settings?<div className="notice">Đang tải cấu hình…</div>:<>
       <div className="admin-panel">
         <h2>Cơ sở dữ liệu</h2>
-        <p><strong>SQLite + Drizzle</strong> · Đang hoạt động</p>
-        <p className="muted">MySQL: chưa có adapter/migration. Không cho đổi trực tiếp DB đang chứa dữ liệu. Chuyển đổi DB sẽ cần quy trình backup, import, đối soát và cutover riêng.</p>
+        <p><strong>{settings.database==="mysql"?"MySQL + Drizzle":"SQLite + Drizzle"}</strong> · Đang hoạt động</p>
+        <p className="muted">SQLite và MySQL đều được hỗ trợ khi khởi tạo lần đầu. Không đổi trực tiếp engine của database đã có dữ liệu; chuyển đổi cần backup, import, đối soát và cutover riêng.</p>
       </div>
+      {settings.database==="mysql"?<MySQLConnection/>:null}
       <div className="admin-panel">
         <h2>Website & AI Provider</h2>
         <form className="form-vertical" onSubmit={save}>

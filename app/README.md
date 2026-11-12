@@ -1,7 +1,7 @@
 # Nihon — Fastify + React + Vite Monolith
 
 One Fastify process serves the built React SPA, REST API, MCP endpoint and
-server-side AI integration. SQLite + Drizzle persist content and SRS.
+server-side AI integration. SQLite or MySQL 8.4 + Drizzle persist content and SRS.
 There is no Next.js, NestJS or Express runtime in this application.
 
 ## Local development
@@ -14,11 +14,18 @@ From the app directory:
     npm run dev
 
 Open http://127.0.0.1:3000. On first startup the server automatically
-creates the private SQLite DB, runs migrations and generates its auth secret.
-The browser shows /setup: enter the one-time code printed to the server
-console, choose SQLite and create Admin. MySQL is visible but **not yet
-supported** (no MySQL adapter or migrations). No .env editing is needed
-for a fresh local installation. See docs/UI_FIRST_INSTALL.md.
+creates a private configuration volume, applies bootstrap SQLite migrations and
+generates its authentication/encryption secret. The browser shows /setup:
+enter the one-time code printed in private server logs, choose **SQLite or MySQL**,
+then create the Admin account. SQLite needs no database server. MySQL requires
+an existing empty MySQL 8.4 database and credentials, tested and saved through
+the wizard. All application data goes to the selected engine. MySQL keeps only
+the **encrypted connection configuration** in local bootstrap SQLite so it can
+reconnect after restart without an environment file.
+
+No source/.env editing is needed for a fresh installation.
+See docs/UI_FIRST_INSTALL.md; preserve BOTH the local bootstrap volume/secret
+and the MySQL database when backing up MySQL installations.
 
 Optional development-only sample data after setup: npm run db:seed:demo
 
@@ -43,7 +50,9 @@ For existing deployments, .env.local remains an optional compatibility /
 advanced-operations mechanism; do not commit it. UI-saved settings override
 matching environment fallbacks. Server encryption and cookie secrets are
 automatically generated and stored in data/instance-secret.key (0600);
-back up this key safely along with the DB. See docs/UI_FIRST_INSTALL.md.
+back up this key safely along with the selected database. If using MySQL,
+also retain the encrypted local bootstrap SQLite settings. See
+docs/UI_FIRST_INSTALL.md.
 
 Generate a random secret:
 
@@ -64,30 +73,33 @@ Existing deployments may set NIHON_ADMIN_PASSWORD_HASH to the output.
 For new installations, create the Admin password in the /setup wizard;
 there is no default password. Admin login: /admin/login.
 Learner login: /account/login.
-Learner registration: /account/register, disabled until the server is
-explicitly configured with NIHON_ENABLE_SIGNUP=true.
+Learner registration: /account/register, enabled in the setup wizard or
+Admin → Settings. Existing advanced deployments may use NIHON_ENABLE_SIGNUP=true
+as a fallback if no UI setting is present.
 Learner password change: /account/security, only for an authenticated learner
 who knows the current password. Changing it revokes sessions on other devices
 and rotates the active browser session. Unverified password reset is not
 available; see docs/ACCOUNT_SECURITY.md.
 
 Signed HttpOnly cookies are used for Admin (8h), learner (30d) and guest
-learning (90d). Admin/learner sessions additionally require a hashed SQLite
-session record: login rotates a browser session, logout revokes it server-side,
+learning (90d). Admin/learner sessions additionally require hashed session
+records in the selected application database (SQLite or MySQL): login rotates
+a browser session, logout revokes it server-side,
 and expired records are purged on subsequent logins. Migration 006 intentionally
 invalidates earlier stateless auth cookies (users log in again), without changing
 guest progress. See `docs/AUTH_SESSION_HARDENING.md`.
 POST/PATCH browser requests require a matching Origin.
-Login lockouts and local signup quota live in SQLite. A bounded per-process IP limit covers Admin/learner login and registration;
-account-level lockouts persist in SQLite. Because trustProxy is false, traffic
+Login lockouts and signup quota live in the selected application database.
+A bounded per-process IP limit covers Admin/learner login and registration;
+account-level lockouts persist in the selected database. Because trustProxy is false, traffic
 from a reverse proxy shares the proxy's IP bucket; configure trusted edge IP
 rate limiting as well. OAuth, recovery and broader abuse review are pending.
 
 ## AI Studio
 
-Use /admin/ai-studio. Configure OPENAI_API_KEY only on the server,
-plus NIHON_AI_MODEL (default gpt-4.1-mini) and NIHON_AI_DAILY_LIMIT
-(default 10 jobs per rolling 24h). No client API key field exists.
+Use /admin/ai-studio. Set the OpenAI API key, model (default gpt-4.1-mini)
+and daily quota in Admin → Settings. Key material remains encrypted server-side;
+environment variables are optional fallback for legacy installations.
 The backend requests structured Japanese vocabulary from OpenAI Responses
 API, validates and deduplicates, stores candidates, and lets Admin edit,
 accept as drafts, reject and publish separately.
@@ -183,9 +195,11 @@ For a fresh install you can omit --env-file entirely; open /setup to set
 the external HTTPS Origin using the interface. The initial one-time setup code
 is printed to Docker logs. For existing deployments, --env-file remains
 optional and PRIVATE; an explicitly set origin or a UI-saved origin is required
-for production browser mutations after setup. Image entrypoint runs SQLite
-migrations and starts one non-root Fastify process. Mount a persistent private
-volume for both the DB and instance-secret.key. Do not recreate the key.
+for production browser mutations after setup. Image startup checks the local
+bootstrap SQLite schema and resumes the chosen SQLite/MySQL engine in one
+non-root Fastify process. Mount a persistent private volume for bootstrap
+configuration, the SQLite application DB when selected, and
+instance-secret.key. Do not recreate the key. See docs/UI_FIRST_INSTALL.md.
 
 ## SQLite backup and restore (no overwrite)
 
@@ -230,7 +244,8 @@ The HTTP smoke script only works on localhost and mutates an isolated test DB:
 
     SMOKE_ENABLE=yes node scripts/smoke-http.mjs
 
-Current limitations: MySQL driver/migration, production login abuse prevention,
-OAuth for remote MCP, v1 user/progress migration, approved rollback plan,
-real AI key E2E and production load test. The v1 Express runtime in the repository is reference
+Current limitations: no automated SQLite ↔ MySQL data conversion, no fully
+verified production MySQL snapshot/restore and failover runbook,
+production login abuse prevention, OAuth for remote MCP, v1 user/progress
+migration, approved rollback plan, real AI key E2E and production load test. The v1 Express runtime in the repository is reference
 code only; deploy only the Fastify application from this directory.

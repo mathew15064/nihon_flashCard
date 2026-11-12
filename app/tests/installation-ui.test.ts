@@ -51,12 +51,12 @@ test("zero-env SQLite installer and encrypted UI settings survive restart withou
       const before=await call("/api/v1/setup/status");
       assert.equal(before.statusCode,200);
       assert.equal(before.json().data.installed,false);
-      assert.equal(before.json().data.engines[1].available,false);
+      assert.equal(before.json().data.engines[1].available,true);
       assert.doesNotMatch(before.body,new RegExp(installer.setupCode));
       assert.equal((await call("/api/v1/setup/initialize","POST",
         {...installer,setupCode:"invalid-setup"})).statusCode,401);
       assert.equal((await call("/api/v1/setup/initialize","POST",
-        {...installer,database:"mysql"})).statusCode,422);
+        {...installer,database:"mysql"})).statusCode,400);
       assert.equal((await call("/api/v1/setup/initialize","POST",installer,undefined,
         "https://attacker.example")).statusCode,403);
       const installed=await call("/api/v1/setup/initialize","POST",installer);

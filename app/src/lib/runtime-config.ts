@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 function settingsPath():string { return resolve(process.env.DB_PATH||"./data/nihon.sqlite"); }
 
 export type SettingName =
-  "admin_password_hash" | "public_origin" | "enable_signup" |
+  "database_engine" | "mysql_connection" | "admin_password_hash" | "public_origin" | "enable_signup" |
   "ai_model" | "ai_daily_limit" | "openai_api_key" |
   "mcp_read_token" | "mcp_write_token" | "admin_rest_token";
 
@@ -68,11 +68,11 @@ export function decryptValue(value:string):string {
     return Buffer.concat([decipher.update(Buffer.from(parts[3]!,"base64url")),decipher.final()]).toString("utf8");
   }catch{throw new Error("SETTINGS_DECRYPT_FAILED");}
 }
-export function storedSecret(key:"openai_api_key"|"mcp_read_token"|"mcp_write_token"|"admin_rest_token"):string|undefined {
+export function storedSecret(key:"openai_api_key"|"mcp_read_token"|"mcp_write_token"|"admin_rest_token"|"mysql_connection"):string|undefined {
   const value=readSetting(key);
   return value && value!=="disabled"?decryptValue(value):undefined;
 }
-export function saveSecret(key:"openai_api_key"|"mcp_read_token"|"mcp_write_token"|"admin_rest_token",value:string):void {
+export function saveSecret(key:"openai_api_key"|"mcp_read_token"|"mcp_write_token"|"admin_rest_token"|"mysql_connection",value:string):void {
   if(!value || value.length>4096)throw new Error("SECRET_INVALID");
   writeSetting(key,encryptValue(value));
 }

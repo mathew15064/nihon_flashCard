@@ -47,6 +47,7 @@ export class FixedWindowLimiter {
 
 const rules: Record<string, { maxRequests: number; windowMs: number }> = {
   "/api/v1/setup/initialize": { maxRequests: 5, windowMs: 15 * 60_000 },
+  "/api/v1/setup/mysql/test": { maxRequests: 8, windowMs: 15 * 60_000 },
   "/api/v1/auth/admin/login": { maxRequests: 10, windowMs: 15 * 60_000 },
   "/api/v1/auth/learner/login": { maxRequests: 25, windowMs: 15 * 60_000 },
   "/api/v1/auth/learner/password": { maxRequests: 10, windowMs: 15 * 60_000 },

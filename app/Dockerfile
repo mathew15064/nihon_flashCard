@@ -18,6 +18,7 @@ COPY --from=build /opt/nihon/package.json /opt/nihon/package-lock.json ./
 COPY --from=build /opt/nihon/node_modules ./node_modules
 COPY --from=build /opt/nihon/dist ./dist
 COPY --from=build /opt/nihon/src/db/migrations ./src/db/migrations
+COPY --from=build /opt/nihon/src/db/mysql/migrations ./src/db/mysql/migrations
 RUN addgroup -g 10001 -S nihon && adduser -S -D -H -u 10001 -G nihon nihon && \
     mkdir -p /opt/nihon/data && chown -R nihon:nihon /opt/nihon/data
 USER nihon

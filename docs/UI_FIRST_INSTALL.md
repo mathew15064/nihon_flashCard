@@ -1,96 +1,119 @@
-# Nihon — UI-first first-run installation and server-managed settings
+# Nihon installation: SQLite or MySQL 8.4 via the browser
 
-## Goal and current scope
+## Quick start — zero source or environment-file edits
 
-A clean Fastify installation now starts with **no manually edited source or .env**.
-The Node process creates `data/nihon.sqlite` if missing, applies ordered
-checksum-verified migrations, and creates a unique persistent
-`data/instance-secret.key` (0600), unless an existing `AUTH_SECRET` is supplied
-for compatibility. Both the secret and SQLite DB must be backed up securely.
+Start the Fastify process with a private, **persistent** data volume. The
+default local development command is `npm ci && npm run dev`; a Docker
+deployment can use `docker run -d --restart unless-stopped -p
+127.0.0.1:3000:3000 -v nihon-data:/opt/nihon/data nihon-fastify`.
+No `.env` is required for initial Admin creation or AI/MCP integration
+configuration. Configure DNS, TLS, firewall and persistent volumes at your
+hosting provider as normal.
 
-The built SPA detects that no Admin exists and displays the one-time setup wizard.
-The app generates a **random one-boot setup code** in the server's private
-startup logs. The operator enters it in the wizard (not through a source edit),
-sets an Admin password and reviews the public origin and learner signup toggle.
+Open `/setup`, take the random one-time setup code from the **private server
+logs** and choose one of:
 
-The code is never returned in an HTTP response and does not persist after
-process restart. Five failed setup attempts per socket IP / 15 minutes are
-rate-limited. An existing Admin cannot be replaced through the wizard.
-The initial setup requires an exact browser Origin match and forbids cross-site
-fetch metadata; production non-loopback origins must use HTTPS.
+| Engine | Installation behavior | External infrastructure |
+| --- | --- | --- |
+| SQLite | Automatically creates database, runs SQLite migrations 001–007 | Only persistent local volume |
+| MySQL 8.4 | Tests connection, applies native MySQL Drizzle schema, creates Admin in MySQL | Existing, empty MySQL database + reachable MySQL server |
 
-## Database selection
+The MySQL setup screen accepts Host, Port (default 3306), Database, Username,
+Password and TLS policy; clicking **Kiểm tra kết nối** validates the connection
+with the one-time setup code. Installing will not silently fall back to SQLite.
+A database that already has unrelated tables is rejected. MySQL is not installed
+by Nihon itself; an existing external MySQL server and database must be
+available. **From Docker, a separate MySQL container's hostname is its Docker
+network name, not `localhost`.** For remote production MySQL, leave TLS set
+to `required` (certificate verification enabled); `off` is for controlled
+private test networks only.
 
-- **SQLite + Drizzle:** currently supported; automatically provisioned with
-  schema migrations, no connection username/password.
-- **MySQL:** visible in the wizard as **not yet supported**. Submitting this
-  choice returns `MYSQL_ADAPTER_NOT_READY` and cannot create an Admin or
-  initialize a fake SQLite-as-MySQL installation.
+The wizard validates the request Origin and one-time code before installing.
+An existing installation cannot be taken over through the setup endpoint.
 
-The existing business services depend on synchronous SQLite/Drizzle operations,
-SQLite transactions and SQLite-specific schema. Genuine MySQL support needs a
-separate async driver, Drizzle MySQL schema/migrations, adapted transactions,
-integration tests against a real MySQL instance, and a reviewed data migration
-or cutover mechanism. Do not switch an existing database by merely editing
-a connection string. This work remains open.
+## Where data lives
 
-## Admin Settings (after initial login)
+Under the MySQL choice, all runtime application records live in **MySQL**:
+Admin verifier, learner accounts and login lockouts, browser auth sessions,
+vocabulary, senses, decks, vocabulary generation jobs/candidates, SRS cards,
+review events, guest-to-learner merges, and AI/MCP/Admin integration settings.
 
-Go to **Admin → Settings** (`/admin/settings`) to change:
+A **small local bootstrap SQLite file** remains on the private data volume.
+It stores the engine selector and AES-256-GCM-encrypted MySQL connection
+details, not user vocabulary/accounts/progress. The randomly created
+`instance-secret.key` is also on that volume, separate from the MySQL DB.
+This private bootstrap is necessary to connect to MySQL on startup without
+an environment file, or asking the Admin for their DB password after reboot.
 
-- Website Origin (`https://...`) and learner signup.
-- OpenAI Responses API key, model and quota.
-- Generate/rotate or revoke separate MCP read-only and MCP draft-write tokens.
-- Generate/rotate or revoke an Admin REST integration token.
+**Back up BOTH** the private bootstrap volume (including the instance key)
+and the MySQL database. Losing either may make the installation impossible
+to decrypt or restore even if the other database still exists. Backing up
+only MySQL is insufficient for a zero-env deployment.
 
-`app_settings` is SQLite migration 007. Passwords are salted scrypt hashes.
-Provider keys and bearer tokens are AES-256-GCM encrypted with an HKDF-derived
-key from the private persistent instance secret, using fresh random IVs.
-The database alone does not reveal cleartext secrets; **compromise of both the
-secret file and database does compromise stored credentials**.
+## Admin → Settings
 
-Secrets are accepted in authenticated Admin requests only with CSRF checks
-for browser cookies, and are never returned on settings GET. Newly generated
-MCP/REST tokens are returned exactly once by a deliberate rotate operation
-over HTTPS, for the Admin to copy to a trusted external integration.
-Never persist one-time tokens in browser localStorage.
+After installing, `/admin/settings` manages website Origin, signup,
+OpenAI key/model/daily quota and MCP read/write or REST integration tokens.
+Secrets are encrypted before storage; old tokens cannot be read back and
+new tokens are displayed only once when created. Explicit revoke prevents
+an old environment fallback from reactivating a credential.
 
-Existing .env-based installations stay compatible: when a stored setting is
-absent, the matching environment variable can serve as a fallback. Stored UI
-settings take precedence over env fallbacks. **Explicitly revoking** a provider
-key or MCP/REST token on the UI stores a server-side disabled marker, so an
-older environment fallback cannot silently become active again. To re-enable
-the integration, save a new key or rotate a new token using Settings.
-Changing the public origin to a different hostname requires using that new
-hostname for future state-changing requests.
+On MySQL installations, the additional **Kết nối MySQL** panel shows the
+host, port, database name (fixed), user and TLS policy without ever returning
+the MySQL password. It can test a proposed connection and update credentials
+without editing source. A replacement MySQL target must have the same
+database name, an identical Admin verifier, and applied migration ledger;
+otherwise it is rejected rather than switching to unrelated or empty data.
 
-## Security and operational boundaries
+Do not change the underlying engine (SQLite → MySQL or MySQL → SQLite)
+for an existing installation in Settings. That is a **data migration**, not
+a connection edit; it needs an explicit, verified backup, migration mapping,
+reconciliation, and approved cutover. UI provisioning does not import or
+claim v1 accounts automatically.
 
-- This wizard cannot safely replace **deployment hosting, TLS, persistent
-  storage provisioning, backups or DNS**. The operator still runs the service
-  and must be able to read first-boot logs. On a hosted install, the logs are
-  typically available through the provider dashboard.
-- **Do not publish an unclaimed, fresh installation widely** before the real
-  operator obtains the one-time code. Use a private staging environment and
-  lock down ingress while onboarding.
-- When backing up the new SQLite DB, separately preserve the 0600 instance
-  key under equivalent access controls. Without that key, encrypted settings
-  and existing signed sessions cannot be recovered.
-- UI Settings does not make the public MCP endpoint OAuth-ready. Keep this
-  integration limited to trusted clients. API keys are never embedded in Vite
-  assets or returned by ordinary GET routes.
-- Existing v1 Express accounts, history, MySQL/Redis passwords and the older
-  Next.js v2 worktree are not changed by this feature.
-- The settings page deliberately does **not** support changing a database
-  driver, overwriting an old database, or importing legacy user identities.
-  Those actions require a verified backup, migration and ownership process.
+## Schema migrations and recovery
 
-## Verification
+MySQL schema and DDL live in `app/src/db/mysql/schema.ts` and
+`app/src/db/mysql/migrations/`. They are native Drizzle/MySQL tables and
+a separate MySQL migration ledger (checksum + status). The migration runner
+holds an advisory lock. Because MySQL DDL commits independently, a crash or
+partial failure leaves an `applying` marker, and the installer **fails closed**
+until an operator verifies/repairs the schema or restores a good backup.
+Do not delete the migration ledger to force a retry.
 
-Regression tests: zero-env startup with migrations 001–007, permissions,
-install status and abuse cases, matching origin, Admin login, Settings
-read/write, encrypted key storage, token issuance/rotation/revocation,
-and stable secret preservation across a second startup.
+SQLite's `db:backup`, `db:restore`, and `db:drill` tools only apply to SQLite.
+They do **not** back up the MySQL application database. Use protected
+MySQL snapshots or a reviewed `mysqldump --single-transaction` +
+restoration into a separate staging schema, then verify row counts, foreign
+keys, Admin/learner login, vocabulary, guest SRS, MCP, and AI. Always back
+up the bootstrap key and configuration securely. Production cutover and
+unattended MySQL backup scheduling are not implemented by this application.
 
-The operational smoke test uses a disposable SQLite volume and a temporary
-Docker container. No real provider credentials or production data are used.
+## Security boundaries
+
+- No MySQL password, OpenAI key or MCP token is embedded in the React bundle.
+- Setup code is only printed in the operator's private process logs.
+- Enforce HTTPS for a public site and TLS certificate verification to remote
+  MySQL. The browser must not connect directly to MySQL.
+- Treat database hosts, ports and credentials as administrative secrets;
+  don't share the setup code with unknown users.
+- MCP read/write bearer tokens remain suitable only for trusted integrations;
+  OAuth for publicly exposed remote MCP is still pending.
+- The legacy Express v1 database, original v1 account mapping and old
+  Next.js worktree are not touched by this new-install flow.
+
+## Quality gates (current branch)
+
+Native MySQL 8.4 integration tests cover version/charset checks, migration
+idempotence, foreign keys, Drizzle transactions and rollback, vocabulary,
+deck publishing, learner registration/password change, SRS due queue and
+idempotent reviews, guest-to-learner transfer, AI candidate generation with a
+fake provider and encrypted credential storage.
+
+Separate HTTP integration tests exercise the real setup wizard API, native
+MySQL installation, Admin login, vocabulary/decks, SRS, learner, Settings,
+token rotation, MCP HTTP, and restart restoration. GitHub Actions provisions
+an isolated MySQL 8.4 service for these tests alongside the SQLite suite.
+
+This is **not** certification against a real production MySQL server, actual
+v1 data, or cloud TLS/network topologies; those need reviewed staging tests.

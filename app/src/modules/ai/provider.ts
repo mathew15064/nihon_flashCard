@@ -21,12 +21,18 @@ export function configuredModel(): string {
 }
 
 /** Requests OpenAI Responses structured JSON. No external request without configured key. */
-export function openAIProvider(fetcher: typeof fetch = fetch): AiProvider {
+export function openAIProvider(
+  fetcher:typeof fetch=fetch,
+  options?:{
+    apiKey:()=>string|undefined|Promise<string|undefined>;
+    model:()=>string|Promise<string>;
+  },
+):AiProvider {
   return {
     async generate(input) {
-      const key = openaiKey();
+      const key = options?await options.apiKey():openaiKey();
       if (!key) throw new Error("AI_NOT_CONFIGURED");
-      const model = configuredModel();
+      const model = options?await options.model():configuredModel();
       const instruction = [
         "You are a Japanese-vocabulary content editor writing for Vietnamese learners.",
         "Return only a JSON object matching the requested schema.",

@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 config({path:resolve(".env.local"),quiet:true});
 const {prepareLocalStorage}=await import("../lib/bootstrap-storage.js");
 prepareLocalStorage();
+const {activateConfiguredMySQL}=await import("../db/mysql/runtime.js");
+await activateConfiguredMySQL();
 const {buildApp}=await import("./app.js");
 const {showSetupInstructions}=await import("./installation.js");
 const app=await buildApp();
